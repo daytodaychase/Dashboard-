@@ -12920,134 +12920,7 @@ function mbReopen(){
 }
 
 
-// ═══════════════════════════════════════════════════════════
-// SPOTIFY WEB PLAYBACK + AUTH
-// ═══════════════════════════════════════════════════════════
-var _SP_CLIENT_ID = 'a90b152a5d2741e79560717acf831489';
-var _SP_REDIRECT = 'https://daytodaychase.github.io/Dashboard-';
-var _SP_SCOPES = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state';
-var _spToken = null;
-var _spDeviceId = null;
-var _spPlayer = null;
-var _spPendingUri = null;
 
-function spGetToken() {
-  return localStorage.getItem('sp_token');
-}
-function spSetToken(t) {
-  localStorage.setItem('sp_token', t);
-  localStorage.setItem('sp_token_ts', Date.now());
-  _spToken = t;
-}
-function spTokenExpired() {
-  var ts = parseInt(localStorage.getItem('sp_token_ts')||'0');
-  return Date.now() - ts > 55*60*1000; // 55 min
-}
-
-function spLogin() {
-  var state = Math.random().toString(36).slice(2);
-  localStorage.setItem('sp_state', state);
-  var url = 'https://accounts.spotify.com/authorize' +
-    '?client_id=' + _SP_CLIENT_ID +
-    '&response_type=token' +
-    '&redirect_uri=' + encodeURIComponent(_SP_REDIRECT) +
-    '&scope=' + encodeURIComponent(_SP_SCOPES) +
-    '&state=' + state;
-  window.location.href = url;
-}
-
-function spHandleCallback() {
-  var hash = window.location.hash.substring(1);
-  if(!hash) return;
-  var params = {};
-  hash.split('&').forEach(function(p) {
-    var kv = p.split('=');
-    params[kv[0]] = decodeURIComponent(kv[1]||'');
-  });
-  if(params.access_token) {
-    spSetToken(params.access_token);
-    // Clean URL
-    history.replaceState(null, '', window.location.pathname);
-    // Init player now that we have token
-    spInitPlayer(params.access_token);
-  }
-}
-
-function spInitPlayer(token) {
-  if(_spPlayer) return;
-  // Load Spotify Web Playback SDK
-  if(!document.getElementById('sp-sdk')) {
-    var script = document.createElement('script');
-    script.id = 'sp-sdk';
-    script.src = 'https://sdk.scdn.co/spotify-player.js';
-    document.body.appendChild(script);
-  }
-  window.onSpotifyWebPlaybackSDKReady = function() {
-    _spPlayer = new Spotify.Player({
-      name: 'Day To Day Dashboard',
-      getOAuthToken: function(cb) { cb(token); },
-      volume: 0.8
-    });
-    _spPlayer.addListener('ready', function(data) {
-      _spDeviceId = data.device_id;
-      localStorage.setItem('sp_device_id', data.device_id);
-      // If there's a pending playlist to play, play it now
-      if(_spPendingUri) {
-        spPlay(_spPendingUri);
-        _spPendingUri = null;
-      }
-    });
-    _spPlayer.addListener('not_ready', function() {
-      _spDeviceId = null;
-    });
-    _spPlayer.connect();
-  };
-  // If SDK already loaded
-  if(window.Spotify) {
-    window.onSpotifyWebPlaybackSDKReady();
-  }
-}
-
-function spPlay(playlistUri) {
-  var token = spGetToken();
-  if(!token || spTokenExpired()) {
-    // Need to login first
-    _spPendingUri = playlistUri;
-    spLogin();
-    return;
-  }
-  if(!_spDeviceId) {
-    // Player not ready yet — init and queue
-    _spPendingUri = playlistUri;
-    spInitPlayer(token);
-    return;
-  }
-  // Play via Web API
-  fetch('https://api.spotify.com/v1/me/player/play?device_id=' + _spDeviceId, {
-    method: 'PUT',
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      context_uri: playlistUri,
-      offset: { position: 0 },
-      position_ms: 0
-    })
-  }).then(function(res) {
-    if(res.status === 401) {
-      // Token expired
-      spSetToken('');
-      spLogin();
-    } else if(res.status === 403) {
-      toast('Spotify Premium required for auto-play');
-    } else {
-      toast('Playing on Spotify ▶', 'ok');
-    }
-  }).catch(function() {
-    toast('Could not connect to Spotify');
-  });
-}
 
 function mbOpenSpotify() {
   var sp = _MB_SPOTIFY[_mbMood];
@@ -13062,6 +12935,152 @@ document.addEventListener('DOMContentLoaded', function() {
   if(token && !spTokenExpired()) {
     spInitPlayer(token);
   }
+});
+
+
+// ═══════════════════════════════════════════════════════════
+// SPOTIFY PKCE AUTH + WEB PLAYBACK
+// ═══════════════════════════════════════════════════════════
+var _SP_CLIENT_ID = 'a90b152a5d2741e79560717acf831489';
+var _SP_REDIRECT = 'https://daytodaychase.github.io/Dashboard-';
+var _SP_SCOPES = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state';
+var _spDeviceId = null;
+var _spPlayer = null;
+var _spPendingUri = null;
+
+// PKCE helpers
+async function spGenVerifier() {
+  var arr = new Uint8Array(56);
+  window.crypto.getRandomValues(arr);
+  return btoa(String.fromCharCode.apply(null, arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+async function spGenChallenge(verifier) {
+  var enc = new TextEncoder().encode(verifier);
+  var digest = await window.crypto.subtle.digest('SHA-256', enc);
+  return btoa(String.fromCharCode.apply(null, new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+async function spLogin() {
+  var verifier = await spGenVerifier();
+  var challenge = await spGenChallenge(verifier);
+  localStorage.setItem('sp_verifier', verifier);
+  var url = 'https://accounts.spotify.com/authorize' +
+    '?client_id=' + _SP_CLIENT_ID +
+    '&response_type=code' +
+    '&redirect_uri=' + encodeURIComponent(_SP_REDIRECT) +
+    '&scope=' + encodeURIComponent(_SP_SCOPES) +
+    '&code_challenge_method=S256' +
+    '&code_challenge=' + challenge;
+  window.location.href = url;
+}
+
+async function spHandleCallback() {
+  var params = new URLSearchParams(window.location.search);
+  var code = params.get('code');
+  if(!code) return;
+  // Clean URL immediately
+  history.replaceState(null, '', window.location.pathname);
+  var verifier = localStorage.getItem('sp_verifier');
+  var resp = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: new URLSearchParams({
+      client_id: _SP_CLIENT_ID,
+      grant_type: 'authorization_code',
+      code: code,
+      redirect_uri: _SP_REDIRECT,
+      code_verifier: verifier
+    })
+  });
+  var data = await resp.json();
+  if(data.access_token) {
+    localStorage.setItem('sp_token', data.access_token);
+    localStorage.setItem('sp_refresh', data.refresh_token||'');
+    localStorage.setItem('sp_token_ts', Date.now());
+    spInitPlayer(data.access_token);
+  }
+}
+
+async function spRefreshToken() {
+  var refresh = localStorage.getItem('sp_refresh');
+  if(!refresh) return null;
+  var resp = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: new URLSearchParams({
+      client_id: _SP_CLIENT_ID,
+      grant_type: 'refresh_token',
+      refresh_token: refresh
+    })
+  });
+  var data = await resp.json();
+  if(data.access_token) {
+    localStorage.setItem('sp_token', data.access_token);
+    localStorage.setItem('sp_token_ts', Date.now());
+    if(data.refresh_token) localStorage.setItem('sp_refresh', data.refresh_token);
+    return data.access_token;
+  }
+  return null;
+}
+
+async function spGetValidToken() {
+  var token = localStorage.getItem('sp_token');
+  var ts = parseInt(localStorage.getItem('sp_token_ts')||'0');
+  if(token && Date.now() - ts < 55*60*1000) return token;
+  return await spRefreshToken();
+}
+
+function spInitPlayer(token) {
+  if(_spPlayer) return;
+  if(!document.getElementById('sp-sdk')) {
+    var script = document.createElement('script');
+    script.id = 'sp-sdk';
+    script.src = 'https://sdk.scdn.co/spotify-player.js';
+    document.body.appendChild(script);
+  }
+  window.onSpotifyWebPlaybackSDKReady = function() {
+    _spPlayer = new Spotify.Player({
+      name: 'Day To Day',
+      getOAuthToken: async function(cb) {
+        var t = await spGetValidToken();
+        cb(t||'');
+      },
+      volume: 0.8
+    });
+    _spPlayer.addListener('ready', function(data) {
+      _spDeviceId = data.device_id;
+      if(_spPendingUri) { spPlay(_spPendingUri); _spPendingUri = null; }
+    });
+    _spPlayer.connect();
+  };
+  if(window.Spotify) window.onSpotifyWebPlaybackSDKReady();
+}
+
+async function spPlay(playlistUri) {
+  var token = await spGetValidToken();
+  if(!token) { _spPendingUri = playlistUri; spLogin(); return; }
+  if(!_spDeviceId) { _spPendingUri = playlistUri; spInitPlayer(token); return; }
+  fetch('https://api.spotify.com/v1/me/player/play?device_id=' + _spDeviceId, {
+    method: 'PUT',
+    headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+    body: JSON.stringify({context_uri: playlistUri, offset: {position:0}, position_ms:0})
+  }).then(function(res) {
+    if(res.status === 401) { localStorage.removeItem('sp_token'); spLogin(); }
+    else if(res.status === 403) { toast('Spotify Premium required for autoplay'); }
+    else if(res.ok) { toast('Playing ▶', 'ok'); }
+  });
+}
+
+function mbOpenSpotify() {
+  var sp = _MB_SPOTIFY[_mbMood];
+  if(!sp) { toast('Pick a mood first'); return; }
+  spPlay(sp.app);
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+  await spHandleCallback();
+  var token = await spGetValidToken();
+  if(token) spInitPlayer(token);
 });
 
 </script>
