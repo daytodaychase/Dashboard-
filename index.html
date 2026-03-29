@@ -13077,6 +13077,48 @@ function spInitPlayer(token) {
   if(window.Spotify) window.onSpotifyWebPlaybackSDKReady();
 }
 
+// Mood → Daily Mix energy mapping
+// 0=most energetic, 5=most chill (we pick based on mood)
+var _MOOD_ENERGY = {
+  fired: 0, zone: 1, good: 2, frustrated: 0, meh: 3, tired: 2, anxious: 5
+};
+
+// Cache daily mixes so we don't fetch every time
+var _spDailyMixes = null;
+
+async function spFetchDailyMixes(token) {
+  if(_spDailyMixes) return _spDailyMixes;
+  try {
+    // Search for user's Daily Mixes
+    var resp = await fetch('https://api.spotify.com/v1/search?q=Daily+Mix&type=playlist&limit=6', {
+      headers: {'Authorization': 'Bearer ' + token}
+    });
+    var data = await resp.json();
+    // Filter to only Spotify-owned Daily Mixes
+    var mixes = (data.playlists && data.playlists.items || [])
+      .filter(function(p) { return p && p.owner && p.owner.id === 'spotify' && p.name && p.name.includes('Daily Mix'); })
+      .slice(0, 6);
+    if(mixes.length > 0) {
+      _spDailyMixes = mixes;
+      return mixes;
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function spGetMixForMood(mood, token) {
+  var mixes = await spFetchDailyMixes(token);
+  if(!mixes || mixes.length === 0) {
+    // Fall back to curated playlists
+    var sp = _MB_SPOTIFY[mood];
+    return sp ? sp.app : null;
+  }
+  // Pick mix based on mood energy level
+  var energyIdx = _MOOD_ENERGY[mood] || 0;
+  var idx = Math.min(energyIdx, mixes.length - 1);
+  return 'spotify:playlist:' + mixes[idx].id;
+}
+
 async function spPlay(playlistUri) {
   var token = await spGetValidToken();
   if(!token) { _spPendingUri = playlistUri; spLogin(); return; }
@@ -13088,14 +13130,27 @@ async function spPlay(playlistUri) {
   }).then(function(res) {
     if(res.status === 401) { localStorage.removeItem('sp_token'); spLogin(); }
     else if(res.status === 403) { toast('Spotify Premium required for autoplay'); }
-    else if(res.ok) { toast('Playing ▶', 'ok'); }
+    else if(res.ok) { toast('Playing your Daily Mix ▶', 'ok'); }
   });
 }
 
-function mbOpenSpotify() {
-  var sp = _MB_SPOTIFY[_mbMood];
-  if(!sp) { toast('Pick a mood first'); return; }
-  spPlay(sp.app);
+async function mbOpenSpotify() {
+  if(!_mbMood) { toast('Pick a mood first'); return; }
+  var token = await spGetValidToken();
+  if(!token) { spLogin(); return; }
+  // Try to get personalized Daily Mix first
+  var uri = await spGetMixForMood(_mbMood, token);
+  if(!uri) {
+    // No daily mixes found, fall back to curated
+    var sp = _MB_SPOTIFY[_mbMood];
+    uri = sp ? sp.app : null;
+  }
+  if(uri) {
+    // Update the label to show what's playing
+    var label = document.getElementById('mb-spotify-label');
+    if(label) label.textContent = _spDailyMixes ? 'Your Daily Mix ▶' : ('Play: ' + (_MB_SPOTIFY[_mbMood]||{name:''}).name);
+    spPlay(uri);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
