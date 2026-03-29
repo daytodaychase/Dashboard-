@@ -13109,13 +13109,14 @@ var _MOOD_AUDIO = {
 async function spBuildPersonalRadio(token, mood) {
   try {
     var energyRanges = {
-      fired:      {min: 0.75, max: 1.0},
-      zone:       {min: 0.55, max: 0.80},
-      good:       {min: 0.50, max: 0.85},
-      frustrated: {min: 0.70, max: 1.0},
-      meh:        {min: 0.20, max: 0.55},
-      tired:      {min: 0.45, max: 0.75},
-      anxious:    {min: 0.10, max: 0.45}
+      // Wider ranges — familiar songs first, mood is secondary
+      fired:      {min: 0.55, max: 1.0},
+      zone:       {min: 0.35, max: 1.0},
+      good:       {min: 0.30, max: 1.0},
+      frustrated: {min: 0.50, max: 1.0},
+      meh:        {min: 0.0,  max: 0.75},
+      tired:      {min: 0.25, max: 1.0},
+      anxious:    {min: 0.0,  max: 0.65}
     };
     var range = energyRanges[mood] || energyRanges.good;
 
