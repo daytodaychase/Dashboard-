@@ -13084,79 +13084,107 @@ var _MOOD_ENERGY = {
 };
 
 // Cache daily mixes so we don't fetch every time
-var _spDailyMixes = null;
+var _spRadioCache = {};
 
-async function spFetchDailyMixes(token) {
-  if(_spDailyMixes) return _spDailyMixes;
+// Mood → audio features mapping for recommendations
+var _MOOD_AUDIO = {
+  fired:      {min_energy:0.8, target_energy:0.95, target_valence:0.7, target_tempo:140},
+  zone:       {min_energy:0.6, target_energy:0.75, target_valence:0.5, target_tempo:110},
+  good:       {min_energy:0.5, target_energy:0.7,  target_valence:0.8, target_tempo:120},
+  frustrated: {min_energy:0.75,target_energy:0.9,  target_valence:0.4, target_tempo:135},
+  meh:        {max_energy:0.6, target_energy:0.4,  target_valence:0.5, target_tempo:85},
+  tired:      {min_energy:0.5, target_energy:0.65, target_valence:0.7, target_tempo:100},
+  anxious:    {max_energy:0.4, target_energy:0.25, target_valence:0.4, target_tempo:70}
+};
+
+async function spBuildPersonalRadio(token, mood) {
   try {
-    // Use the recommendations sections endpoint to find Made For You content
-    var resp = await fetch('https://api.spotify.com/v1/browse/featured-playlists?limit=50', {
+    // Step 1: Get user's top artists (short term = last 4 weeks)
+    var tResp = await fetch('https://api.spotify.com/v1/me/top/artists?limit=5&time_range=short_term', {
       headers: {'Authorization': 'Bearer ' + token}
     });
-    var data = await resp.json();
-    var mixes = (data.playlists && data.playlists.items || [])
-      .filter(function(p) { return p && p.name && p.name.match(/Daily Mix \d/); })
-      .slice(0, 6);
-    if(mixes.length > 0) { _spDailyMixes = mixes; return mixes; }
+    var tData = await tResp.json();
+    var seedArtists = (tData.items || []).slice(0, 3).map(function(a) { return a.id; });
 
-    // Try the user's personalized playlists via sections
-    var resp2 = await fetch('https://api.spotify.com/v1/me/playlists?limit=50', {
+    // Step 2: Also grab a seed track from recent plays
+    var rResp = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=5', {
       headers: {'Authorization': 'Bearer ' + token}
     });
-    var data2 = await resp2.json();
-    var mixes2 = (data2.items || [])
-      .filter(function(p) { return p && p.name && p.name.match(/Daily Mix \d/); })
-      .slice(0, 6);
-    if(mixes2.length > 0) { _spDailyMixes = mixes2; return mixes2; }
-  } catch(e) { console.log('Daily mix fetch error:', e); }
-  return null;
+    var rData = await rResp.json();
+    var seedTracks = (rData.items || []).slice(0, 2).map(function(i) { return i.track.id; });
+
+    if(seedArtists.length === 0 && seedTracks.length === 0) return null;
+
+    // Step 3: Get recommendations based on seeds + mood audio features
+    var audioFeatures = _MOOD_AUDIO[mood] || _MOOD_AUDIO.good;
+    var params = new URLSearchParams({limit: 30});
+    if(seedArtists.length) params.append('seed_artists', seedArtists.slice(0,2).join(','));
+    if(seedTracks.length) params.append('seed_tracks', seedTracks.slice(0,1).join(','));
+    Object.keys(audioFeatures).forEach(function(k) { params.append(k, audioFeatures[k]); });
+
+    var recResp = await fetch('https://api.spotify.com/v1/recommendations?' + params.toString(), {
+      headers: {'Authorization': 'Bearer ' + token}
+    });
+    var recData = await recResp.json();
+    var tracks = (recData.tracks || []).map(function(t) { return t.uri; });
+    return tracks.length > 0 ? tracks : null;
+  } catch(e) { console.log('Radio build error:', e); return null; }
 }
 
 async function spGetMixForMood(mood, token) {
-  var mixes = await spFetchDailyMixes(token);
-  if(!mixes || mixes.length === 0) {
-    // Fall back to curated playlists
-    var sp = _MB_SPOTIFY[mood];
-    return sp ? sp.app : null;
+  // Build personalized radio from user's actual listening history
+  var tracks = await spBuildPersonalRadio(token, mood);
+  if(tracks && tracks.length > 0) {
+    return {type: 'tracks', uris: tracks};
   }
-  // Pick mix based on mood energy level
-  var energyIdx = _MOOD_ENERGY[mood] || 0;
-  var idx = Math.min(energyIdx, mixes.length - 1);
-  return 'spotify:playlist:' + mixes[idx].id;
+  // Fall back to curated playlist
+  var sp = _MB_SPOTIFY[mood];
+  return sp ? {type: 'playlist', uri: sp.app} : null;
 }
 
-async function spPlay(playlistUri) {
+async function spPlay(target) {
   var token = await spGetValidToken();
-  if(!token) { _spPendingUri = playlistUri; spLogin(); return; }
-  if(!_spDeviceId) { _spPendingUri = playlistUri; spInitPlayer(token); return; }
+  if(!token) { _spPendingUri = target; spLogin(); return; }
+  if(!_spDeviceId) { _spPendingUri = target; spInitPlayer(token); return; }
+  var body;
+  if(target && target.type === 'tracks') {
+    // Personal radio — play track list
+    body = {uris: target.uris};
+  } else if(target && target.type === 'playlist') {
+    // Curated fallback — play playlist
+    body = {context_uri: target.uri, offset: {position:0}, position_ms:0};
+  } else if(typeof target === 'string') {
+    body = {context_uri: target, offset: {position:0}, position_ms:0};
+  }
   fetch('https://api.spotify.com/v1/me/player/play?device_id=' + _spDeviceId, {
     method: 'PUT',
     headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
-    body: JSON.stringify({context_uri: playlistUri, offset: {position:0}, position_ms:0})
+    body: JSON.stringify(body)
   }).then(function(res) {
     if(res.status === 401) { localStorage.removeItem('sp_token'); spLogin(); }
     else if(res.status === 403) { toast('Spotify Premium required for autoplay'); }
-    else if(res.ok) { toast('Playing your Daily Mix ▶', 'ok'); }
+    else if(res.ok) {
+      var isPersonal = target && target.type === 'tracks';
+      toast(isPersonal ? 'Your radio ▶' : 'Playing ▶', 'ok');
+      var label = document.getElementById('mb-spotify-label');
+      if(label) label.textContent = isPersonal ? 'Your Radio ▶' : 'Playing ▶';
+    }
   });
 }
 
 async function mbOpenSpotify() {
   if(!_mbMood) { toast('Pick a mood first'); return; }
+  var label = document.getElementById('mb-spotify-label');
+  if(label) label.textContent = 'Building your radio...';
   var token = await spGetValidToken();
   if(!token) { spLogin(); return; }
-  // Try to get personalized Daily Mix first
-  var uri = await spGetMixForMood(_mbMood, token);
-  if(!uri) {
-    // No daily mixes found, fall back to curated
+  var target = await spGetMixForMood(_mbMood, token);
+  if(!target) {
     var sp = _MB_SPOTIFY[_mbMood];
-    uri = sp ? sp.app : null;
+    target = sp ? {type:'playlist', uri:sp.app} : null;
   }
-  if(uri) {
-    // Update the label to show what's playing
-    var label = document.getElementById('mb-spotify-label');
-    if(label) label.textContent = _spDailyMixes ? 'Your Daily Mix ▶' : ('Play: ' + (_MB_SPOTIFY[_mbMood]||{name:''}).name);
-    spPlay(uri);
-  }
+  if(target) spPlay(target);
+  else toast('Could not load playlist');
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
