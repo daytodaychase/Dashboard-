@@ -12895,12 +12895,7 @@ function renderMoodCard(){
 }
 
 
-function mbOpenSpotify(){
-  var sp = _MB_SPOTIFY[_mbMood];
-  if(!sp) return;
-  // window.location.href with spotify: URI hands off to the app inline — no new tab
-  window.location.href = sp.app;
-}
+
 function mbReopen(){
   // Reset the overlay back to step 1 (mood selection)
   _mbMood = null;
@@ -12923,6 +12918,151 @@ function mbReopen(){
   var mb=document.getElementById('morning-brief');
   if(mb){mb.style.opacity='0';mb.style.display='flex';setTimeout(function(){mb.style.opacity='1';mb.style.transition='opacity .3s';},10);}
 }
+
+
+// ═══════════════════════════════════════════════════════════
+// SPOTIFY WEB PLAYBACK + AUTH
+// ═══════════════════════════════════════════════════════════
+var _SP_CLIENT_ID = 'a90b152a5d2741e79560717acf831489';
+var _SP_REDIRECT = 'https://daytodaychase.github.io/Dashboard-';
+var _SP_SCOPES = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state';
+var _spToken = null;
+var _spDeviceId = null;
+var _spPlayer = null;
+var _spPendingUri = null;
+
+function spGetToken() {
+  return localStorage.getItem('sp_token');
+}
+function spSetToken(t) {
+  localStorage.setItem('sp_token', t);
+  localStorage.setItem('sp_token_ts', Date.now());
+  _spToken = t;
+}
+function spTokenExpired() {
+  var ts = parseInt(localStorage.getItem('sp_token_ts')||'0');
+  return Date.now() - ts > 55*60*1000; // 55 min
+}
+
+function spLogin() {
+  var state = Math.random().toString(36).slice(2);
+  localStorage.setItem('sp_state', state);
+  var url = 'https://accounts.spotify.com/authorize' +
+    '?client_id=' + _SP_CLIENT_ID +
+    '&response_type=token' +
+    '&redirect_uri=' + encodeURIComponent(_SP_REDIRECT) +
+    '&scope=' + encodeURIComponent(_SP_SCOPES) +
+    '&state=' + state;
+  window.location.href = url;
+}
+
+function spHandleCallback() {
+  var hash = window.location.hash.substring(1);
+  if(!hash) return;
+  var params = {};
+  hash.split('&').forEach(function(p) {
+    var kv = p.split('=');
+    params[kv[0]] = decodeURIComponent(kv[1]||'');
+  });
+  if(params.access_token) {
+    spSetToken(params.access_token);
+    // Clean URL
+    history.replaceState(null, '', window.location.pathname);
+    // Init player now that we have token
+    spInitPlayer(params.access_token);
+  }
+}
+
+function spInitPlayer(token) {
+  if(_spPlayer) return;
+  // Load Spotify Web Playback SDK
+  if(!document.getElementById('sp-sdk')) {
+    var script = document.createElement('script');
+    script.id = 'sp-sdk';
+    script.src = 'https://sdk.scdn.co/spotify-player.js';
+    document.body.appendChild(script);
+  }
+  window.onSpotifyWebPlaybackSDKReady = function() {
+    _spPlayer = new Spotify.Player({
+      name: 'Day To Day Dashboard',
+      getOAuthToken: function(cb) { cb(token); },
+      volume: 0.8
+    });
+    _spPlayer.addListener('ready', function(data) {
+      _spDeviceId = data.device_id;
+      localStorage.setItem('sp_device_id', data.device_id);
+      // If there's a pending playlist to play, play it now
+      if(_spPendingUri) {
+        spPlay(_spPendingUri);
+        _spPendingUri = null;
+      }
+    });
+    _spPlayer.addListener('not_ready', function() {
+      _spDeviceId = null;
+    });
+    _spPlayer.connect();
+  };
+  // If SDK already loaded
+  if(window.Spotify) {
+    window.onSpotifyWebPlaybackSDKReady();
+  }
+}
+
+function spPlay(playlistUri) {
+  var token = spGetToken();
+  if(!token || spTokenExpired()) {
+    // Need to login first
+    _spPendingUri = playlistUri;
+    spLogin();
+    return;
+  }
+  if(!_spDeviceId) {
+    // Player not ready yet — init and queue
+    _spPendingUri = playlistUri;
+    spInitPlayer(token);
+    return;
+  }
+  // Play via Web API
+  fetch('https://api.spotify.com/v1/me/player/play?device_id=' + _spDeviceId, {
+    method: 'PUT',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      context_uri: playlistUri,
+      offset: { position: 0 },
+      position_ms: 0
+    })
+  }).then(function(res) {
+    if(res.status === 401) {
+      // Token expired
+      spSetToken('');
+      spLogin();
+    } else if(res.status === 403) {
+      toast('Spotify Premium required for auto-play');
+    } else {
+      toast('Playing on Spotify ▶', 'ok');
+    }
+  }).catch(function() {
+    toast('Could not connect to Spotify');
+  });
+}
+
+function mbOpenSpotify() {
+  var sp = _MB_SPOTIFY[_mbMood];
+  if(!sp) { toast('Pick a mood first'); return; }
+  spPlay(sp.app.replace('spotify:playlist:', 'spotify:playlist:'));
+}
+
+// On load — handle OAuth callback and init player if token exists
+document.addEventListener('DOMContentLoaded', function() {
+  spHandleCallback();
+  var token = spGetToken();
+  if(token && !spTokenExpired()) {
+    spInitPlayer(token);
+  }
+});
 
 </script>
 </body>
