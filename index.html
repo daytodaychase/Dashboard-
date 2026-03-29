@@ -13109,8 +13109,13 @@ var _MOOD_AUDIO = {
 async function spBuildPersonalRadio(token, mood) {
   try {
     var energyTarget = {
-      fired:0.9, zone:0.65, good:0.7,
-      frustrated:0.85, meh:0.45, tired:0.6, anxious:0.3
+      fired:      0.97,  // only the hardest tracks — head bang energy
+      frustrated: 0.88,  // intense, channel the anger
+      zone:       0.65,  // locked in, rhythmic flow
+      good:       0.72,  // feel good, melodic, upbeat
+      meh:        0.60,  // gentle push to get moving
+      tired:      0.55,  // lift without overwhelming
+      anxious:    0.22   // calm, slow, familiar
     };
     var target = energyTarget[mood] || 0.65;
 
@@ -13148,12 +13153,15 @@ async function spBuildPersonalRadio(token, mood) {
       (afData.audio_features||[]).forEach(function(f){if(f&&f.id)featMap[f.id]=f.energy;});
     }
 
-    // Score every track — top tracks always boosted, energy proximity is secondary
+    // Score every track
+    // For high-energy moods (fired/frustrated), energy match is weighted MORE
+    // so only genuinely hard tracks float to the top even if they're less familiar
+    var energyWeight = mood==='fired'||mood==='frustrated' ? 1.2 : 0.6;
     var scored=allTracks.map(function(t,idx){
       var energy=featMap[t.id]!==undefined?featMap[t.id]:0.5;
-      var energyScore=1-Math.abs(energy-target);
-      var familiarBonus=idx<topTracks.length?0.4:0;
-      var recencyBonus=idx<50?0.2:idx<100?0.1:0;
+      var energyScore=(1-Math.abs(energy-target))*energyWeight;
+      var familiarBonus=idx<topTracks.length?0.3:0;
+      var recencyBonus=idx<50?0.15:idx<100?0.07:0;
       return{uri:t.uri,score:energyScore+familiarBonus+recencyBonus};
     });
 
