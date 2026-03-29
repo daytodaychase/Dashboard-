@@ -12964,7 +12964,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ═══════════════════════════════════════════════════════════
 var _SP_CLIENT_ID = 'a90b152a5d2741e79560717acf831489';
 var _SP_REDIRECT = 'https://daytodaychase.github.io/Dashboard-';
-var _SP_SCOPES = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state user-top-read user-read-recently-played';
+var _SP_SCOPES = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state user-top-read user-read-recently-played user-library-read';
 var _spDeviceId = null;
 var _spPlayer = null;
 var _spPendingUri = null;
@@ -13099,35 +13099,61 @@ var _MOOD_AUDIO = {
 
 async function spBuildPersonalRadio(token, mood) {
   try {
-    // Step 1: Get user's top artists (short term = last 4 weeks)
-    var tResp = await fetch('https://api.spotify.com/v1/me/top/artists?limit=5&time_range=short_term', {
+    // Step 1: Get user's top tracks (short term = last 4 weeks — songs they actually know)
+    var tResp = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=short_term', {
       headers: {'Authorization': 'Bearer ' + token}
     });
     var tData = await tResp.json();
-    var seedArtists = (tData.items || []).slice(0, 3).map(function(a) { return a.id; });
+    var topTracks = tData.items || [];
 
-    // Step 2: Also grab a seed track from recent plays
-    var rResp = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=5', {
+    // Step 2: If not enough short-term tracks, fill with medium-term
+    if(topTracks.length < 20) {
+      var mResp = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=medium_term', {
+        headers: {'Authorization': 'Bearer ' + token}
+      });
+      var mData = await mResp.json();
+      topTracks = topTracks.concat(mData.items || []);
+    }
+
+    if(topTracks.length === 0) return null;
+
+    // Step 3: Filter by mood energy using audio features
+    // Get audio features for top tracks to pick the right vibe
+    var trackIds = topTracks.slice(0, 50).map(function(t) { return t.id; });
+    var afResp = await fetch('https://api.spotify.com/v1/audio-features?ids=' + trackIds.join(','), {
       headers: {'Authorization': 'Bearer ' + token}
     });
-    var rData = await rResp.json();
-    var seedTracks = (rData.items || []).slice(0, 2).map(function(i) { return i.track.id; });
+    var afData = await afResp.json();
+    var features = afData.audio_features || [];
 
-    if(seedArtists.length === 0 && seedTracks.length === 0) return null;
+    // Map mood to energy range
+    var energyRanges = {
+      fired:      {min: 0.75, max: 1.0},
+      zone:       {min: 0.55, max: 0.80},
+      good:       {min: 0.50, max: 0.85},
+      frustrated: {min: 0.70, max: 1.0},
+      meh:        {min: 0.20, max: 0.55},
+      tired:      {min: 0.45, max: 0.75},
+      anxious:    {min: 0.10, max: 0.45}
+    };
+    var range = energyRanges[mood] || energyRanges.good;
 
-    // Step 3: Get recommendations based on seeds + mood audio features
-    var audioFeatures = _MOOD_AUDIO[mood] || _MOOD_AUDIO.good;
-    var params = new URLSearchParams({limit: 30});
-    if(seedArtists.length) params.append('seed_artists', seedArtists.slice(0,2).join(','));
-    if(seedTracks.length) params.append('seed_tracks', seedTracks.slice(0,1).join(','));
-    Object.keys(audioFeatures).forEach(function(k) { params.append(k, audioFeatures[k]); });
-
-    var recResp = await fetch('https://api.spotify.com/v1/recommendations?' + params.toString(), {
-      headers: {'Authorization': 'Bearer ' + token}
+    // Match tracks to mood energy
+    var matched = [];
+    features.forEach(function(f, i) {
+      if(f && f.energy >= range.min && f.energy <= range.max) {
+        matched.push(topTracks[i].uri);
+      }
     });
-    var recData = await recResp.json();
-    var tracks = (recData.tracks || []).map(function(t) { return t.uri; });
-    return tracks.length > 0 ? tracks : null;
+
+    // If not enough mood matches, use all top tracks shuffled
+    if(matched.length < 5) {
+      matched = topTracks.map(function(t) { return t.uri; });
+    }
+
+    // Shuffle and return up to 30
+    matched = matched.sort(function() { return Math.random() - 0.5; }).slice(0, 30);
+    return matched.length > 0 ? matched : null;
   } catch(e) { console.log('Radio build error:', e); return null; }
 }
 
