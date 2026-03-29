@@ -481,7 +481,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
     <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:28px" id="mb-sub">Before the noise. How are you showing up today?</div>
 
     <!-- MOOD CHECK -->
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:24px">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">
       <button class="mb-mood" data-mood="fired" onclick="mbSelectMood(this,'fired')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;border-radius:12px;border:1px solid var(--b);background:var(--s1);cursor:pointer;transition:all .15s">
         <span style="font-size:24px">🔥</span><span style="font-size:10px;color:var(--t3);font-family:'DM Sans',sans-serif">Fired up</span>
       </button>
@@ -491,11 +491,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
       <button class="mb-mood" data-mood="meh" onclick="mbSelectMood(this,'meh')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;border-radius:12px;border:1px solid var(--b);background:var(--s1);cursor:pointer;transition:all .15s">
         <span style="font-size:24px">😐</span><span style="font-size:10px;color:var(--t3);font-family:'DM Sans',sans-serif">Meh</span>
       </button>
+      <button class="mb-mood" data-mood="zone" onclick="mbSelectMood(this,'zone')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;border-radius:12px;border:1px solid var(--b);background:var(--s1);cursor:pointer;transition:all .15s">
+        <span style="font-size:24px">🌊</span><span style="font-size:10px;color:var(--t3);font-family:'DM Sans',sans-serif">In the zone</span>
+      </button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px">
       <button class="mb-mood" data-mood="tired" onclick="mbSelectMood(this,'tired')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;border-radius:12px;border:1px solid var(--b);background:var(--s1);cursor:pointer;transition:all .15s">
         <span style="font-size:24px">😴</span><span style="font-size:10px;color:var(--t3);font-family:'DM Sans',sans-serif">Tired</span>
       </button>
       <button class="mb-mood" data-mood="anxious" onclick="mbSelectMood(this,'anxious')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;border-radius:12px;border:1px solid var(--b);background:var(--s1);cursor:pointer;transition:all .15s">
         <span style="font-size:24px">😰</span><span style="font-size:10px;color:var(--t3);font-family:'DM Sans',sans-serif">Anxious</span>
+      </button>
+      <button class="mb-mood" data-mood="frustrated" onclick="mbSelectMood(this,'frustrated')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;border-radius:12px;border:1px solid var(--b);background:var(--s1);cursor:pointer;transition:all .15s">
+        <span style="font-size:24px">😤</span><span style="font-size:10px;color:var(--t3);font-family:'DM Sans',sans-serif">Frustrated</span>
       </button>
     </div>
 
@@ -12651,6 +12659,20 @@ var _MB_QUOTES = {
     {q:"The thing you're avoiding is probably the thing that matters.",a:""},
     {q:"Name the fear. When it has a name, it gets smaller.",a:""},
     {q:"Do the next 10 minutes. That's all.",a:""}
+  ],
+  frustrated:[
+    {q:"Frustrated means you care. That's not a problem — that's fuel.",a:""},
+    {q:"The block is information. What is it telling you?",a:""},
+    {q:"Channel it. Don't suppress it. Frustration is energy looking for direction.",a:""},
+    {q:"Every creative you admire has been exactly where you are right now.",a:""},
+    {q:"Break something small. Then build something big.",a:""}
+  ],
+  zone:[
+    {q:"You're already there. Don't think. Just move.",a:""},
+    {q:"Protect this state like it's rare — because it is.",a:""},
+    {q:"Flow doesn't ask for permission. It just shows up. Stay with it.",a:""},
+    {q:"This is what all the preparation was for.",a:""},
+    {q:"Lock in. The world can wait.",a:""}
   ]
 };
 var _mbMood = null;
@@ -12668,21 +12690,20 @@ function mbInit(){
   if(dEl){var now=new Date();dEl.textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});}
 }
 var _MB_SPOTIFY = {
-  // Fired up: Mint — Spotify's flagship EDM. Relentless driving beats, no lyrics competing with your work.
-  // Better than hip-hop for screen-based creative work — tempo locks in ADHD focus without distraction.
-  fired:   {name:'Mint',                app:'spotify:playlist:37i9dQZF1DX4dyzvuaRJ0n', web:'https://open.spotify.com/playlist/37i9dQZF1DX4dyzvuaRJ0n'},
-  // Good: All Out 70s — classic rock, Supertramp, Fleetwood Mac, Bowie, Zeppelin.
-  // Familiar, melodic, structured energy. Dreamer energy. Gets you moving without revving you up.
-  good:    {name:'All Out 70s',         app:'spotify:playlist:37i9dQZF1DWTJ7xPn4vNaz', web:'https://open.spotify.com/playlist/37i9dQZF1DWTJ7xPn4vNaz'},
-  // Meh: Brain Food — Spotify's focus playlist mixing lo-fi, ambient, and classical.
-  // Mozart, lo-fi beats, ambient all in one. 60-90 BPM. The mix keeps it from getting stale.
-  meh:     {name:'Brain Food',          app:'spotify:playlist:37i9dQZF1DWXLeA8Omikj7', web:'https://open.spotify.com/playlist/37i9dQZF1DWXLeA8Omikj7'},
-  // Tired: Coffeehouse — acoustic + indie, medium energy. Lifts you without overwhelming.
-  // ADHD under-arousal needs stimulation, not calm. This is the gentle kick that actually works.
-  tired:   {name:'Coffeehouse',         app:'spotify:playlist:37i9dQZF1DX6ziVCJnEm59', web:'https://open.spotify.com/playlist/37i9dQZF1DX6ziVCJnEm59'},
-  // Anxious: Deep Focus — slow classical and ambient. Mozart, Satie, Brian Eno.
-  // Proven cortisol reduction. Familiar enough that your brain doesn't spend energy processing it.
-  anxious: {name:'Deep Focus',          app:'spotify:playlist:37i9dQZF1DWZeKCadgRdKQ', web:'https://open.spotify.com/playlist/37i9dQZF1DWZeKCadgRdKQ'},
+  // Fired up: Mint — EDM, relentless tempo, no lyrics competing with work
+  fired:      {name:'Mint',             app:'spotify:playlist:37i9dQZF1DX4dyzvuaRJ0n'},
+  // Good: All Out 70s — Supertramp, Fleetwood Mac, Bowie. Dreamer energy.
+  good:       {name:'All Out 70s',      app:'spotify:playlist:37i9dQZF1DWTJ7xPn4vNaz'},
+  // Meh: Brain Food — lo-fi, ambient, classical mix. 60-90 BPM hyperfocus trigger.
+  meh:        {name:'Brain Food',       app:'spotify:playlist:37i9dQZF1DWXLeA8Omikj7'},
+  // Tired: Energy Boost — upbeat pop/dance to lift under-aroused ADHD brain
+  tired:      {name:'Energy Boost',     app:'spotify:playlist:37i9dQZF1DX1s9knjP51Oa'},
+  // Anxious: Peaceful Piano — slow, familiar, cortisol-lowering
+  anxious:    {name:'Peaceful Piano',   app:'spotify:playlist:37i9dQZF1DX4sWSpwq3LiO'},
+  // Frustrated: Rage beats — channel the blocked energy, not suppress it
+  frustrated: {name:'Hype',            app:'spotify:playlist:37i9dQZF1DX0XUsuxWHRQd'},
+  // Zone: Deep Focus instrumental — you're already in flow, stay there
+  zone:       {name:'Deep Focus',       app:'spotify:playlist:37i9dQZF1DWZeKCadgRdKQ'},
 };
 function mbSelectMood(btn, mood){
   _mbMood = mood;
@@ -12871,8 +12892,8 @@ function renderGoals(){
 // ═══════════════════════════════════════════════════════════
 
 
-var _MB_EMOJIS = {fired:'🔥',good:'✅',meh:'😐',tired:'😴',anxious:'😰'};
-var _MB_LABELS = {fired:'Fired up',good:'Good',meh:'Meh',tired:'Tired',anxious:'Anxious'};
+var _MB_EMOJIS = {fired:'🔥',good:'✅',meh:'😐',tired:'😴',anxious:'😰',frustrated:'😤',zone:'🌊'};
+var _MB_LABELS = {fired:'Fired up',good:'Good',meh:'Meh',tired:'Tired',anxious:'Anxious',frustrated:'Frustrated',zone:'In the zone'};
 
 function renderMoodCard(){
   var card = document.getElementById('mb-mood-card');
