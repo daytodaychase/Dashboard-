@@ -12705,6 +12705,15 @@ var _MB_SPOTIFY = {
   // Zone: Deep Focus instrumental — you're already in flow, stay there
   zone:       {name:'Deep Focus',       app:'spotify:playlist:37i9dQZF1DWZeKCadgRdKQ'},
 };
+var _MOOD_BTN_LABELS = {
+  fired: 'Play music to match the energy 🔥',
+  good: 'Play music to keep it going ✅',
+  meh: 'Play music to get you moving 😐',
+  zone: 'Play music to stay in flow 🌊',
+  tired: 'Play music to wake you up 😴',
+  anxious: 'Play music to calm you down 😰',
+  frustrated: 'Play music to channel it 😤',
+};
 function mbSelectMood(btn, mood){
   _mbMood = mood;
   document.querySelectorAll('.mb-mood').forEach(function(b){
@@ -12729,7 +12738,7 @@ function mbSelectMood(btn, mood){
   var spn=document.getElementById('mb-spotify-name');
   // Show subtle confirmation that Spotify was launched
   if(spw)spw.style.display='';
-  if(spl&&sp)spl.textContent='Play: '+sp.name;
+  if(spl){spl.textContent=_MOOD_BTN_LABELS[mood]||'Play your radio';}
   if(spn&&sp)spn.textContent='Spotify is opening automatically';
 
   var fw = document.getElementById('mb-focus-wrap'); if(fw) fw.style.display='';
@@ -13193,7 +13202,7 @@ async function spPlay(target) {
       var isPersonal = target && target.type === 'tracks';
       toast(isPersonal ? 'Your radio ▶' : 'Playing ▶', 'ok');
       var label = document.getElementById('mb-spotify-label');
-      if(label) label.textContent = isPersonal ? 'Your Radio ▶' : 'Playing ▶';
+      if(label) label.textContent = '▶ Playing';
     }
   });
 }
