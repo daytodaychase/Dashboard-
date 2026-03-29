@@ -13089,20 +13089,26 @@ var _spDailyMixes = null;
 async function spFetchDailyMixes(token) {
   if(_spDailyMixes) return _spDailyMixes;
   try {
-    // Search for user's Daily Mixes
-    var resp = await fetch('https://api.spotify.com/v1/search?q=Daily+Mix&type=playlist&limit=6', {
+    // Use the recommendations sections endpoint to find Made For You content
+    var resp = await fetch('https://api.spotify.com/v1/browse/featured-playlists?limit=50', {
       headers: {'Authorization': 'Bearer ' + token}
     });
     var data = await resp.json();
-    // Filter to only Spotify-owned Daily Mixes
     var mixes = (data.playlists && data.playlists.items || [])
-      .filter(function(p) { return p && p.owner && p.owner.id === 'spotify' && p.name && p.name.includes('Daily Mix'); })
+      .filter(function(p) { return p && p.name && p.name.match(/Daily Mix \d/); })
       .slice(0, 6);
-    if(mixes.length > 0) {
-      _spDailyMixes = mixes;
-      return mixes;
-    }
-  } catch(e) {}
+    if(mixes.length > 0) { _spDailyMixes = mixes; return mixes; }
+
+    // Try the user's personalized playlists via sections
+    var resp2 = await fetch('https://api.spotify.com/v1/me/playlists?limit=50', {
+      headers: {'Authorization': 'Bearer ' + token}
+    });
+    var data2 = await resp2.json();
+    var mixes2 = (data2.items || [])
+      .filter(function(p) { return p && p.name && p.name.match(/Daily Mix \d/); })
+      .slice(0, 6);
+    if(mixes2.length > 0) { _spDailyMixes = mixes2; return mixes2; }
+  } catch(e) { console.log('Daily mix fetch error:', e); }
   return null;
 }
 
