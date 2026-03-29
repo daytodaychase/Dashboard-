@@ -13108,34 +13108,6 @@ var _MOOD_AUDIO = {
 
 async function spBuildPersonalRadio(token, mood) {
   try {
-    // Step 1: Get user's top tracks (short term = last 4 weeks — songs they actually know)
-    var tResp = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=short_term', {
-      headers: {'Authorization': 'Bearer ' + token}
-    });
-    var tData = await tResp.json();
-    var topTracks = tData.items || [];
-
-    // Step 2: If not enough short-term tracks, fill with medium-term
-    if(topTracks.length < 20) {
-      var mResp = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=medium_term', {
-        headers: {'Authorization': 'Bearer ' + token}
-      });
-      var mData = await mResp.json();
-      topTracks = topTracks.concat(mData.items || []);
-    }
-
-    if(topTracks.length === 0) return null;
-
-    // Step 3: Filter by mood energy using audio features
-    // Get audio features for top tracks to pick the right vibe
-    var trackIds = topTracks.slice(0, 50).map(function(t) { return t.id; });
-    var afResp = await fetch('https://api.spotify.com/v1/audio-features?ids=' + trackIds.join(','), {
-      headers: {'Authorization': 'Bearer ' + token}
-    });
-    var afData = await afResp.json();
-    var features = afData.audio_features || [];
-
-    // Map mood to energy range
     var energyRanges = {
       fired:      {min: 0.75, max: 1.0},
       zone:       {min: 0.55, max: 0.80},
@@ -13147,22 +13119,71 @@ async function spBuildPersonalRadio(token, mood) {
     };
     var range = energyRanges[mood] || energyRanges.good;
 
-    // Match tracks to mood energy
-    var matched = [];
-    features.forEach(function(f, i) {
-      if(f && f.energy >= range.min && f.energy <= range.max) {
-        matched.push(topTracks[i].uri);
-      }
-    });
+    // Step 1: Get top tracks across all time ranges — most played come first
+    var topShort = [], topMed = [], topLong = [];
+    var s = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=short_term', {headers:{'Authorization':'Bearer '+token}});
+    topShort = ((await s.json()).items || []);
+    var m = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=medium_term', {headers:{'Authorization':'Bearer '+token}});
+    topMed = ((await m.json()).items || []);
+    var l = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=long_term', {headers:{'Authorization':'Bearer '+token}});
+    topLong = ((await l.json()).items || []);
 
-    // If not enough mood matches, use all top tracks shuffled
-    if(matched.length < 5) {
-      matched = topTracks.map(function(t) { return t.uri; });
+    // Step 2: Get liked songs library (up to 200 more)
+    var liked = [];
+    var lResp = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {headers:{'Authorization':'Bearer '+token}});
+    var lData = await lResp.json();
+    liked = (lData.items || []).map(function(i){return i.track;});
+    // Fetch 3 more pages for up to 200 liked songs
+    for(var page = 1; page < 4; page++) {
+      if(!lData.next) break;
+      var lr = await fetch(lData.next, {headers:{'Authorization':'Bearer '+token}});
+      lData = await lr.json();
+      liked = liked.concat((lData.items||[]).map(function(i){return i.track;}));
     }
 
-    // Shuffle and return up to 30
-    matched = matched.sort(function() { return Math.random() - 0.5; }).slice(0, 30);
-    return matched.length > 0 ? matched : null;
+    // Step 3: Merge — top tracks first (most familiar), then liked library
+    // Deduplicate by track ID
+    var seen = {};
+    var allTracks = [];
+    topShort.concat(topMed).concat(topLong).concat(liked).forEach(function(t) {
+      if(t && t.id && !seen[t.id]) { seen[t.id]=true; allTracks.push(t); }
+    });
+
+    if(allTracks.length === 0) return null;
+
+    // Step 4: Get audio features in batches of 100
+    var matched = [];
+    var unmatched = [];
+    for(var i = 0; i < allTracks.length; i += 100) {
+      var batch = allTracks.slice(i, i+100);
+      var ids = batch.map(function(t){return t.id;}).join(',');
+      var afResp = await fetch('https://api.spotify.com/v1/audio-features?ids='+ids, {
+        headers:{'Authorization':'Bearer '+token}
+      });
+      var afData = await afResp.json();
+      (afData.audio_features||[]).forEach(function(f, idx) {
+        if(!f) return;
+        if(f.energy >= range.min && f.energy <= range.max) {
+          matched.push(batch[idx].uri);
+        } else {
+          unmatched.push(batch[idx].uri);
+        }
+      });
+      // Stop after we have enough matched
+      if(matched.length >= 100) break;
+    }
+
+    // Step 5: Build queue — matched tracks first (mood-filtered),
+    // then fill with unmatched if needed. Top played stay at front.
+    var queue = matched;
+    if(queue.length < 10) queue = queue.concat(unmatched);
+
+    // Shuffle only the tail (after first 10) so top songs still play first
+    var head = queue.slice(0, 10);
+    var tail = queue.slice(10).sort(function(){return Math.random()-0.5;});
+    queue = head.concat(tail).slice(0, 50);
+
+    return queue.length > 0 ? queue : null;
   } catch(e) { console.log('Radio build error:', e); return null; }
 }
 
@@ -13177,6 +13198,48 @@ async function spGetMixForMood(mood, token) {
   return sp ? {type: 'playlist', uri: sp.app} : null;
 }
 
+
+async function spTransferToApp(token) {
+  try {
+    // Get available devices
+    var resp = await fetch('https://api.spotify.com/v1/me/player/devices', {
+      headers: {'Authorization': 'Bearer ' + token}
+    });
+    var data = await resp.json();
+    var devices = data.devices || [];
+
+    // Find desktop app — not our web player
+    var desktop = devices.find(function(d) {
+      return d.type === 'Computer' && d.id !== _spDeviceId && !d.name.includes('Day To Day');
+    });
+
+    // Also look for phone
+    if(!desktop) {
+      desktop = devices.find(function(d) {
+        return (d.type === 'Smartphone' || d.type === 'Tablet') && d.id !== _spDeviceId;
+      });
+    }
+
+    if(desktop) {
+      // Transfer playback to desktop app — music continues there
+      await fetch('https://api.spotify.com/v1/me/player', {
+        method: 'PUT',
+        headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+        body: JSON.stringify({device_ids: [desktop.id], play: true})
+      });
+      toast('Music transferred to Spotify app ✓', 'ok');
+      var label = document.getElementById('mb-spotify-label');
+      if(label) label.textContent = '▶ Playing in Spotify app';
+    } else {
+      // No other device found — Spotify app isn't open
+      // Show a subtle hint
+      var label = document.getElementById('mb-spotify-label');
+      if(label) label.textContent = '▶ Playing — open Spotify app to take control';
+    }
+  } catch(e) {
+    console.log('Transfer error:', e);
+  }
+}
 async function spPlay(target) {
   var token = await spGetValidToken();
   if(!token) { _spPendingUri = target; spLogin(); return; }
@@ -13199,10 +13262,10 @@ async function spPlay(target) {
     if(res.status === 401) { localStorage.removeItem('sp_token'); spLogin(); }
     else if(res.status === 403) { toast('Spotify Premium required for autoplay'); }
     else if(res.ok) {
-      var isPersonal = target && target.type === 'tracks';
-      toast(isPersonal ? 'Your radio ▶' : 'Playing ▶', 'ok');
       var label = document.getElementById('mb-spotify-label');
       if(label) label.textContent = '▶ Playing';
+      // After 1.5s transfer to Spotify desktop app so closing browser won't stop music
+      setTimeout(function() { spTransferToApp(token); }, 1500);
     }
   });
 }
