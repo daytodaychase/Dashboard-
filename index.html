@@ -12690,8 +12690,8 @@ function mbInit(){
   if(dEl){var now=new Date();dEl.textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});}
 }
 var _MB_SPOTIFY = {
-  // Fired up: Mint — EDM, relentless tempo, no lyrics competing with work
-  fired:      {name:'Mint',             app:'spotify:playlist:37i9dQZF1DX4dyzvuaRJ0n'},
+  // Fired up: Rock This — rock/metal/punk energy
+  fired:      {name:'Rock This',         app:'spotify:playlist:37i9dQZF1DXdxMiHGsVxGs'},
   // Good: All Out 70s — Supertramp, Fleetwood Mac, Bowie. Dreamer energy.
   good:       {name:'All Out 70s',      app:'spotify:playlist:37i9dQZF1DWTJ7xPn4vNaz'},
   // Meh: Brain Food — lo-fi, ambient, classical mix. 60-90 BPM hyperfocus trigger.
@@ -13108,84 +13108,64 @@ var _MOOD_AUDIO = {
 
 async function spBuildPersonalRadio(token, mood) {
   try {
-    var energyRanges = {
-      // Wider ranges — familiar songs first, mood is secondary
-      fired:      {min: 0.55, max: 1.0},
-      zone:       {min: 0.35, max: 1.0},
-      good:       {min: 0.30, max: 1.0},
-      frustrated: {min: 0.50, max: 1.0},
-      meh:        {min: 0.0,  max: 0.75},
-      tired:      {min: 0.25, max: 1.0},
-      anxious:    {min: 0.0,  max: 0.65}
+    var energyTarget = {
+      fired:0.9, zone:0.65, good:0.7,
+      frustrated:0.85, meh:0.45, tired:0.6, anxious:0.3
     };
-    var range = energyRanges[mood] || energyRanges.good;
+    var target = energyTarget[mood] || 0.65;
 
-    // Step 1: Get top tracks across all time ranges — most played come first
-    var topShort = [], topMed = [], topLong = [];
-    var s = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=short_term', {headers:{'Authorization':'Bearer '+token}});
-    topShort = ((await s.json()).items || []);
-    var m = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=medium_term', {headers:{'Authorization':'Bearer '+token}});
-    topMed = ((await m.json()).items || []);
-    var l = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=long_term', {headers:{'Authorization':'Bearer '+token}});
-    topLong = ((await l.json()).items || []);
-
-    // Step 2: Get liked songs library (up to 200 more)
-    var liked = [];
-    var lResp = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {headers:{'Authorization':'Bearer '+token}});
-    var lData = await lResp.json();
-    liked = (lData.items || []).map(function(i){return i.track;});
-    // Fetch 3 more pages for up to 200 liked songs
-    for(var page = 1; page < 4; page++) {
-      if(!lData.next) break;
-      var lr = await fetch(lData.next, {headers:{'Authorization':'Bearer '+token}});
-      lData = await lr.json();
-      liked = liked.concat((lData.items||[]).map(function(i){return i.track;}));
+    // Top tracks across all 3 time ranges — these ALWAYS make the queue
+    var seen={}, topTracks=[], likedTracks=[];
+    var timeRanges=['short_term','medium_term','long_term'];
+    for(var ri=0;ri<timeRanges.length;ri++){
+      var tr=await fetch('https://api.spotify.com/v1/me/top/tracks?limit=50&time_range='+timeRanges[ri],{headers:{'Authorization':'Bearer '+token}});
+      var trd=await tr.json();
+      (trd.items||[]).forEach(function(t){if(t&&t.id&&!seen[t.id]){seen[t.id]=true;topTracks.push(t);}});
     }
 
-    // Step 3: Merge — top tracks first (most familiar), then liked library
-    // Deduplicate by track ID
-    var seen = {};
-    var allTracks = [];
-    topShort.concat(topMed).concat(topLong).concat(liked).forEach(function(t) {
-      if(t && t.id && !seen[t.id]) { seen[t.id]=true; allTracks.push(t); }
+    // Liked songs — up to 250 more
+    var lResp=await fetch('https://api.spotify.com/v1/me/tracks?limit=50',{headers:{'Authorization':'Bearer '+token}});
+    var lData=await lResp.json();
+    var likedRaw=(lData.items||[]).map(function(i){return i.track;});
+    for(var p=0;p<5;p++){
+      if(!lData.next) break;
+      var lr=await fetch(lData.next,{headers:{'Authorization':'Bearer '+token}});
+      lData=await lr.json();
+      likedRaw=likedRaw.concat((lData.items||[]).map(function(i){return i.track;}));
+    }
+    likedRaw.forEach(function(t){if(t&&t.id&&!seen[t.id]){seen[t.id]=true;likedTracks.push(t);}});
+
+    var allTracks=topTracks.concat(likedTracks);
+    if(allTracks.length===0) return null;
+
+    // Get audio features to SORT not filter
+    var featMap={};
+    for(var i=0;i<Math.min(allTracks.length,300);i+=100){
+      var batch=allTracks.slice(i,i+100);
+      var ids=batch.map(function(t){return t.id;}).join(',');
+      var afResp=await fetch('https://api.spotify.com/v1/audio-features?ids='+ids,{headers:{'Authorization':'Bearer '+token}});
+      var afData=await afResp.json();
+      (afData.audio_features||[]).forEach(function(f){if(f&&f.id)featMap[f.id]=f.energy;});
+    }
+
+    // Score every track — top tracks always boosted, energy proximity is secondary
+    var scored=allTracks.map(function(t,idx){
+      var energy=featMap[t.id]!==undefined?featMap[t.id]:0.5;
+      var energyScore=1-Math.abs(energy-target);
+      var familiarBonus=idx<topTracks.length?0.4:0;
+      var recencyBonus=idx<50?0.2:idx<100?0.1:0;
+      return{uri:t.uri,score:energyScore+familiarBonus+recencyBonus};
     });
 
-    if(allTracks.length === 0) return null;
-
-    // Step 4: Get audio features in batches of 100
-    var matched = [];
-    var unmatched = [];
-    for(var i = 0; i < allTracks.length; i += 100) {
-      var batch = allTracks.slice(i, i+100);
-      var ids = batch.map(function(t){return t.id;}).join(',');
-      var afResp = await fetch('https://api.spotify.com/v1/audio-features?ids='+ids, {
-        headers:{'Authorization':'Bearer '+token}
-      });
-      var afData = await afResp.json();
-      (afData.audio_features||[]).forEach(function(f, idx) {
-        if(!f) return;
-        if(f.energy >= range.min && f.energy <= range.max) {
-          matched.push(batch[idx].uri);
-        } else {
-          unmatched.push(batch[idx].uri);
-        }
-      });
-      // Stop after we have enough matched
-      if(matched.length >= 100) break;
+    // Sort by score, shuffle within groups of 10
+    scored.sort(function(a,b){return b.score-a.score;});
+    var queue=[];
+    for(var g=0;g<scored.length;g+=10){
+      var group=scored.slice(g,g+10).sort(function(){return Math.random()-0.5;});
+      queue=queue.concat(group.map(function(s){return s.uri;}));
     }
-
-    // Step 5: Build queue — matched tracks first (mood-filtered),
-    // then fill with unmatched if needed. Top played stay at front.
-    var queue = matched;
-    if(queue.length < 10) queue = queue.concat(unmatched);
-
-    // Shuffle only the tail (after first 10) so top songs still play first
-    var head = queue.slice(0, 10);
-    var tail = queue.slice(10).sort(function(){return Math.random()-0.5;});
-    queue = head.concat(tail).slice(0, 50);
-
-    return queue.length > 0 ? queue : null;
-  } catch(e) { console.log('Radio build error:', e); return null; }
+    return queue.slice(0,50);
+  } catch(e){console.log('Radio error:',e);return null;}
 }
 
 async function spGetMixForMood(mood, token) {
