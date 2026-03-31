@@ -12792,6 +12792,11 @@ function mbInit(){
   var mb = document.getElementById('morning-brief');
   if(!mb) return;
   mb.style.display = 'flex';
+  // On mobile: shrink morning brief so tab bar at bottom is never covered
+  if(window.innerWidth <= 768){
+    mb.style.bottom = '90px';
+    mb.style.overflowY = 'auto';
+  }
   var hr = new Date().getHours();
   var greet = hr < 12 ? 'Good morning, Chase.' : hr < 17 ? 'Good afternoon, Chase.' : 'Good evening, Chase.';
   var gEl = document.getElementById('mb-greeting'); if(gEl) gEl.textContent = greet;
@@ -13483,15 +13488,17 @@ function mobBuildTray(tabKey, activePageId) {
   var tray = document.getElementById('mob-subtray');
   if (!tray) return;
   var pages = _MOB_TABS[tabKey] ? _MOB_TABS[tabKey].pages : [];
-  if (pages.length <= 1) {
-    tray.innerHTML = '';
-    tray.classList.remove('show');
-    return;
-  }
-  tray.innerHTML = pages.map(function(p) {
-    var isActive = p.id === activePageId;
-    return '<div class="mob-chip' + (isActive ? ' active' : '') + '" onclick="mobGoPage('' + p.id + '')" style="cursor:pointer">' + p.label + '</div>';
-  }).join('');
+  tray.innerHTML = '';
+  tray.classList.remove('show');
+  if (pages.length <= 1) return;
+  pages.forEach(function(p) {
+    var chip = document.createElement('div');
+    chip.className = 'mob-chip' + (p.id === activePageId ? ' active' : '');
+    chip.textContent = p.label;
+    chip.style.cursor = 'pointer';
+    chip.addEventListener('click', function() { mobGoPage(p.id); });
+    tray.appendChild(chip);
+  });
   tray.classList.add('show');
 }
 
