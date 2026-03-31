@@ -2,6 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="D.A.Y. to D.A.Y.">
+<meta name="theme-color" content="#0C0C0C">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chase — Life Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -311,6 +316,78 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
   50% { transform:scale(1.15); opacity:0.7; }
 }
 .creative-hidden { opacity:0.2 !important; }
+/* ═══════════════════════════════════════════════════════════════════
+   D.A.Y. to D.A.Y. — MOBILE STYLES
+═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .sb { display: none !important; }
+  .main { margin-left: 0 !important; max-width: 100vw !important; padding-bottom: 80px; }
+  .topbar { padding: 10px 14px !important; }
+  .pg { padding: 12px 14px 14px !important; }
+  .card { padding: 12px 14px !important; }
+  .mg, .mg3, .mg4 { grid-template-columns: 1fr 1fr !important; }
+  .mg2, .afg { grid-template-columns: 1fr !important; }
+  .afg .full { grid-column: 1 !important; }
+  .ei, .es, .eta { font-size: 16px !important; padding: 10px 12px !important; min-height: 44px !important; }
+  .btn { min-height: 40px !important; padding: 8px 14px !important; font-size: 13px !important; }
+  .btn-g { min-height: 44px !important; font-size: 14px !important; }
+  .add-form { padding: 14px !important; margin-bottom: 12px !important; }
+  #jtd-btn { font-size: 16px !important; padding: 18px !important; }
+  #mobile-nav { display: flex !important; }
+  #pg-debrief > div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+  #pg-bookings > div[style*="grid-template-columns:1fr 1fr 1fr"] { grid-template-columns: 1fr !important; }
+}
+
+/* MOBILE BOTTOM NAV */
+#mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 64px;
+  background: rgba(12,12,12,0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--b);
+  z-index: 200;
+  padding: 0 4px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.mob-nav-items {
+  display: flex; align-items: center; justify-content: space-around;
+  height: 100%; max-width: 500px; margin: 0 auto;
+}
+.mob-nav-item {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 3px; cursor: pointer;
+  padding: 6px 10px; border-radius: 10px; transition: background .15s;
+  min-width: 52px; -webkit-tap-highlight-color: transparent;
+}
+.mob-nav-item:active { background: var(--s2); }
+.mob-nav-item.mob-active { background: var(--acs); }
+.mob-nav-icon { font-size: 20px; line-height: 1; }
+.mob-nav-label { font-size: 9px; color: var(--t3); font-family: 'DM Mono',monospace; white-space: nowrap; }
+.mob-nav-item.mob-active .mob-nav-label { color: var(--ac); }
+
+/* MORE MENU */
+#mobile-more-menu {
+  display: none; position: fixed; bottom: 64px; left: 0; right: 0;
+  background: rgba(12,12,12,0.98); backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px); border-top: 1px solid var(--b);
+  z-index: 199; padding: 16px; max-height: 65vh; overflow-y: auto;
+}
+#mobile-more-menu.open { display: block; }
+.mob-menu-section { margin-bottom: 16px; }
+.mob-menu-sec-title { font-size: 9px; color: var(--t3); font-family: 'DM Mono',monospace; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; padding-left: 4px; }
+.mob-menu-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.mob-menu-btn {
+  background: var(--s1); border: 1px solid var(--b); border-radius: 10px;
+  padding: 10px 8px; display: flex; flex-direction: column; align-items: center;
+  gap: 4px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.mob-menu-btn:active { background: var(--s2); }
+.mob-menu-btn-icon { font-size: 18px; }
+.mob-menu-btn-label { font-size: 9px; color: var(--t2); font-family: 'DM Mono',monospace; text-align: center; white-space: nowrap; }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -11696,6 +11773,107 @@ const noteFields = ['tsd','yayclay','graysonsky','studio','nova','bmg','builds',
 noteFields.forEach(k => {
   const el = document.getElementById('notes-' + k);
   if (el && STATE.notes[k]) el.value = STATE.notes[k];
+});
+</script>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav id="mobile-nav">
+  <div class="mob-nav-items">
+    <div class="mob-nav-item mob-active" id="mobnav-today" onclick="mobNav('today')">
+      <div class="mob-nav-icon">⚡</div>
+      <div class="mob-nav-label">Today</div>
+    </div>
+    <div class="mob-nav-item" id="mobnav-bookings" onclick="mobNav('bookings')">
+      <div class="mob-nav-icon">📅</div>
+      <div class="mob-nav-label">Bookings</div>
+    </div>
+    <div class="mob-nav-item" id="mobnav-braindump" onclick="mobNav('braindump')">
+      <div class="mob-nav-icon">🧠</div>
+      <div class="mob-nav-label">Brain Dump</div>
+    </div>
+    <div class="mob-nav-item" id="mobnav-scripts" onclick="mobNav('scripts')">
+      <div class="mob-nav-icon">🎙</div>
+      <div class="mob-nav-label">Scripts</div>
+    </div>
+    <div class="mob-nav-item" id="mobnav-more" onclick="toggleMobMenu()">
+      <div class="mob-nav-icon">⋯</div>
+      <div class="mob-nav-label">More</div>
+    </div>
+  </div>
+</nav>
+
+<!-- MOBILE MORE MENU -->
+<div id="mobile-more-menu">
+  <div class="mob-menu-section">
+    <div class="mob-menu-sec-title">Pipeline</div>
+    <div class="mob-menu-grid">
+      <div class="mob-menu-btn" onclick="mobNav('crm');toggleMobMenu()"><div class="mob-menu-btn-icon">👥</div><div class="mob-menu-btn-label">CRM</div></div>
+      <div class="mob-menu-btn" onclick="mobNav('invoices');toggleMobMenu()"><div class="mob-menu-btn-icon">📄</div><div class="mob-menu-btn-label">Invoices</div></div>
+      <div class="mob-menu-btn" onclick="mobNav('deals');toggleMobMenu()"><div class="mob-menu-btn-icon">🤝</div><div class="mob-menu-btn-label">Deals</div></div>
+    </div>
+  </div>
+  <div class="mob-menu-section">
+    <div class="mob-menu-sec-title">Money</div>
+    <div class="mob-menu-grid">
+      <div class="mob-menu-btn" onclick="mobNav('payday');toggleMobMenu()"><div class="mob-menu-btn-icon">💰</div><div class="mob-menu-btn-label">Pay Day</div></div>
+      <div class="mob-menu-btn" onclick="mobNav('money');toggleMobMenu()"><div class="mob-menu-btn-icon">📊</div><div class="mob-menu-btn-label">Money</div></div>
+      <div class="mob-menu-btn" onclick="mobNav('debt');toggleMobMenu()"><div class="mob-menu-btn-icon">💳</div><div class="mob-menu-btn-label">Debt</div></div>
+    </div>
+  </div>
+  <div class="mob-menu-section">
+    <div class="mob-menu-sec-title">Create</div>
+    <div class="mob-menu-grid">
+      <div class="mob-menu-btn" onclick="mobNav('content');toggleMobMenu()"><div class="mob-menu-btn-icon">📱</div><div class="mob-menu-btn-label">Content</div></div>
+      <div class="mob-menu-btn" onclick="mobNav('ideas');toggleMobMenu()"><div class="mob-menu-btn-icon">💡</div><div class="mob-menu-btn-label">Ideas</div></div>
+      <div class="mob-menu-btn" onclick="mobNav('calendar');toggleMobMenu()"><div class="mob-menu-btn-icon">🗓</div><div class="mob-menu-btn-label">Calendar</div></div>
+    </div>
+  </div>
+  <div class="mob-menu-section">
+    <div class="mob-menu-sec-title">Life</div>
+    <div class="mob-menu-grid">
+      <div class="mob-menu-btn" onclick="mobNav('health');toggleMobMenu()"><div class="mob-menu-btn-icon">❤️</div><div class="mob-menu-btn-label">Health</div></div>
+      <div class="mob-menu-btn" onclick="mobNav('goals');toggleMobMenu()"><div class="mob-menu-btn-icon">🎯</div><div class="mob-menu-btn-label">Goals</div></div>
+      <div class="mob-menu-btn" onclick="mobNav('debrief');toggleMobMenu()"><div class="mob-menu-btn-icon">📋</div><div class="mob-menu-btn-label">Debrief</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── MOBILE NAVIGATION ────────────────────────────────────────────────────────
+function mobNav(page) {
+  goPage(page);
+  // Update active state on bottom nav
+  document.querySelectorAll('.mob-nav-item').forEach(function(el) {
+    el.classList.remove('mob-active');
+  });
+  var active = document.getElementById('mobnav-' + page);
+  if(active) active.classList.add('mob-active');
+  // Close more menu if open
+  var menu = document.getElementById('mobile-more-menu');
+  if(menu) menu.classList.remove('open');
+  // Scroll to top
+  var main = document.querySelector('.main');
+  if(main) main.scrollTop = 0;
+}
+
+function toggleMobMenu() {
+  var menu = document.getElementById('mobile-more-menu');
+  if(menu) menu.classList.toggle('open');
+  // Toggle active on more button
+  var moreBtn = document.getElementById('mobnav-more');
+  if(moreBtn) moreBtn.classList.toggle('mob-active');
+}
+
+// Close more menu when tapping outside
+document.addEventListener('click', function(e) {
+  var menu = document.getElementById('mobile-more-menu');
+  var moreBtn = document.getElementById('mobnav-more');
+  if(menu && menu.classList.contains('open')) {
+    if(!menu.contains(e.target) && !moreBtn.contains(e.target)) {
+      menu.classList.remove('open');
+      if(moreBtn) moreBtn.classList.remove('mob-active');
+    }
+  }
 });
 </script>
 </body>
