@@ -521,9 +521,42 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
    ════════════════════════════════ */
 @media (max-width: 768px) {
   .sb { display: none !important; }
-  .main, .pg, .pg * { text-align: center; }
-  /* Keep left-align for inputs, tables, and things that break when centered */
-  input, textarea, select, table, .deal-table, .cr, .mon-r, .alert, .life-add, .exp-acts, .ca-tabs, .ta { text-align: left; }
+  /* ── NUCLEAR CENTER: every text node, every label, every value ── */
+  .pg { text-align: center; }
+  .pg p, .pg span, .pg div, .pg h1, .pg h2, .pg h3, .pg h4,
+  .pg label, .pg li, .pg td, .pg th,
+  .card-t, .card-s, .st, .sd, .sct,
+  .mv, .ml, .ms, .mc, .mc *,
+  .al-t, .al-b,
+  .dn, .dsrc, .dd, .dam, .dams,
+  .plat-name, .plat-goal, .stat-l, .stat-v,
+  .pj-t, .pj-d,
+  .life-t, .life-item,
+  .ql-t, .ql-d, .ql-lbl, .qi,
+  .biz-t, .ca-name, .ca-sub, .ca-ml, .ca-mv,
+  .exp-lbl, .date, .badge,
+  .tb-t, .tb-s,
+  .sh, .sh *, .sec-hd,
+  .rpt-wrap *, .rpt-wrap h1, .rpt-wrap .subtitle,
+  .mon-r .mon-a, .mon-r,
+  .alert .al-t, .alert .al-b { text-align: center !important; }
+
+  /* Center flex containers */
+  .sh, .mg, .mg2, .mg3, .mg4,
+  .card, .mc, .ql, .ql-hd,
+  .biz-hero, .ca-hdr, .ca-met,
+  .sec, .alert,
+  .plat-card, .proj-card, .life-sec { justify-content: center; align-items: center; }
+
+  /* Center block elements */
+  .badge, .btn, .btn-g { margin-left: auto; margin-right: auto; }
+
+  /* Left-align only truly functional things that break when centered */
+  input, textarea, select { text-align: left !important; }
+  .deal-table td, .deal-table th { text-align: left !important; }
+  .life-add, .exp-acts { justify-content: center; }
+  .cr, .stat-r { text-align: left !important; }
+  .cr *, .stat-r * { text-align: left !important; }
   /* Topbar: show only app name, hide page title/subtitle/actions */
   .topbar { padding: 12px 16px; justify-content: center; }
   .tb-t { font-size: 15px; text-align: center; font-family: "Fredoka", sans-serif; }
@@ -709,6 +742,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
       </div>
       <div class="ni" id="nav-bookings" onclick="goPage('bookings')">
         <div class="nd" style="background:var(--tl)"></div>Bookings
+      </div>
+      <div class="ni" id="nav-inventory" onclick="goPage('inventory')">
+        <div class="nd" style="background:var(--am)"></div>Inventory
       </div>
       <div class="ni" id="nav-invoices" onclick="goPage('invoices')" style="border-left:3px solid var(--am)">
         <div class="nd" style="background:var(--am)"></div>Invoices
@@ -4651,6 +4687,73 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
     </div>
   </div>
 
+  <!-- ═══ INVENTORY PAGE (Mario feedback) ═══ -->
+  <div class="pg" id="pg-inventory">
+    <div class="add-form" id="inv-form">
+      <div style="font-family:'Fredoka',sans-serif;font-size:14px;font-weight:600;margin-bottom:12px">Add Consumable</div>
+      <div class="afg">
+        <div class="full"><div class="exp-lbl">Item name</div><input class="ei" id="inv-name" placeholder="e.g. Screen printing ink — black"></div>
+        <div><div class="exp-lbl">Category</div>
+          <select class="es" id="inv-cat">
+            <option value="consumable">Consumable</option>
+            <option value="supply">Supply</option>
+            <option value="packaging">Packaging</option>
+            <option value="equipment">Equipment</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div><div class="exp-lbl">Unit</div><input class="ei" id="inv-unit" placeholder="e.g. oz, rolls, sheets"></div>
+        <div><div class="exp-lbl">Current qty</div><input class="ei" type="number" id="inv-qty" placeholder="0"></div>
+        <div><div class="exp-lbl">Low stock alert at</div><input class="ei" type="number" id="inv-low" placeholder="5"></div>
+        <div><div class="exp-lbl">Cost per unit ($)</div><input class="ei" type="number" id="inv-cost" placeholder="0.00"></div>
+        <div><div class="exp-lbl">Supplier</div><input class="ei" id="inv-supplier" placeholder="e.g. Ryonet"></div>
+        <div><div class="exp-lbl">Reorder link</div><input class="ei" id="inv-link" placeholder="https://..."></div>
+        <div class="full"><div class="exp-lbl">Notes</div><textarea class="eta" id="inv-notes" placeholder="How often you go through it, any notes..."></textarea></div>
+      </div>
+      <div class="af-acts">
+        <button class="btn btn-g" onclick="invSave()">Save Item</button>
+        <button class="btn" onclick="invCancelForm()">Cancel</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sh">
+        <div class="st">Consumables &amp; Supplies</div>
+        <div class="sd" id="inv-low-count"></div>
+      </div>
+
+      <!-- Summary metrics -->
+      <div class="mg mg3" style="margin-bottom:18px" id="inv-metrics">
+        <div class="mc mc-a"><div class="ml">Total Items</div><div class="mv" id="inv-total-items">0</div><div class="ms">tracked</div></div>
+        <div class="mc mc-r"><div class="ml">Low Stock</div><div class="mv" id="inv-low-items">0</div><div class="ms">need reorder</div></div>
+        <div class="mc mc-h"><div class="ml">Est. Value</div><div class="mv" id="inv-total-value">$0</div><div class="ms">on hand</div></div>
+      </div>
+
+      <!-- Category filter -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="inv-filters">
+        <button class="btn inv-filter-btn active" data-cat="all" onclick="invFilter('all')">All</button>
+        <button class="btn inv-filter-btn" data-cat="consumable" onclick="invFilter('consumable')">Consumables</button>
+        <button class="btn inv-filter-btn" data-cat="supply" onclick="invFilter('supply')">Supplies</button>
+        <button class="btn inv-filter-btn" data-cat="packaging" onclick="invFilter('packaging')">Packaging</button>
+        <button class="btn inv-filter-btn" data-cat="equipment" onclick="invFilter('equipment')">Equipment</button>
+      </div>
+
+      <div id="inv-list"></div>
+    </div>
+
+    <!-- Usage log -->
+    <div class="sec">
+      <div class="sh"><div class="st">Usage Log</div><div class="sd">Track when you use items</div></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <select class="es" id="inv-log-item" style="flex:1;min-width:140px"></select>
+        <input class="ei" type="number" id="inv-log-qty" placeholder="Qty used" style="width:100px">
+        <input class="ei" id="inv-log-note" placeholder="Note (optional)" style="flex:1;min-width:120px">
+        <button class="btn btn-g" onclick="invLogUsage()">Log Use</button>
+      </div>
+      <div id="inv-log-list" style="max-height:280px;overflow-y:auto"></div>
+    </div>
+  </div>
+
 </main>
 <div class="toast" id="toast"></div>
 
@@ -4684,6 +4787,7 @@ const PAGE_META = {
   goals:    ['Goals','Quarterly targets · Q1–Q4 · income · content · health · debt'],
   network:  ['Network','Key people · last contact · relationship health'],
   gear:     ['Gear','Equipment inventory · value · Hiscox coverage · lent out'],
+  inventory:['Inventory','Consumables · supplies · low stock alerts · usage log'],
   studio:   ['Studio','NovaLight Studios · 5,600 sq ft · Philly'],
   business: ['Business','NovaLight LLC + Bootstrap Media Group'],
   content:  ['Content','YouTube, short-form, personal brand'],
@@ -4844,6 +4948,7 @@ function goPage(n) {
   if (n === 'goals') renderGoals();
   if (n === 'network') renderNetwork();
   if (n === 'gear') renderGear();
+  if (n === 'inventory') invRender();
   if (n === 'finance2025' && !window._r25init) { window._r25init = true; initReport_r25(); }
   if (n === 'finance2024' && !window._r24init) { window._r24init = true; initReport_r24(); }
   if (n === 'finance2023' && !window._r23init) { window._r23init = true; initReport_r23(); }
@@ -13424,6 +13529,86 @@ document.addEventListener('DOMContentLoaded', async function() {
   var token = await spGetValidToken();
   if(token) spInitPlayer(token);
 });
+// ════════════════════════════════════════════════════════
+//  INVENTORY
+// ════════════════════════════════════════════════════════
+function invData(){return JSON.parse(localStorage.getItem('chase-inventory')||'[]');}
+function invSaveData(d){localStorage.setItem('chase-inventory',JSON.stringify(d));}
+function invLogData(){return JSON.parse(localStorage.getItem('chase-inv-log')||'[]');}
+function invSaveLog(d){localStorage.setItem('chase-inv-log',JSON.stringify(d));}
+var _invFilter='all';
+function invRender(){
+  var items=invData();
+  var filtered=_invFilter==='all'?items:items.filter(function(i){return i.cat===_invFilter;});
+  var low=items.filter(function(i){return i.qty<=i.low;});
+  var totalVal=items.reduce(function(s,i){return s+(i.qty*(i.cost||0));},0);
+  var e1=document.getElementById('inv-total-items');if(e1)e1.textContent=items.length;
+  var e2=document.getElementById('inv-low-items');if(e2)e2.textContent=low.length;
+  var e3=document.getElementById('inv-total-value');if(e3)e3.textContent='$'+totalVal.toFixed(0);
+  var lc=document.getElementById('inv-low-count');if(lc)lc.textContent=low.length?low.length+' low stock':'';
+  var el=document.getElementById('inv-list');if(!el)return;
+  if(!filtered.length){el.innerHTML='<div style="background:var(--s1);border:1px dashed var(--b);border-radius:12px;padding:28px;text-align:center;color:var(--t3);font-size:12px">No items yet. Hit + Add to start tracking.</div>';return;}
+  el.innerHTML=filtered.map(function(item){
+    var isLow=item.qty<=item.low;
+    var pct=item.low>0?Math.min(100,Math.round((item.qty/(item.low*3))*100)):100;
+    var bc=isLow?'var(--rd)':pct<60?'var(--am)':'var(--gn)';
+    return '<div class="card" style="margin-bottom:10px;border-left:3px solid '+(isLow?'var(--rd)':'var(--b)')+'">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
+        '<div><div class="card-t">'+item.name+'</div><div class="card-s">'+(item.supplier||'')+(item.cat?' · '+item.cat:'')+'</div></div>' +
+        '<div style="display:flex;gap:6px;align-items:center">'+(isLow?'<span class="badge b-stall">Low</span>':'')+
+        '<button onclick="invDelete(''+item.id+'')" style="background:none;border:none;color:var(--t3);font-size:11px;cursor:pointer">✕</button></div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">' +
+        '<div style="flex:1"><div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%;background:'+bc+'"></div></div></div>' +
+        '<div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:'+bc+'">'+item.qty+' <span style="font-size:10px;color:var(--t3)">'+(item.unit||'units')+'</span></div>' +
+      '</div>' +
+      '<div style="display:flex;gap:16px;font-size:11px;color:var(--t3)">' +
+        '<span>Alert at: '+item.low+'</span>'+(item.cost?'<span>$'+item.cost+'/unit</span>':'')+(item.link?'<a href="'+item.link+'" target="_blank" style="color:var(--ac);text-decoration:none">Reorder ↗</a>':'') +
+      '</div>' +
+      '<div style="display:flex;gap:6px;margin-top:10px">' +
+        '<button class="btn" onclick="invAdjust(''+item.id+'',-1)">- 1</button>' +
+        '<button class="btn" onclick="invAdjust(''+item.id+'',1)">+ 1</button>' +
+        '<button class="btn" onclick="invRestock(''+item.id+'')">Restock</button>' +
+      '</div></div>';
+  }).join('');
+  var sel=document.getElementById('inv-log-item');
+  if(sel)sel.innerHTML=items.map(function(i){return '<option value="'+i.id+'">'+i.name+'</option>';}).join('');
+  invRenderLog();
+}
+function invRenderLog(){
+  var log=invLogData().slice(0,30);
+  var el=document.getElementById('inv-log-list');if(!el)return;
+  if(!log.length){el.innerHTML='<div style="color:var(--t3);font-size:12px;padding:12px 0">No usage logged yet.</div>';return;}
+  el.innerHTML=log.map(function(l){return '<div class="mon-r"><span style="color:var(--t2)">'+l.name+'</span><span style="font-size:11px;color:var(--t3)">'+l.note+'</span><span style="font-family:'DM Mono',monospace;font-size:11px">-'+l.qty+' '+(l.unit||'')+'</span><span style="font-size:10px;color:var(--t3)">'+l.date+'</span></div>';}).join('');
+}
+function invSave(){
+  var name=(document.getElementById('inv-name')||{}).value||'';
+  name=name.trim();if(!name){toast('Name required');return;}
+  var items=invData();
+  items.push({id:'inv-'+Date.now(),name:name,cat:document.getElementById('inv-cat').value,unit:document.getElementById('inv-unit').value,qty:parseFloat(document.getElementById('inv-qty').value)||0,low:parseFloat(document.getElementById('inv-low').value)||5,cost:parseFloat(document.getElementById('inv-cost').value)||0,supplier:document.getElementById('inv-supplier').value,link:document.getElementById('inv-link').value,notes:document.getElementById('inv-notes').value,added:new Date().toISOString().slice(0,10)});
+  invSaveData(items);
+  document.getElementById('inv-form').classList.remove('show');
+  ['inv-name','inv-unit','inv-qty','inv-low','inv-cost','inv-supplier','inv-link','inv-notes'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  invRender();toast('Item added','ok');
+}
+function invCancelForm(){document.getElementById('inv-form').classList.remove('show');}
+function invFilter(cat){
+  _invFilter=cat;
+  document.querySelectorAll('.inv-filter-btn').forEach(function(b){b.classList.toggle('active',b.dataset.cat===cat);});
+  invRender();
+}
+function invAdjust(id,delta){var items=invData();var item=items.find(function(i){return i.id===id;});if(!item)return;item.qty=Math.max(0,(item.qty||0)+delta);invSaveData(items);invRender();}
+function invRestock(id){var items=invData();var item=items.find(function(i){return i.id===id;});if(!item)return;var qty=parseFloat(prompt('How many '+(item.unit||'units')+' are you adding?'));if(isNaN(qty)||qty<=0)return;item.qty=(item.qty||0)+qty;invSaveData(items);invRender();toast('Restocked +'+qty,'ok');}
+function invDelete(id){invSaveData(invData().filter(function(i){return i.id!==id;}));invRender();toast('Removed');}
+function invLogUsage(){
+  var sel=document.getElementById('inv-log-item');var qtyEl=document.getElementById('inv-log-qty');var noteEl=document.getElementById('inv-log-note');
+  if(!sel||!sel.value)return;var qty=parseFloat(qtyEl.value);if(!qty||qty<=0){toast('Enter a quantity');return;}
+  var items=invData();var item=items.find(function(i){return i.id===sel.value;});if(!item)return;
+  item.qty=Math.max(0,(item.qty||0)-qty);invSaveData(items);
+  var log=invLogData();log.unshift({id:Date.now(),name:item.name,qty:qty,unit:item.unit,note:noteEl.value||'',date:new Date().toISOString().slice(0,10)});
+  invSaveLog(log.slice(0,100));qtyEl.value='';noteEl.value='';invRender();toast('Logged -'+qty+' '+(item.unit||''),'ok');
+}
+
 
 
 </script>
@@ -13465,10 +13650,11 @@ var _MOB_TABS = {
     { id: 'calendar', label: 'Calendar' }
   ]},
   pipeline: { pages: [
-    { id: 'deals',    label: 'Deals' },
-    { id: 'crm',      label: 'CRM' },
-    { id: 'bookings', label: 'Bookings' },
-    { id: 'invoices', label: 'Invoices' }
+    { id: 'deals',     label: 'Deals' },
+    { id: 'crm',       label: 'CRM' },
+    { id: 'bookings',  label: 'Bookings' },
+    { id: 'invoices',  label: 'Invoices' },
+    { id: 'inventory', label: 'Inventory' }
   ]},
   money: { pages: [
     { id: 'payday',    label: 'Pay Day' },
