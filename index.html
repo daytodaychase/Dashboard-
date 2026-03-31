@@ -436,85 +436,101 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
 .exp-lbl { font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:var(--t3); margin-bottom:4px; font-weight:600; }
 .mg.mg2 { grid-template-columns:1fr !important; }
 
-/* ── MOBILE OVERLAY ── */
-.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:150;backdrop-filter:blur(2px);}
-.sb-overlay.show{display:block;}
+/* ════════════════════════════════
+   BOTTOM TAB BAR  (mobile only)
+   ════════════════════════════════ */
+.mob-tabbar {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(14,14,14,0.97);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  z-index: 300;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.mob-tabs { display: flex; align-items: stretch; }
+.mob-tab {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 10px 4px 8px; cursor: pointer; gap: 3px;
+  border: none; background: transparent; color: var(--t3);
+  transition: color .15s; -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+.mob-tab.active { color: var(--ac); }
+.mob-tab-icon { font-size: 20px; line-height: 1; }
+.mob-tab-label {
+  font-family: 'DM Sans', sans-serif; font-size: 9px;
+  letter-spacing: .03em; font-weight: 500; text-transform: uppercase;
+}
+.mob-tab.active .mob-tab-label { color: var(--ac); }
+.mob-tab-pip {
+  position: absolute; top: 7px; right: calc(50% - 14px);
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--rd); display: none;
+}
+.mob-tab-pip.show { display: block; }
 
-/* ── HAMBURGER ── */
-.mob-ham{display:none;flex-direction:column;justify-content:center;align-items:center;gap:4px;width:38px;height:38px;border-radius:var(--r);border:1px solid var(--b);background:var(--s2);cursor:pointer;flex-shrink:0;}
-.mob-ham div{width:16px;height:1.5px;background:var(--t2);border-radius:1px;transition:.2s;}
-
-/* ── MOBILE ── */
-@media(max-width:768px){
-  body{font-size:15px;overflow-x:hidden;}
-
-  .sb{
-    position:fixed;left:-250px;top:0;height:100%;width:240px;
-    transition:left .25s cubic-bezier(.4,0,.2,1);
-    z-index:200;border-right:1px solid var(--bh);
-  }
-  .sb.open{left:0;box-shadow:8px 0 32px rgba(0,0,0,0.6);}
-
-  .main{margin-left:0 !important;max-width:100vw;}
-
-  .topbar{padding:10px 12px;gap:8px;}
-  .topbar > div:first-child{flex:1;min-width:0;}
-  .tb-t{font-size:16px;}
-  .tb-s{font-size:10px;}
-  .ta{gap:6px;}
-
-  .mob-ham{display:flex;}
-
-  .pg{padding:14px 12px 90px !important;}
-  .pg.active.fullpage{padding:0 0 80px !important;}
-
-  .toast{bottom:20px;right:10px;left:10px;text-align:center;max-width:none;}
-
-  /* All multi-col grids collapse */
-  .mg4,.mg3{grid-template-columns:1fr 1fr !important;}
-  .mg2{grid-template-columns:1fr 1fr !important;}
-  .ql-cols{grid-template-columns:1fr !important;}
-  .life-grid{grid-template-columns:1fr !important;}
-  .proj-grid{grid-template-columns:1fr !important;}
-  .exp-g{grid-template-columns:1fr 1fr !important;}
-  .exp-g5{grid-template-columns:1fr 1fr !important;}
-  .exp-g2{grid-template-columns:1fr 1fr !important;}
-  .afg{grid-template-columns:1fr 1fr !important;}
-  .rpt-wrap .grid2{grid-template-columns:1fr !important;}
-  .rpt-wrap .grid3{grid-template-columns:1fr !important;}
-  .rpt-wrap .grid4{grid-template-columns:1fr 1fr !important;}
-  .ca-m4{grid-template-columns:1fr 1fr !important;}
-  .ca-m3{grid-template-columns:1fr 1fr !important;}
-  .ca-form-g4{grid-template-columns:1fr 1fr !important;}
-  .ca-form-g2{grid-template-columns:1fr !important;}
-
-  /* Tables scroll horizontally */
-  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
-
-  /* Bigger touch targets */
-  .ni{padding:12px 10px;font-size:14px;}
-  .btn{padding:9px 14px;font-size:13px;}
-
-  /* Prevent iOS zoom on input focus */
-  input,select,textarea{font-size:16px !important;}
-
-  .mc{padding:12px;}
-  .mv{font-size:20px;}
-  .biz-hero{padding:14px;}
-  .biz-hero-bg{font-size:44px;}
-
-  .sb-ft{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px);}
-
-  /* pg max-width full on mobile */
-  .pg{max-width:100% !important;}
+.mob-subtray {
+  display: none; overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 12px 6px; gap: 7px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  scrollbar-width: none;
+}
+.mob-subtray::-webkit-scrollbar { display: none; }
+.mob-subtray.show { display: flex; align-items: center; }
+.mob-chip {
+  flex-shrink: 0; font-family: 'DM Sans', sans-serif; font-size: 11px;
+  padding: 5px 13px; border-radius: 20px; border: 1px solid var(--b);
+  background: var(--s2); color: var(--t2); cursor: pointer;
+  white-space: nowrap; transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mob-chip.active {
+  background: var(--ac); color: #0f0f0f;
+  border-color: var(--ac); font-weight: 600;
 }
 
-@media(max-width:400px){
-  .mg4,.mg3,.mg2{grid-template-columns:1fr !important;}
-  .exp-g,.exp-g2,.exp-g5{grid-template-columns:1fr !important;}
-  .afg{grid-template-columns:1fr !important;}
-  .ca-m4,.ca-m3{grid-template-columns:1fr !important;}
-  .rpt-wrap .grid4{grid-template-columns:1fr !important;}
+/* ════════════════════════════════
+   MOBILE LAYOUT OVERRIDES
+   ════════════════════════════════ */
+@media (max-width: 768px) {
+  .sb { display: none !important; }
+  .main { margin-left: 0 !important; max-width: 100vw !important; }
+  .mob-tabbar { display: block; }
+  .topbar { padding: 10px 14px; min-height: 52px; }
+  .tb-t { font-size: 16px; }
+  .tb-s { font-size: 10px; }
+  .pg { padding: 14px 12px 165px !important; max-width: 100% !important; }
+  .pg.active.fullpage { padding: 0 0 145px !important; }
+  .toast { bottom: 110px; right: 10px; left: 10px; text-align: center; max-width: none; }
+  .mg4, .mg3 { grid-template-columns: 1fr 1fr !important; }
+  .mg2 { grid-template-columns: 1fr 1fr !important; }
+  .ql-cols, .life-grid, .proj-grid { grid-template-columns: 1fr !important; }
+  .exp-g, .exp-g5, .exp-g2 { grid-template-columns: 1fr 1fr !important; }
+  .afg { grid-template-columns: 1fr 1fr !important; }
+  .rpt-wrap .grid2 { grid-template-columns: 1fr !important; }
+  .rpt-wrap .grid3 { grid-template-columns: 1fr !important; }
+  .rpt-wrap .grid4 { grid-template-columns: 1fr 1fr !important; }
+  .ca-m4, .ca-m3 { grid-template-columns: 1fr 1fr !important; }
+  .ca-form-g4 { grid-template-columns: 1fr 1fr !important; }
+  .ca-form-g2 { grid-template-columns: 1fr !important; }
+  table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  input, select, textarea { font-size: 16px !important; }
+  .btn { padding: 9px 14px; font-size: 13px; }
+  .mc { padding: 12px; }
+  .mv { font-size: 20px; }
+  .card { padding: 14px; }
+  .biz-hero { padding: 14px; }
+}
+
+@media (max-width: 400px) {
+  .mg4, .mg3, .mg2 { grid-template-columns: 1fr !important; }
+  .exp-g, .exp-g2, .exp-g5, .afg { grid-template-columns: 1fr !important; }
+  .ca-m4, .ca-m3, .ca-form-g4, .rpt-wrap .grid4 { grid-template-columns: 1fr !important; }
 }
 </style>
 </head>
@@ -791,10 +807,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
 
 <main class="main">
   <div class="topbar">
-    <div class="mob-ham" onclick="toggleMobileSidebar()" id="mob-ham-btn">
-      <div></div><div></div><div></div>
-    </div>
-    <div style="flex:1;min-width:0;">
+    <div>
       <div class="tb-t" id="pg-title">Deals</div>
       <div class="tb-s" id="pg-sub">Brand deals and content partnerships</div>
     </div>
@@ -13276,7 +13289,6 @@ async function spGetMixForMood(mood, token) {
 }
 
 
-
 async function spTransferToApp(token) {
   try {
     // Get available devices
@@ -13370,40 +13382,167 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 
-
-// ── MOBILE SIDEBAR ──
-function toggleMobileSidebar() {
-  var sb = document.querySelector('.sb');
-  var overlay = document.getElementById('sb-overlay');
-  var isOpen = sb.classList.contains('open');
-  if(isOpen) {
-    sb.classList.remove('open');
-    overlay.classList.remove('show');
-  } else {
-    sb.classList.add('open');
-    overlay.classList.add('show');
-  }
-}
-
-function closeMobileSidebar() {
-  document.querySelector('.sb').classList.remove('open');
-  document.getElementById('sb-overlay').classList.remove('show');
-}
-
-// Close sidebar when a nav item is tapped on mobile
-document.addEventListener('DOMContentLoaded', function() {
-  if(window.innerWidth <= 768) {
-    document.querySelectorAll('.ni').forEach(function(el) {
-      el.addEventListener('click', function() {
-        setTimeout(closeMobileSidebar, 120);
-      });
-    });
-  }
-});
 </script>
 
-<!-- Mobile sidebar overlay -->
-<div class="sb-overlay" id="sb-overlay" onclick="closeMobileSidebar()"></div>
+<!-- ══════════ MOBILE BOTTOM TAB BAR ══════════ -->
+<nav class="mob-tabbar" id="mob-tabbar">
+  <!-- Sub-page chip tray -->
+  <div class="mob-subtray" id="mob-subtray"></div>
+  <!-- 5 main tabs -->
+  <div class="mob-tabs">
+    <button class="mob-tab" id="mobtab-today" onclick="mobSwitchTab('today')">
+      <div class="mob-tab-icon">🌅</div>
+      <div class="mob-tab-label">Today</div>
+    </button>
+    <button class="mob-tab" id="mobtab-pipeline" onclick="mobSwitchTab('pipeline')">
+      <div class="mob-tab-icon">💼</div>
+      <div class="mob-tab-label">Pipeline</div>
+      <div class="mob-tab-pip" id="mobpip-pipeline"></div>
+    </button>
+    <button class="mob-tab" id="mobtab-money" onclick="mobSwitchTab('money')">
+      <div class="mob-tab-icon">💰</div>
+      <div class="mob-tab-label">Money</div>
+    </button>
+    <button class="mob-tab" id="mobtab-create" onclick="mobSwitchTab('create')">
+      <div class="mob-tab-icon">🎬</div>
+      <div class="mob-tab-label">Create</div>
+    </button>
+    <button class="mob-tab" id="mobtab-life" onclick="mobSwitchTab('life')">
+      <div class="mob-tab-icon">👤</div>
+      <div class="mob-tab-label">Life</div>
+    </button>
+  </div>
+</nav>
 
+<script>
+// ══════════════════════════════════════
+//  MOBILE BOTTOM TAB BAR
+// ══════════════════════════════════════
+
+var _MOB_TABS = {
+  today:    { pages: [
+    { id: 'today',    label: 'Today' },
+    { id: 'calendar', label: 'Calendar' }
+  ]},
+  pipeline: { pages: [
+    { id: 'deals',    label: 'Deals' },
+    { id: 'crm',      label: 'CRM' },
+    { id: 'bookings', label: 'Bookings' },
+    { id: 'invoices', label: 'Invoices' }
+  ]},
+  money: { pages: [
+    { id: 'payday',    label: 'Pay Day' },
+    { id: 'money',     label: 'Overview' },
+    { id: 'debt',      label: 'Debt' },
+    { id: 'yesnocalc', label: 'Say Yes?' },
+    { id: 'ltv',       label: 'Client LTV' },
+    { id: 'taxjar',    label: 'Tax Jar' },
+    { id: 'runway',    label: 'Runway' }
+  ]},
+  create: { pages: [
+    { id: 'braindump',   label: 'Brain Dump' },
+    { id: 'scripts',     label: 'Scripts' },
+    { id: 'ideas',       label: 'Ideas' },
+    { id: 'content',     label: 'Content' },
+    { id: 'studio',      label: 'Studio' },
+    { id: 'shootprep',   label: 'Shoot Prep' },
+    { id: 'contentpipe', label: 'Pipeline' },
+    { id: 'parking',     label: 'Parking Lot' },
+    { id: 'inquiry',     label: 'Inquiry Script' },
+    { id: 'business',    label: 'Business' }
+  ]},
+  life: { pages: [
+    { id: 'health',   label: 'Health' },
+    { id: 'goals',    label: 'Goals' },
+    { id: 'winjar',   label: 'Win Jar' },
+    { id: 'didtoday', label: 'Did Today' },
+    { id: 'network',  label: 'Network' },
+    { id: 'builds',   label: 'Builds' },
+    { id: 'life',     label: 'Life' },
+    { id: 'gear',     label: 'Gear' },
+    { id: 'debrief',  label: 'Debrief' },
+    { id: 'fin-all',  label: 'Finance' }
+  ]}
+};
+
+// Map each page id -> which tab it belongs to
+var _PAGE_TO_TAB = {};
+Object.keys(_MOB_TABS).forEach(function(tab) {
+  _MOB_TABS[tab].pages.forEach(function(p) {
+    _PAGE_TO_TAB[p.id] = tab;
+  });
+});
+
+var _mobActiveTab = 'today';
+var _mobActivePages = {}; // remember last visited page per tab
+
+function mobSwitchTab(tabKey) {
+  if (!window.matchMedia('(max-width: 768px)').matches) return;
+
+  _mobActiveTab = tabKey;
+
+  // Highlight active tab button
+  document.querySelectorAll('.mob-tab').forEach(function(el) {
+    el.classList.toggle('active', el.id === 'mobtab-' + tabKey);
+  });
+
+  // Build chip tray
+  var tray = document.getElementById('mob-subtray');
+  var pages = _MOB_TABS[tabKey].pages;
+  var lastPage = _mobActivePages[tabKey] || pages[0].id;
+
+  tray.innerHTML = pages.map(function(p) {
+    return '<div class="mob-chip' + (p.id === lastPage ? ' active' : '') + '" onclick="mobGoPage('' + p.id + '')">' + p.label + '</div>';
+  }).join('');
+  tray.classList.add('show');
+
+  // Navigate to last visited page in this tab
+  goPage(lastPage);
+}
+
+function mobGoPage(pageId) {
+  var tab = _PAGE_TO_TAB[pageId] || _mobActiveTab;
+  _mobActivePages[tab] = pageId;
+
+  // Update chips
+  var tray = document.getElementById('mob-subtray');
+  tray.querySelectorAll('.mob-chip').forEach(function(el) {
+    el.classList.toggle('active', el.textContent.trim() === (_MOB_TABS[tab] && _MOB_TABS[tab].pages.find(function(p){ return p.id === pageId; }) || {label:''}).label);
+  });
+
+  goPage(pageId);
+}
+
+// Hook into the existing goPage to keep tab bar in sync when desktop nav is used
+var _origGoPage = typeof goPage === 'function' ? goPage : null;
+document.addEventListener('DOMContentLoaded', function() {
+  if (!window.matchMedia('(max-width: 768px)').matches) return;
+
+  // Wrap goPage to sync tab bar
+  var _realGoPage = goPage;
+  window.goPage = function(id) {
+    _realGoPage(id);
+    var tab = _PAGE_TO_TAB[id];
+    if (tab) {
+      _mobActiveTab = tab;
+      _mobActivePages[tab] = id;
+      // Update active tab button
+      document.querySelectorAll('.mob-tab').forEach(function(el) {
+        el.classList.toggle('active', el.id === 'mobtab-' + tab);
+      });
+      // Rebuild chip tray
+      var tray = document.getElementById('mob-subtray');
+      var pages = _MOB_TABS[tab].pages;
+      tray.innerHTML = pages.map(function(p) {
+        return '<div class="mob-chip' + (p.id === id ? ' active' : '') + '" onclick="mobGoPage('' + p.id + '')">' + p.label + '</div>';
+      }).join('');
+      tray.classList.add('show');
+    }
+  };
+
+  // Init: activate today tab
+  mobSwitchTab('today');
+});
+</script>
 </body>
 </html>
