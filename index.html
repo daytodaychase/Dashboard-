@@ -521,6 +521,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
    ════════════════════════════════ */
 @media (max-width: 768px) {
   .sb { display: none !important; }
+  .main, .pg, .pg * { text-align: center; }
+  /* Keep left-align for inputs, tables, and things that break when centered */
+  input, textarea, select, table, .deal-table, .cr, .mon-r, .alert, .life-add, .exp-acts, .ca-tabs, .ta { text-align: left; }
   /* Topbar: show only app name, hide page title/subtitle/actions */
   .topbar { padding: 12px 16px; justify-content: center; }
   .tb-t { font-size: 15px; text-align: center; font-family: "Fredoka", sans-serif; }
