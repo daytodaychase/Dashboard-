@@ -447,7 +447,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-top: 1px solid rgba(255,255,255,0.08);
-  z-index: 300;
+  z-index: 99999;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .mob-tabs { display: flex; align-items: stretch; }
@@ -474,6 +474,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
 .mob-tab-pip.show { display: block; }
 
 .mob-subtray {
+  position: relative; z-index: 99999;
   display: none; overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   padding: 8px 12px 6px; gap: 7px;
