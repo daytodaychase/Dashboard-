@@ -521,42 +521,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
    ════════════════════════════════ */
 @media (max-width: 768px) {
   .sb { display: none !important; }
-  /* ── NUCLEAR CENTER: every text node, every label, every value ── */
+  /* ── MOBILE TEXT CENTERING (safe — text-align only, nothing that blocks clicks) ── */
   .pg { text-align: center; }
-  .pg p, .pg span, .pg div, .pg h1, .pg h2, .pg h3, .pg h4,
-  .pg label, .pg li, .pg td, .pg th,
-  .card-t, .card-s, .st, .sd, .sct,
-  .mv, .ml, .ms, .mc, .mc *,
-  .al-t, .al-b,
-  .dn, .dsrc, .dd, .dam, .dams,
-  .plat-name, .plat-goal, .stat-l, .stat-v,
-  .pj-t, .pj-d,
-  .life-t, .life-item,
-  .ql-t, .ql-d, .ql-lbl, .qi,
+  .card-t, .card-s, .mv, .ml, .ms, .st, .sd, .sct,
+  .al-t, .al-b, .dn, .dsrc, .dd, .dam, .dams,
+  .plat-name, .plat-goal, .pj-t, .pj-d,
+  .life-t, .ql-t, .ql-d, .ql-lbl,
   .biz-t, .ca-name, .ca-sub, .ca-ml, .ca-mv,
-  .exp-lbl, .date, .badge,
-  .tb-t, .tb-s,
-  .sh, .sh *, .sec-hd,
-  .rpt-wrap *, .rpt-wrap h1, .rpt-wrap .subtitle,
-  .mon-r .mon-a, .mon-r,
-  .alert .al-t, .alert .al-b { text-align: center !important; }
-
-  /* Center flex containers */
-  .sh, .mg, .mg2, .mg3, .mg4,
-  .card, .mc, .ql, .ql-hd,
-  .biz-hero, .ca-hdr, .ca-met,
-  .sec, .alert,
-  .plat-card, .proj-card, .life-sec { justify-content: center; align-items: center; }
-
-  /* Center block elements */
-  .badge, .btn, .btn-g { margin-left: auto; margin-right: auto; }
-
-  /* Left-align only truly functional things that break when centered */
-  input, textarea, select { text-align: left !important; }
-  .deal-table td, .deal-table th { text-align: left !important; }
-  .life-add, .exp-acts { justify-content: center; }
-  .cr, .stat-r { text-align: left !important; }
-  .cr *, .stat-r * { text-align: left !important; }
+  .exp-lbl, .tb-t, .tb-s, .badge,
+  .rpt-wrap h1, .rpt-wrap .subtitle { text-align: center; }
+  /* Left-align things that break or need to stay left */
+  input, textarea, select,
+  .cr, .cr *, .stat-r, .stat-r *,
+  .mon-r, .mon-r *,
+  .deal-table td, .deal-table th,
+  .life-item, .life-item *,
+  .pj-i, .pj-i *,
+  .qi, .qi *,
+  .alert, .alert * { text-align: left !important; }
   /* Topbar: show only app name, hide page title/subtitle/actions */
   .topbar { padding: 12px 16px; justify-content: center; }
   .tb-t { font-size: 15px; text-align: center; font-family: "Fredoka", sans-serif; }
