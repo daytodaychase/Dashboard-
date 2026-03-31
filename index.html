@@ -7,7 +7,9 @@
      Get it at: console.anthropic.com → API Keys → Create Key
      It starts with: sk-ant-api03-...
      ============================================================ -->
-<script>window.ANTHROPIC_KEY = 'sk-ant-aрі0З-MХwZsFcLqnqgFхspksIiDpn0ng2fdKZVapNVGdczjM0AJIаjHRbvP1UеHТxkn-7spQWgLdjbF4jdDRY_PHCrkQ-8eNbRgAA';</script>
+<script>window.ANTHROPIC_KEY = 'sk-ant-aрі0З-MХwZsFcLqnqgFхspksIiDpn0ng2fd
+KZVapNVGdczjM0AJIаjHRbvP1UеHТxkn-7spQWgLdj
+bF4jdDRY_PHCrkQ-8eNbRgAA';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13776,7 +13778,7 @@ function aiSnapCalories(input) {
     document.getElementById('calsnap-result').style.display = 'block';
     var calMatch = text.match(/ESTIMATED CALORIES:\s*~?(\d+)/i);
     _calsnapEstimate = calMatch ? parseInt(calMatch[1]) : 0;
-    var foodMatch = text.match(/FOODS DETECTED:\s*(.+?)(?:\n|$)/i);
+    var foodMatch = text.match(/FOODS DETECTED:\s*(.+)/i);
     _calsnapLabel = foodMatch ? foodMatch[1].trim() : 'Food (AI estimate)';
     // Highlight the ESTIMATE warning line in amber
     var formatted = text
@@ -13784,7 +13786,7 @@ function aiSnapCalories(input) {
       .replace(/CONFIDENCE: (Low)/g, 'CONFIDENCE: <span style="color:var(--rd)">Low</span>')
       .replace(/CONFIDENCE: (Medium)/g, 'CONFIDENCE: <span style="color:var(--am)">Medium</span>')
       .replace(/CONFIDENCE: (High)/g, 'CONFIDENCE: <span style="color:var(--gn)">High</span>')
-      .replace(/\n/g, '<br>');
+      .split('\n').join('<br>');
     document.getElementById('calsnap-output').innerHTML = formatted;
     if (_calsnapEstimate > 0) {
       document.getElementById('calsnap-log-btn').textContent = '+ Log ~' + _calsnapEstimate + ' cals (est.)';
@@ -13878,13 +13880,11 @@ async function aiSnapCalories(input) {
     // Parse calories for logging
     var calMatch = text.match(/ESTIMATED CALORIES:\s*~?(\d+)/i);
     _calsnapEstimate = calMatch ? parseInt(calMatch[1]) : 0;
-    var foodMatch = text.match(/FOODS DETECTED:\s*(.+?)(?:
-|$)/i);
+    var foodMatch = text.match(/FOODS DETECTED:\s*(.+)/i);
     _calsnapLabel = foodMatch ? foodMatch[1].trim() : 'Food (AI estimate)';
 
     // Format output nicely
-    document.getElementById('calsnap-output').innerHTML = text.replace(/
-/g, '<br>');
+    document.getElementById('calsnap-output').innerHTML = text.split('\n').join('<br>');
     if(_calsnapEstimate > 0) {
       document.getElementById('calsnap-log-btn').textContent = '+ Log ~' + _calsnapEstimate + ' cals';
     }
