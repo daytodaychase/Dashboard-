@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="D.A.Y. to D.A.Y.">
+<meta name="apple-mobile-web-app-title" content="DAYTODAY">
 <meta name="theme-color" content="#0f0f0f">
 <title>Chase — Life Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -436,149 +436,67 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
 .exp-lbl { font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:var(--t3); margin-bottom:4px; font-weight:600; }
 .mg.mg2 { grid-template-columns:1fr !important; }
 
-/* ── TOPBAR BRAND (mobile only) ── */
-.tb-mobile { display: none; flex-direction: column; align-items: center; flex: 1; }
-.tb-brand {
-  font-family: 'Fredoka', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--ac);
-  letter-spacing: .18em;
-  line-height: 1;
-}
-.tb-brand-tag {
-  font-family: 'DM Mono', monospace;
-  font-size: 9px;
-  color: var(--t3);
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  margin-top: 3px;
-}
-.tb-desktop { display: block; }
+/* ═══════════════════════════════════════
+   MOBILE — bottom tab bar + layout
+   ═══════════════════════════════════════ */
 
-/* ════════════════════════════════
-   BOTTOM TAB BAR  (mobile only)
-   ════════════════════════════════ */
-.mob-tabbar {
-  display: none;
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  background: rgba(14,14,14,0.97);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-top: 1px solid rgba(255,255,255,0.08);
-  z-index: 99999;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-.mob-tabs { display: flex; align-items: stretch; }
-.mob-tab {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  padding: 10px 4px 8px; cursor: pointer; gap: 3px;
-  border: none; background: transparent; color: var(--t3);
-  transition: color .15s; -webkit-tap-highlight-color: transparent;
-  position: relative;
-}
-.mob-tab.active { color: var(--ac); }
-.mob-tab-icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
-.mob-tab-icon svg { width: 22px; height: 22px; transition: stroke .15s; }
-.mob-tab-label {
-  font-family: 'DM Sans', sans-serif; font-size: 9px;
-  letter-spacing: .03em; font-weight: 500; text-transform: uppercase;
-}
-.mob-tab.active .mob-tab-label { color: var(--ac); }
-.mob-tab-pip {
-  position: absolute; top: 7px; right: calc(50% - 14px);
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--rd); display: none;
-}
-.mob-tab-pip.show { display: block; }
+/* Tab bar */
+.mob-tabbar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:99999;background:rgba(14,14,14,0.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,0.08);padding-bottom:env(safe-area-inset-bottom,0px);}
+.mob-tabs{display:flex;}
+.mob-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;gap:4px;border:none;background:transparent;color:#666;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.mob-tab.active{color:#e8d5a3;}
+.mob-tab-icon{width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+.mob-tab-icon svg{width:22px;height:22px;}
+.mob-tab-label{font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.03em;text-transform:uppercase;}
+.mob-subtray{display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:8px 12px 6px;gap:7px;border-top:1px solid rgba(255,255,255,0.05);scrollbar-width:none;}
+.mob-subtray::-webkit-scrollbar{display:none;}
+.mob-subtray.show{display:flex;}
+.mob-chip{flex-shrink:0;font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 13px;border-radius:20px;border:1px solid rgba(255,255,255,0.07);background:#1e1e1e;color:#9a9590;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
+.mob-chip.active{background:#e8d5a3;color:#0f0f0f;border-color:#e8d5a3;font-weight:600;}
 
-.mob-subtray {
-  position: relative; z-index: 99999;
-  display: none; overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 8px 12px 6px; gap: 7px;
-  border-top: 1px solid rgba(255,255,255,0.05);
-  scrollbar-width: none;
-}
-.mob-subtray::-webkit-scrollbar { display: none; }
-.mob-subtray.show { display: flex; align-items: center; }
-.mob-chip {
-  flex-shrink: 0; font-family: 'DM Sans', sans-serif; font-size: 11px;
-  padding: 5px 13px; border-radius: 20px; border: 1px solid var(--b);
-  background: var(--s2); color: var(--t2); cursor: pointer;
-  white-space: nowrap; transition: all .15s;
-  -webkit-tap-highlight-color: transparent;
-}
-.mob-chip.active {
-  background: var(--ac); color: #0f0f0f;
-  border-color: var(--ac); font-weight: 600;
-}
+/* Brand topbar for mobile */
+.tb-mobile{display:none;flex-direction:column;align-items:center;flex:1;}
+.tb-brand{font-family:'Fredoka',sans-serif;font-size:22px;font-weight:700;color:#e8d5a3;letter-spacing:.18em;line-height:1;}
+.tb-brand-tag{font-family:'DM Mono',monospace;font-size:9px;color:#5a5550;letter-spacing:.22em;text-transform:uppercase;margin-top:3px;}
 
-/* ════════════════════════════════
-   MOBILE LAYOUT OVERRIDES
-   ════════════════════════════════ */
-@media (max-width: 768px) {
-  .sb { display: none !important; }
-  /* ── MOBILE TEXT CENTERING (safe — text-align only, nothing that blocks clicks) ── */
-  .pg.active { text-align: center; display: block !important; }
-  .card-t, .card-s, .mv, .ml, .ms, .st, .sd, .sct,
-  .al-t, .al-b, .dn, .dsrc, .dd, .dam, .dams,
-  .plat-name, .plat-goal, .pj-t, .pj-d,
-  .life-t, .ql-t, .ql-d, .ql-lbl,
-  .biz-t, .ca-name, .ca-sub, .ca-ml, .ca-mv,
-  .exp-lbl, .tb-t, .tb-s, .badge,
-  .rpt-wrap h1, .rpt-wrap .subtitle { text-align: center; }
-  /* Left-align things that break or need to stay left */
-  input, textarea, select,
-  .cr, .cr *, .stat-r, .stat-r *,
-  .mon-r, .mon-r *,
-  .deal-table td, .deal-table th,
-  .life-item, .life-item *,
-  .pj-i, .pj-i *,
-  .qi, .qi *,
-  .alert, .alert * { text-align: left !important; }
-  /* Topbar: show only app name, hide page title/subtitle/actions */
-  .topbar { padding: 12px 16px; justify-content: center; }
-  .tb-t { font-size: 15px; text-align: center; font-family: "Fredoka", sans-serif; }
-  .tb-s { display: none; }
-  .ta { display: none; }
-  /* Parking lot bar hidden — use Create > Parking Lot instead */
-  .parking-lot-bar { display: none !important; }
-  .main { margin-left: 0 !important; max-width: 100vw !important; }
-  .mob-tabbar { display: block; }
-  .topbar { padding: 10px 16px; min-height: 56px; justify-content: center; }
-  .tb-desktop { display: none; }
-  .tb-mobile { display: flex; }
-  .ta { display: none !important; }
-  .pg.active { padding: 14px 12px 165px !important; max-width: 100% !important; }
-  .pg.active.fullpage { padding: 0 0 145px !important; display:block !important; }
-  .toast { bottom: 110px; right: 10px; left: 10px; text-align: center; max-width: none; }
-  .mg4, .mg3 { grid-template-columns: 1fr 1fr !important; }
-  .mg2 { grid-template-columns: 1fr 1fr !important; }
-  .ql-cols, .life-grid, .proj-grid { grid-template-columns: 1fr !important; }
-  .exp-g, .exp-g5, .exp-g2 { grid-template-columns: 1fr 1fr !important; }
-  .afg { grid-template-columns: 1fr 1fr !important; }
-  .rpt-wrap .grid2 { grid-template-columns: 1fr !important; }
-  .rpt-wrap .grid3 { grid-template-columns: 1fr !important; }
-  .rpt-wrap .grid4 { grid-template-columns: 1fr 1fr !important; }
-  .ca-m4, .ca-m3 { grid-template-columns: 1fr 1fr !important; }
-  .ca-form-g4 { grid-template-columns: 1fr 1fr !important; }
-  .ca-form-g2 { grid-template-columns: 1fr !important; }
-  table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  input, select, textarea { font-size: 16px !important; }
-  .btn { padding: 9px 14px; font-size: 13px; }
-  .mc { padding: 12px; }
-  .mv { font-size: 20px; }
-  .card { padding: 14px; }
-  .biz-hero { padding: 14px; }
+@media(max-width:768px){
+  /* Hide desktop sidebar completely */
+  .sb{display:none!important;}
+  /* Main takes full width */
+  .main{margin-left:0!important;max-width:100vw!important;}
+  /* Show tab bar */
+  .mob-tabbar{display:block;}
+  /* Show brand, hide desktop topbar elements */
+  .tb-mobile{display:flex;}
+  .topbar{padding:10px 16px;min-height:56px;justify-content:center;}
+  /* CRITICAL: ta must be hidden but NOT with display:none on the element itself */
+  /* Hide actions and page subtitle */
+  .ta{visibility:hidden;width:0;overflow:hidden;padding:0;margin:0;}
+  .tb-s{display:none;}
+  /* Page bottom padding for tab bar */
+  .pg.active{padding-bottom:160px!important;}
+  .pg.active.fullpage{padding-bottom:140px!important;}
+  /* Prevent iOS input zoom */
+  input,select,textarea{font-size:16px!important;}
+  /* Parking lot bar off */
+  .parking-lot-bar{display:none!important;}
+  /* Grid collapsing */
+  .mg4,.mg3{grid-template-columns:1fr 1fr!important;}
+  .mg2{grid-template-columns:1fr 1fr!important;}
+  .ql-cols,.life-grid,.proj-grid{grid-template-columns:1fr!important;}
+  .exp-g,.exp-g5,.exp-g2,.afg{grid-template-columns:1fr 1fr!important;}
+  .rpt-wrap .grid2{grid-template-columns:1fr!important;}
+  .rpt-wrap .grid3{grid-template-columns:1fr!important;}
+  .rpt-wrap .grid4{grid-template-columns:1fr 1fr!important;}
+  .ca-m4,.ca-m3{grid-template-columns:1fr 1fr!important;}
+  .ca-form-g4{grid-template-columns:1fr 1fr!important;}
+  .ca-form-g2{grid-template-columns:1fr!important;}
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .toast{bottom:100px;right:10px;left:10px;text-align:center;max-width:none;}
 }
-
-@media (max-width: 400px) {
-  .mg4, .mg3, .mg2 { grid-template-columns: 1fr !important; }
-  .exp-g, .exp-g2, .exp-g5, .afg { grid-template-columns: 1fr !important; }
-  .ca-m4, .ca-m3, .ca-form-g4, .rpt-wrap .grid4 { grid-template-columns: 1fr !important; }
+@media(max-width:400px){
+  .mg4,.mg3,.mg2{grid-template-columns:1fr!important;}
+  .exp-g,.exp-g2,.exp-g5,.afg{grid-template-columns:1fr!important;}
 }
 </style>
 </head>
@@ -725,9 +643,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
       <div class="ni" id="nav-bookings" onclick="goPage('bookings')">
         <div class="nd" style="background:var(--tl)"></div>Bookings
       </div>
-      <div class="ni" id="nav-inventory" onclick="goPage('inventory')">
-        <div class="nd" style="background:var(--am)"></div>Inventory
-      </div>
       <div class="ni" id="nav-invoices" onclick="goPage('invoices')" style="border-left:3px solid var(--am)">
         <div class="nd" style="background:var(--am)"></div>Invoices
       </div>
@@ -858,15 +773,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
 
 <main class="main">
   <div class="topbar">
-    <!-- Desktop: page title + actions -->
-    <div class="tb-desktop">
-      <div class="tb-t" id="pg-title">Deals</div>
-      <div class="tb-s" id="pg-sub">Brand deals and content partnerships</div>
-    </div>
-    <!-- Mobile: brand header -->
     <div class="tb-mobile">
       <div class="tb-brand">DAYTODAY</div>
       <div class="tb-brand-tag">daily automating yourself · designed around you</div>
+    </div>
+    <div style="flex:1" class="tb-desktop-info">
+      <div class="tb-t" id="pg-title">Deals</div>
+      <div class="tb-s" id="pg-sub">Brand deals and content partnerships</div>
     </div>
     <div class="ta">
       <button class="btn" onclick="topAdd()">+ Add</button>
@@ -4669,73 +4582,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
     </div>
   </div>
 
-  <!-- ═══ INVENTORY PAGE (Mario feedback) ═══ -->
-  <div class="pg" id="pg-inventory">
-    <div class="add-form" id="inv-form">
-      <div style="font-family:'Fredoka',sans-serif;font-size:14px;font-weight:600;margin-bottom:12px">Add Consumable</div>
-      <div class="afg">
-        <div class="full"><div class="exp-lbl">Item name</div><input class="ei" id="inv-name" placeholder="e.g. Screen printing ink — black"></div>
-        <div><div class="exp-lbl">Category</div>
-          <select class="es" id="inv-cat">
-            <option value="consumable">Consumable</option>
-            <option value="supply">Supply</option>
-            <option value="packaging">Packaging</option>
-            <option value="equipment">Equipment</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div><div class="exp-lbl">Unit</div><input class="ei" id="inv-unit" placeholder="e.g. oz, rolls, sheets"></div>
-        <div><div class="exp-lbl">Current qty</div><input class="ei" type="number" id="inv-qty" placeholder="0"></div>
-        <div><div class="exp-lbl">Low stock alert at</div><input class="ei" type="number" id="inv-low" placeholder="5"></div>
-        <div><div class="exp-lbl">Cost per unit ($)</div><input class="ei" type="number" id="inv-cost" placeholder="0.00"></div>
-        <div><div class="exp-lbl">Supplier</div><input class="ei" id="inv-supplier" placeholder="e.g. Ryonet"></div>
-        <div><div class="exp-lbl">Reorder link</div><input class="ei" id="inv-link" placeholder="https://..."></div>
-        <div class="full"><div class="exp-lbl">Notes</div><textarea class="eta" id="inv-notes" placeholder="How often you go through it, any notes..."></textarea></div>
-      </div>
-      <div class="af-acts">
-        <button class="btn btn-g" onclick="invSave()">Save Item</button>
-        <button class="btn" onclick="invCancelForm()">Cancel</button>
-      </div>
-    </div>
-
-    <div class="sec">
-      <div class="sh">
-        <div class="st">Consumables &amp; Supplies</div>
-        <div class="sd" id="inv-low-count"></div>
-      </div>
-
-      <!-- Summary metrics -->
-      <div class="mg mg3" style="margin-bottom:18px" id="inv-metrics">
-        <div class="mc mc-a"><div class="ml">Total Items</div><div class="mv" id="inv-total-items">0</div><div class="ms">tracked</div></div>
-        <div class="mc mc-r"><div class="ml">Low Stock</div><div class="mv" id="inv-low-items">0</div><div class="ms">need reorder</div></div>
-        <div class="mc mc-h"><div class="ml">Est. Value</div><div class="mv" id="inv-total-value">$0</div><div class="ms">on hand</div></div>
-      </div>
-
-      <!-- Category filter -->
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="inv-filters">
-        <button class="btn inv-filter-btn active" data-cat="all" onclick="invFilter('all')">All</button>
-        <button class="btn inv-filter-btn" data-cat="consumable" onclick="invFilter('consumable')">Consumables</button>
-        <button class="btn inv-filter-btn" data-cat="supply" onclick="invFilter('supply')">Supplies</button>
-        <button class="btn inv-filter-btn" data-cat="packaging" onclick="invFilter('packaging')">Packaging</button>
-        <button class="btn inv-filter-btn" data-cat="equipment" onclick="invFilter('equipment')">Equipment</button>
-      </div>
-
-      <div id="inv-list"></div>
-    </div>
-
-    <!-- Usage log -->
-    <div class="sec">
-      <div class="sh"><div class="st">Usage Log</div><div class="sd">Track when you use items</div></div>
-      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <select class="es" id="inv-log-item" style="flex:1;min-width:140px"></select>
-        <input class="ei" type="number" id="inv-log-qty" placeholder="Qty used" style="width:100px">
-        <input class="ei" id="inv-log-note" placeholder="Note (optional)" style="flex:1;min-width:120px">
-        <button class="btn btn-g" onclick="invLogUsage()">Log Use</button>
-      </div>
-      <div id="inv-log-list" style="max-height:280px;overflow-y:auto"></div>
-    </div>
-  </div>
-
 </main>
 <div class="toast" id="toast"></div>
 
@@ -4769,7 +4615,6 @@ const PAGE_META = {
   goals:    ['Goals','Quarterly targets · Q1–Q4 · income · content · health · debt'],
   network:  ['Network','Key people · last contact · relationship health'],
   gear:     ['Gear','Equipment inventory · value · Hiscox coverage · lent out'],
-  inventory:['Inventory','Consumables · supplies · low stock alerts · usage log'],
   studio:   ['Studio','NovaLight Studios · 5,600 sq ft · Philly'],
   business: ['Business','NovaLight LLC + Bootstrap Media Group'],
   content:  ['Content','YouTube, short-form, personal brand'],
@@ -4930,7 +4775,6 @@ function goPage(n) {
   if (n === 'goals') renderGoals();
   if (n === 'network') renderNetwork();
   if (n === 'gear') renderGear();
-  if (n === 'inventory') invRender();
   if (n === 'finance2025' && !window._r25init) { window._r25init = true; initReport_r25(); }
   if (n === 'finance2024' && !window._r24init) { window._r24init = true; initReport_r24(); }
   if (n === 'finance2023' && !window._r23init) { window._r23init = true; initReport_r23(); }
@@ -12909,12 +12753,6 @@ function mbInit(){
   if(saved.date === today){mbSkip();renderMoodCard();return;} // already done today
   var mb = document.getElementById('morning-brief');
   if(!mb) return;
-  // On mobile: stop the overlay 100px from the bottom so tab bar is always exposed
-  if(window.innerWidth <= 768){
-    mb.style.bottom = '100px';
-    mb.style.overflowY = 'auto';
-    mb.style.paddingBottom = '20px';
-  }
   mb.style.display = 'flex';
   var hr = new Date().getHours();
   var greet = hr < 12 ? 'Good morning, Chase.' : hr < 17 ? 'Good afternoon, Chase.' : 'Good evening, Chase.';
@@ -13512,234 +13350,87 @@ document.addEventListener('DOMContentLoaded', async function() {
   var token = await spGetValidToken();
   if(token) spInitPlayer(token);
 });
-// ════════════════════════════════════════════════════════
-//  INVENTORY
-// ════════════════════════════════════════════════════════
-function invData(){return JSON.parse(localStorage.getItem('chase-inventory')||'[]');}
-function invSaveData(d){localStorage.setItem('chase-inventory',JSON.stringify(d));}
-function invLogData(){return JSON.parse(localStorage.getItem('chase-inv-log')||'[]');}
-function invSaveLog(d){localStorage.setItem('chase-inv-log',JSON.stringify(d));}
-var _invFilter='all';
-function invRender(){
-  var items=invData();
-  var filtered=_invFilter==='all'?items:items.filter(function(i){return i.cat===_invFilter;});
-  var low=items.filter(function(i){return i.qty<=i.low;});
-  var totalVal=items.reduce(function(s,i){return s+(i.qty*(i.cost||0));},0);
-  var e1=document.getElementById('inv-total-items');if(e1)e1.textContent=items.length;
-  var e2=document.getElementById('inv-low-items');if(e2)e2.textContent=low.length;
-  var e3=document.getElementById('inv-total-value');if(e3)e3.textContent='$'+totalVal.toFixed(0);
-  var lc=document.getElementById('inv-low-count');if(lc)lc.textContent=low.length?low.length+' low stock':'';
-  var el=document.getElementById('inv-list');if(!el)return;
-  if(!filtered.length){el.innerHTML='<div style="background:var(--s1);border:1px dashed var(--b);border-radius:12px;padding:28px;text-align:center;color:var(--t3);font-size:12px">No items yet. Hit + Add to start tracking.</div>';return;}
-  el.innerHTML=filtered.map(function(item){
-    var isLow=item.qty<=item.low;
-    var pct=item.low>0?Math.min(100,Math.round((item.qty/(item.low*3))*100)):100;
-    var bc=isLow?'var(--rd)':pct<60?'var(--am)':'var(--gn)';
-    return '<div class="card" style="margin-bottom:10px;border-left:3px solid '+(isLow?'var(--rd)':'var(--b)')+'">' +
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
-        '<div><div class="card-t">'+item.name+'</div><div class="card-s">'+(item.supplier||'')+(item.cat?' · '+item.cat:'')+'</div></div>' +
-        '<div style="display:flex;gap:6px;align-items:center">'+(isLow?'<span class="badge b-stall">Low</span>':'')+
-        '<button onclick="invDelete(''+item.id+'')" style="background:none;border:none;color:var(--t3);font-size:11px;cursor:pointer">✕</button></div>' +
-      '</div>' +
-      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">' +
-        '<div style="flex:1"><div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%;background:'+bc+'"></div></div></div>' +
-        '<div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:'+bc+'">'+item.qty+' <span style="font-size:10px;color:var(--t3)">'+(item.unit||'units')+'</span></div>' +
-      '</div>' +
-      '<div style="display:flex;gap:16px;font-size:11px;color:var(--t3)">' +
-        '<span>Alert at: '+item.low+'</span>'+(item.cost?'<span>$'+item.cost+'/unit</span>':'')+(item.link?'<a href="'+item.link+'" target="_blank" style="color:var(--ac);text-decoration:none">Reorder ↗</a>':'') +
-      '</div>' +
-      '<div style="display:flex;gap:6px;margin-top:10px">' +
-        '<button class="btn" onclick="invAdjust(''+item.id+'',-1)">- 1</button>' +
-        '<button class="btn" onclick="invAdjust(''+item.id+'',1)">+ 1</button>' +
-        '<button class="btn" onclick="invRestock(''+item.id+'')">Restock</button>' +
-      '</div></div>';
-  }).join('');
-  var sel=document.getElementById('inv-log-item');
-  if(sel)sel.innerHTML=items.map(function(i){return '<option value="'+i.id+'">'+i.name+'</option>';}).join('');
-  invRenderLog();
-}
-function invRenderLog(){
-  var log=invLogData().slice(0,30);
-  var el=document.getElementById('inv-log-list');if(!el)return;
-  if(!log.length){el.innerHTML='<div style="color:var(--t3);font-size:12px;padding:12px 0">No usage logged yet.</div>';return;}
-  el.innerHTML=log.map(function(l){return '<div class="mon-r"><span style="color:var(--t2)">'+l.name+'</span><span style="font-size:11px;color:var(--t3)">'+l.note+'</span><span style="font-family:'DM Mono',monospace;font-size:11px">-'+l.qty+' '+(l.unit||'')+'</span><span style="font-size:10px;color:var(--t3)">'+l.date+'</span></div>';}).join('');
-}
-function invSave(){
-  var name=(document.getElementById('inv-name')||{}).value||'';
-  name=name.trim();if(!name){toast('Name required');return;}
-  var items=invData();
-  items.push({id:'inv-'+Date.now(),name:name,cat:document.getElementById('inv-cat').value,unit:document.getElementById('inv-unit').value,qty:parseFloat(document.getElementById('inv-qty').value)||0,low:parseFloat(document.getElementById('inv-low').value)||5,cost:parseFloat(document.getElementById('inv-cost').value)||0,supplier:document.getElementById('inv-supplier').value,link:document.getElementById('inv-link').value,notes:document.getElementById('inv-notes').value,added:new Date().toISOString().slice(0,10)});
-  invSaveData(items);
-  document.getElementById('inv-form').classList.remove('show');
-  ['inv-name','inv-unit','inv-qty','inv-low','inv-cost','inv-supplier','inv-link','inv-notes'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-  invRender();toast('Item added','ok');
-}
-function invCancelForm(){document.getElementById('inv-form').classList.remove('show');}
-function invFilter(cat){
-  _invFilter=cat;
-  document.querySelectorAll('.inv-filter-btn').forEach(function(b){b.classList.toggle('active',b.dataset.cat===cat);});
-  invRender();
-}
-function invAdjust(id,delta){var items=invData();var item=items.find(function(i){return i.id===id;});if(!item)return;item.qty=Math.max(0,(item.qty||0)+delta);invSaveData(items);invRender();}
-function invRestock(id){var items=invData();var item=items.find(function(i){return i.id===id;});if(!item)return;var qty=parseFloat(prompt('How many '+(item.unit||'units')+' are you adding?'));if(isNaN(qty)||qty<=0)return;item.qty=(item.qty||0)+qty;invSaveData(items);invRender();toast('Restocked +'+qty,'ok');}
-function invDelete(id){invSaveData(invData().filter(function(i){return i.id!==id;}));invRender();toast('Removed');}
-function invLogUsage(){
-  var sel=document.getElementById('inv-log-item');var qtyEl=document.getElementById('inv-log-qty');var noteEl=document.getElementById('inv-log-note');
-  if(!sel||!sel.value)return;var qty=parseFloat(qtyEl.value);if(!qty||qty<=0){toast('Enter a quantity');return;}
-  var items=invData();var item=items.find(function(i){return i.id===sel.value;});if(!item)return;
-  item.qty=Math.max(0,(item.qty||0)-qty);invSaveData(items);
-  var log=invLogData();log.unshift({id:Date.now(),name:item.name,qty:qty,unit:item.unit,note:noteEl.value||'',date:new Date().toISOString().slice(0,10)});
-  invSaveLog(log.slice(0,100));qtyEl.value='';noteEl.value='';invRender();toast('Logged -'+qty+' '+(item.unit||''),'ok');
-}
-
-
 
 </script>
-
-<!-- ══════════ MOBILE BOTTOM TAB BAR ══════════ -->
+<!-- ═══ MOBILE TAB BAR ═══ -->
 <nav class="mob-tabbar" id="mob-tabbar">
   <div class="mob-subtray" id="mob-subtray"></div>
   <div class="mob-tabs">
-    <button class="mob-tab active" id="mobtab-today" onclick="mobSwitchTab('today')">
-      <div class="mob-tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none"/></svg></div>
+    <button class="mob-tab active" id="mobtab-today" onclick="mobTab('today')">
+      <div class="mob-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none"/></svg></div>
       <div class="mob-tab-label">Today</div>
     </button>
-    <button class="mob-tab" id="mobtab-pipeline" onclick="mobSwitchTab('pipeline')">
-      <div class="mob-tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/><circle cx="19" cy="17" r="3"/><path d="M19 15v2l1 1"/></svg></div>
+    <button class="mob-tab" id="mobtab-pipeline" onclick="mobTab('pipeline')">
+      <div class="mob-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/><circle cx="19" cy="17" r="3"/><path d="M19 15v2l1 1"/></svg></div>
       <div class="mob-tab-label">Pipeline</div>
     </button>
-    <button class="mob-tab" id="mobtab-money" onclick="mobSwitchTab('money')">
-      <div class="mob-tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><circle cx="12" cy="15" r="2"/></svg></div>
+    <button class="mob-tab" id="mobtab-money" onclick="mobTab('money')">
+      <div class="mob-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><circle cx="12" cy="15" r="2"/></svg></div>
       <div class="mob-tab-label">Money</div>
     </button>
-    <button class="mob-tab" id="mobtab-create" onclick="mobSwitchTab('create')">
-      <div class="mob-tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+    <button class="mob-tab" id="mobtab-create" onclick="mobTab('create')">
+      <div class="mob-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
       <div class="mob-tab-label">Create</div>
     </button>
-    <button class="mob-tab" id="mobtab-life" onclick="mobSwitchTab('life')">
-      <div class="mob-tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+    <button class="mob-tab" id="mobtab-life" onclick="mobTab('life')">
+      <div class="mob-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
       <div class="mob-tab-label">Life</div>
     </button>
   </div>
 </nav>
 
 <script>
-/* ══════════════════════════════════════════
-   MOBILE TAB BAR — fixed init, no DOMContentLoaded race
-   ══════════════════════════════════════════ */
-var _MOB_TABS = {
-  today:    { pages: [
-    { id: 'today',    label: 'Today' },
-    { id: 'calendar', label: 'Calendar' }
-  ]},
-  pipeline: { pages: [
-    { id: 'deals',     label: 'Deals' },
-    { id: 'crm',       label: 'CRM' },
-    { id: 'bookings',  label: 'Bookings' },
-    { id: 'invoices',  label: 'Invoices' },
-    { id: 'inventory', label: 'Inventory' }
-  ]},
-  money: { pages: [
-    { id: 'payday',    label: 'Pay Day' },
-    { id: 'money',     label: 'Overview' },
-    { id: 'debt',      label: 'Debt' },
-    { id: 'yesnocalc', label: 'Say Yes?' },
-    { id: 'ltv',       label: 'Client LTV' },
-    { id: 'taxjar',    label: 'Tax Jar' },
-    { id: 'runway',    label: 'Runway' }
-  ]},
-  create: { pages: [
-    { id: 'braindump',   label: 'Brain Dump' },
-    { id: 'scripts',     label: 'Scripts' },
-    { id: 'ideas',       label: 'Ideas' },
-    { id: 'content',     label: 'Content' },
-    { id: 'studio',      label: 'Studio' },
-    { id: 'shootprep',   label: 'Shoot Prep' },
-    { id: 'contentpipe', label: 'Pipe' },
-    { id: 'parking',     label: 'Parking Lot' },
-    { id: 'inquiry',     label: 'Inquiry' },
-    { id: 'business',    label: 'Business' }
-  ]},
-  life: { pages: [
-    { id: 'health',   label: 'Health' },
-    { id: 'goals',    label: 'Goals' },
-    { id: 'winjar',   label: 'Win Jar' },
-    { id: 'didtoday', label: 'Did Today' },
-    { id: 'network',  label: 'Network' },
-    { id: 'builds',   label: 'Builds' },
-    { id: 'life',     label: 'Life' },
-    { id: 'gear',     label: 'Gear' },
-    { id: 'debrief',  label: 'Debrief' },
-    { id: 'fin-all',  label: 'Finance' }
-  ]}
+var _TABS = {
+  today:    [{id:'today',l:'Today'},{id:'calendar',l:'Calendar'}],
+  pipeline: [{id:'deals',l:'Deals'},{id:'crm',l:'CRM'},{id:'bookings',l:'Bookings'},{id:'invoices',l:'Invoices'}],
+  money:    [{id:'payday',l:'Pay Day'},{id:'money',l:'Overview'},{id:'debt',l:'Debt'},{id:'yesnocalc',l:'Say Yes?'},{id:'ltv',l:'LTV'},{id:'taxjar',l:'Tax Jar'},{id:'runway',l:'Runway'}],
+  create:   [{id:'braindump',l:'Brain Dump'},{id:'scripts',l:'Scripts'},{id:'ideas',l:'Ideas'},{id:'content',l:'Content'},{id:'studio',l:'Studio'},{id:'shootprep',l:'Shoot Prep'},{id:'contentpipe',l:'Pipe'},{id:'parking',l:'Parking'},{id:'inquiry',l:'Inquiry'},{id:'business',l:'Business'}],
+  life:     [{id:'health',l:'Health'},{id:'goals',l:'Goals'},{id:'winjar',l:'Win Jar'},{id:'didtoday',l:'Did Today'},{id:'network',l:'Network'},{id:'builds',l:'Builds'},{id:'life',l:'Life'},{id:'gear',l:'Gear'},{id:'debrief',l:'Debrief'}]
 };
+var _P2T = {};
+Object.keys(_TABS).forEach(function(t){_TABS[t].forEach(function(p){_P2T[p.id]=t;});});
+var _curTab = 'today';
+var _lastPage = {today:'today',pipeline:'deals',money:'payday',create:'braindump',life:'health'};
 
-var _PAGE_TO_TAB = {};
-Object.keys(_MOB_TABS).forEach(function(tab) {
-  _MOB_TABS[tab].pages.forEach(function(p) { _PAGE_TO_TAB[p.id] = tab; });
-});
-
-var _mobActiveTab = 'today';
-var _mobActivePages = { today: 'today', pipeline: 'deals', money: 'payday', create: 'braindump', life: 'health' };
-
-function isMobile() { return window.innerWidth <= 768; }
-
-function mobBuildTray(tabKey, activePageId) {
+function mobTab(tab) {
+  if(window.innerWidth > 768) return;
+  _curTab = tab;
+  // Update tab buttons
+  document.querySelectorAll('.mob-tab').forEach(function(el){
+    el.classList.toggle('active', el.id === 'mobtab-' + tab);
+  });
+  // Build chip tray
   var tray = document.getElementById('mob-subtray');
-  if (!tray) return;
-  var pages = _MOB_TABS[tabKey] ? _MOB_TABS[tabKey].pages : [];
+  var pages = _TABS[tab];
+  var cur = _lastPage[tab] || pages[0].id;
   tray.innerHTML = '';
-  tray.classList.remove('show');
-  if (pages.length <= 1) return;
   pages.forEach(function(p) {
     var chip = document.createElement('div');
-    chip.className = 'mob-chip' + (p.id === activePageId ? ' active' : '');
-    chip.textContent = p.label;
-    chip.style.cursor = 'pointer';
-    chip.addEventListener('click', function() { mobGoPage(p.id); });
+    chip.className = 'mob-chip' + (p.id === cur ? ' active' : '');
+    chip.textContent = p.l;
+    chip.addEventListener('click', function(){ mobChip(p.id, tab); });
     tray.appendChild(chip);
   });
   tray.classList.add('show');
+  // Navigate
+  goPage(cur);
 }
 
-function mobSwitchTab(tabKey) {
-  // Dismiss morning brief if it's showing
-  var mb = document.getElementById('morning-brief');
-  if(mb && mb.style.display !== 'none') {
-    mb.style.opacity = '0';
-    mb.style.transition = 'opacity .25s';
-    setTimeout(function(){ mb.style.display = 'none'; mb.style.opacity = '1'; }, 260);
-  }
-  _mobActiveTab = tabKey;
-  // Highlight tab button
-  document.querySelectorAll('.mob-tab').forEach(function(el) {
-    el.classList.toggle('active', el.id === 'mobtab-' + tabKey);
+function mobChip(pageId, tab) {
+  _lastPage[tab] = pageId;
+  var tray = document.getElementById('mob-subtray');
+  tray.querySelectorAll('.mob-chip').forEach(function(c){
+    c.classList.remove('active');
   });
-  // Build tray
-  var pageId = _mobActivePages[tabKey] || _MOB_TABS[tabKey].pages[0].id;
-  mobBuildTray(tabKey, pageId);
-  // Navigate
+  event.target.classList.add('active');
   goPage(pageId);
 }
 
-function mobGoPage(pageId) {
-  var tab = _PAGE_TO_TAB[pageId] || _mobActiveTab;
-  _mobActivePages[tab] = pageId;
-  // Rebuild tray with new active chip
-  mobBuildTray(tab, pageId);
-  // Navigate
-  goPage(pageId);
-}
-
-// Init after a tiny delay to ensure goPage is defined
-setTimeout(function() {
-  if (!isMobile()) return;
-  // Hide parking lot bar on mobile so it doesn't cover tabs
-  var plb = document.getElementById('parking-lot-bar');
-  if (plb) plb.style.display = 'none';
-  // Set today tab active and navigate
-  mobSwitchTab('today');
-}, 50);
+// Init on load
+window.addEventListener('load', function(){
+  if(window.innerWidth > 768) return;
+  mobTab('today');
+});
 </script>
 </body>
 </html>
