@@ -2,6 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<!-- ============================================================
+     PASTE YOUR ANTHROPIC API KEY BELOW
+     Get it at: console.anthropic.com → API Keys → Create Key
+     It starts with: sk-ant-api03-...
+     ============================================================ -->
+<script>window.ANTHROPIC_KEY = 'sk-ant-aрі0З-MХwZsFcLqnqgFхspksIiDpn0ng2fdKZVapNVGdczjM0AJIаjHRbvP1UеHТxkn-7spQWgLdjbF4jdDRY_PHCrkQ-8eNbRgAA';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -6008,7 +6014,7 @@ async function generateDebrief() {
   try {
     var resp = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','x-api-key':window.ANTHROPIC_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body: JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:600,
@@ -8817,7 +8823,7 @@ async function runBrainDump() {
 
     var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': window.ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: isYap ? 2000 : 1000,
@@ -12226,7 +12232,7 @@ async function analyzeContentIdeas() {
 
     var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': window.ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
@@ -13664,7 +13670,7 @@ async function bkCreateCalendarEvent(client, date, startTime, hours, spaceName, 
 
     var resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': window.ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 500,
@@ -13708,7 +13714,7 @@ async function bkCreateGmailDraft(client, email, date, startTime, hours, spaceNa
 
     var resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': window.ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 500,
@@ -13752,7 +13758,7 @@ function aiSnapCalories(input) {
     var mediaType = file.type || 'image/jpeg';
     return fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': window.ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 700,
@@ -13844,7 +13850,7 @@ async function aiSnapCalories(input) {
 
     var resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': window.ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 600,
@@ -13929,7 +13935,7 @@ async function aiCheckIngredients(input) {
 
     var resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': window.ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 800,
