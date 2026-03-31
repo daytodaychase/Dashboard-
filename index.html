@@ -460,6 +460,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
 .tb-brand-tag{font-family:'DM Mono',monospace;font-size:9px;color:#5a5550;letter-spacing:.22em;text-transform:uppercase;margin-top:3px;}
 
 @media(max-width:768px){
+  #morning-brief{bottom:100px!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;justify-content:flex-start!important;padding-top:30px!important;}
   /* Hide desktop sidebar completely */
   .sb{display:none!important;}
   /* Main takes full width */
@@ -497,6 +498,119 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
 @media(max-width:400px){
   .mg4,.mg3,.mg2{grid-template-columns:1fr!important;}
   .exp-g,.exp-g2,.exp-g5,.afg{grid-template-columns:1fr!important;}
+}
+
+/* ── MOBILE: GLOBAL FIXES FOR EVERY PAGE ── */
+@media(max-width:768px){
+
+  /* ── 1. KILL ALL HORIZONTAL OVERFLOW EVERYWHERE ── */
+  .pg.active, .pg.active * {
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+
+  /* ── 2. COLLAPSE EVERY INLINE GRID TO SINGLE COLUMN ── */
+  /* Targets every style="display:grid;grid-template-columns:..." */
+  [style*="grid-template-columns"] {
+    grid-template-columns:1fr!important;
+  }
+  /* Exceptions: keep 2-col for small things that make sense */
+  [style*="repeat(4,1fr)"][style*="gap:8px"],
+  [style*="repeat(3,1fr)"][style*="gap:8px"] {
+    grid-template-columns:1fr 1fr!important;
+  }
+  /* Calendar 7-day grid stays 7 cols */
+  #cal-grid,
+  [style*="repeat(7,1fr)"] {
+    grid-template-columns:repeat(7,1fr)!important;
+    font-size:10px!important;
+  }
+
+  /* ── 3. COLLAPSE FLEX ROWS THAT CAUSE SIDEWAYS SCROLL ── */
+  [style*="display:flex"][style*="gap"] {
+    flex-wrap:wrap!important;
+  }
+  /* Keep intentional single-line rows */
+  .mob-tabs, .mob-subtray, .ca-tabs,
+  [style*="display:flex"][style*="align-items:center"][style*="justify-content:space-between"] {
+    flex-wrap:nowrap!important;
+  }
+
+  /* ── 4. CENTER EVERYTHING ── */
+  .pg.active { text-align:center!important; }
+  /* Inputs/selects stay left-aligned so they read naturally */
+  input, select, textarea,
+  .cr, .mon-r, .life-item,
+  .deal-table td { text-align:left!important; }
+
+  /* ── 5. DEALS TABLE → STACKED CARDS ── */
+  .deal-table thead { display:none!important; }
+  .deal-table,
+  .deal-table tbody,
+  .deal-table tr,
+  .deal-table td { display:block!important; width:100%!important; }
+  .deal-table tr.dr {
+    background:var(--s1)!important;
+    border:1px solid rgba(255,255,255,0.07)!important;
+    border-radius:12px!important;
+    margin-bottom:10px!important;
+    padding:12px 14px!important;
+  }
+  .deal-table tr.dr td {
+    border:none!important;
+    border-radius:0!important;
+    padding:3px 0!important;
+    text-align:left!important;
+  }
+  /* Hide dot columns — keep name, value, status, next action */
+  .deal-table td:nth-child(n+4):nth-child(-n+9) { display:none!important; }
+
+  /* ── 6. INVOICES ── */
+  #pg-invoices [style*="justify-content:space-between"] {
+    flex-direction:column!important;
+    align-items:center!important;
+  }
+
+  /* ── 7. CALENDAR ── */
+  #pg-calendar [style*="grid-template-columns:1fr 300px"] {
+    grid-template-columns:1fr!important;
+  }
+  #pg-calendar [style*="grid-template-columns:repeat(7,1fr)"] {
+    grid-template-columns:repeat(7,1fr)!important;
+    font-size:9px!important;
+  }
+
+  /* ── 8. PAYDAY ── */
+  #pg-payday [style*="grid-template-columns:2fr 1fr 1fr auto"] {
+    grid-template-columns:1fr 1fr!important;
+  }
+
+  /* ── 9. HEALTH step stats ── */
+  [id="steps-week-stats"] {
+    grid-template-columns:repeat(7,1fr)!important;
+    font-size:9px!important;
+  }
+
+  /* ── 10. PREVENT any table from scrolling sideways ── */
+  table { display:block!important; overflow-x:hidden!important; width:100%!important; }
+  table:not(.deal-table) thead th,
+  table:not(.deal-table) td { font-size:11px!important; padding:6px 4px!important; }
+
+  /* ── 11. BUTTONS: center and wrap ── */
+  .af-acts, [style*="display:flex;gap:8px"] { justify-content:center!important; flex-wrap:wrap!important; }
+
+  /* ── 12. PARKING LOT & misc ── */
+  .parking-lot-bar { display:none!important; }
+
+  /* ── 13. FINANCE REPORTS ── */
+  .rpt-wrap [style*="grid-template-columns"] { grid-template-columns:1fr!important; }
+  .rpt-wrap [style*="grid-template-columns:1fr 1fr"] { grid-template-columns:1fr 1fr!important; }
+}
+
+@media(max-width:400px){
+  #cal-grid, [style*="repeat(7,1fr)"] { font-size:7px!important; }
+  [style*="repeat(4,1fr)"][style*="gap:8px"],
+  [style*="repeat(3,1fr)"][style*="gap:8px"] { grid-template-columns:1fr 1fr!important; }
 }
 </style>
 </head>
@@ -540,7 +654,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
 <div class="parking-lot-bar" id="parking-lot-bar"><span style="font-size:12px;color:var(--t3);flex-shrink:0">🅿 Park it:</span><input id="pl-input" placeholder="Idea? Park it here and stay on task — Enter saves..." onkeydown="if(event.key==='Enter')plSave()"><span class="pl-badge" id="pl-count"></span><button onclick="goPage('parking')" style="font-size:9px;padding:3px 8px;border-radius:5px;border:1px solid var(--b);background:var(--s2);color:var(--t3);cursor:pointer;white-space:nowrap">View all</button></div>
 
 <!-- ═══ MORNING BRIEF ═══ -->
-<div id="morning-brief" style="position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:9990;display:none;flex-direction:column;align-items:center;justify-content:center;padding:30px;">
+<div id="morning-brief" style="position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:9990;display:none;flex-direction:column;align-items:center;justify-content:flex-start;padding:30px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
   <div style="width:100%;max-width:520px">
     <!-- TIME + GREETING -->
     <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--t3);text-align:center;margin-bottom:6px;letter-spacing:.12em;text-transform:uppercase" id="mb-date-display"></div>
@@ -13431,6 +13545,31 @@ window.addEventListener('load', function(){
   if(window.innerWidth > 768) return;
   mobTab('today');
 });
+
+// ── SWIPE TO SWITCH TABS ──────────────────────────────────────────
+(function(){
+  var tabOrder = ['today','pipeline','money','create','life'];
+  var touchStartX = 0;
+  var touchStartY = 0;
+  var threshold = 60; // min px horizontal swipe
+  var restraint = 100; // max px vertical drift
+
+  document.addEventListener('touchstart', function(e){
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  }, {passive:true});
+
+  document.addEventListener('touchend', function(e){
+    if(window.innerWidth > 768) return;
+    var dx = e.changedTouches[0].screenX - touchStartX;
+    var dy = e.changedTouches[0].screenY - touchStartY;
+    if(Math.abs(dx) < threshold) return;
+    if(Math.abs(dy) > restraint) return;
+    var cur = tabOrder.indexOf(window._curTab || 'today');
+    if(dx < 0 && cur < tabOrder.length - 1) mobTab(tabOrder[cur + 1]); // swipe left = next tab
+    if(dx > 0 && cur > 0) mobTab(tabOrder[cur - 1]); // swipe right = prev tab
+  }, {passive:true});
+})();
 </script>
 </body>
 </html>
