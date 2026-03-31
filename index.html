@@ -522,7 +522,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
 @media (max-width: 768px) {
   .sb { display: none !important; }
   /* ── MOBILE TEXT CENTERING (safe — text-align only, nothing that blocks clicks) ── */
-  .pg { text-align: center; }
+  .pg.active { text-align: center; display: block !important; }
   .card-t, .card-s, .mv, .ml, .ms, .st, .sd, .sct,
   .al-t, .al-b, .dn, .dsrc, .dd, .dam, .dams,
   .plat-name, .plat-goal, .pj-t, .pj-d,
@@ -552,8 +552,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
   .tb-desktop { display: none; }
   .tb-mobile { display: flex; }
   .ta { display: none !important; }
-  .pg { padding: 14px 12px 165px !important; max-width: 100% !important; }
-  .pg.active.fullpage { padding: 0 0 145px !important; }
+  .pg.active { padding: 14px 12px 165px !important; max-width: 100% !important; }
+  .pg.active.fullpage { padding: 0 0 145px !important; display:block !important; }
   .toast { bottom: 110px; right: 10px; left: 10px; text-align: center; max-width: none; }
   .mg4, .mg3 { grid-template-columns: 1fr 1fr !important; }
   .mg2 { grid-template-columns: 1fr 1fr !important; }
