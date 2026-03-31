@@ -495,6 +495,53 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
   table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .toast{bottom:100px;right:10px;left:10px;text-align:center;max-width:none;}
 }
+/* ── MORNING BRIEF MOBILE ── */
+@media(max-width:768px){
+  #morning-brief {
+    padding: 24px 16px !important;
+    bottom: 100px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    align-items: center !important;
+  }
+  #morning-brief > div {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  #mb-greeting {
+    font-size: 26px !important;
+    line-height: 1.2 !important;
+    margin-bottom: 4px !important;
+  }
+  #mb-sub {
+    font-size: 11px !important;
+    margin-bottom: 18px !important;
+  }
+  /* Mood grid: 4 across on top row stays readable, 3 across on bottom */
+  #morning-brief [style*="repeat(4,1fr)"] {
+    grid-template-columns: repeat(4,1fr) !important;
+    gap: 6px !important;
+  }
+  #morning-brief [style*="repeat(3,1fr)"] {
+    grid-template-columns: repeat(3,1fr) !important;
+    gap: 6px !important;
+  }
+  /* Mood buttons: smaller padding on mobile */
+  .mb-mood {
+    padding: 10px 4px !important;
+    border-radius: 10px !important;
+  }
+  .mb-mood span:first-child { font-size: 20px !important; }
+  .mb-mood span:last-child { font-size: 9px !important; }
+  /* Focus input */
+  #mb-focus-input { font-size: 16px !important; }
+  /* Let's go button full width */
+  #mb-enter-wrap button {
+    width: 100% !important;
+    font-size: 18px !important;
+  }
+}
+
 @media(max-width:400px){
   .mg4,.mg3,.mg2{grid-template-columns:1fr!important;}
   .exp-g,.exp-g2,.exp-g5,.afg{grid-template-columns:1fr!important;}
@@ -2037,6 +2084,63 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
       </div>
     </div>
 
+
+    <!-- ═══ AI FOOD CAMERA ═══ -->
+    <div class="sh" style="margin-top:28px">
+      <div class="st">📸 AI Food Scanner</div>
+      <div class="sd">camera · estimate · log</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <!-- Calorie Snap -->
+      <div class="card" style="border-top:3px solid var(--ac)">
+        <div class="card-t" style="margin-bottom:4px">🔥 Calorie Snap</div>
+        <div class="card-s" style="margin-bottom:12px">Photo your food · get an estimate</div>
+        <label style="display:block;background:var(--s2);border:1px dashed rgba(232,213,163,0.3);border-radius:10px;padding:20px;text-align:center;cursor:pointer;margin-bottom:10px" id="calsnap-label">
+          <div style="font-size:28px;margin-bottom:6px">📷</div>
+          <div style="font-size:11px;color:var(--t3)">Tap to use camera</div>
+          <input type="file" accept="image/*" capture="environment" id="calsnap-input" style="display:none" onchange="aiSnapCalories(this)">
+        </label>
+        <div id="calsnap-result" style="display:none">
+          <div id="calsnap-img-wrap" style="margin-bottom:10px;border-radius:8px;overflow:hidden;max-height:180px;display:flex;align-items:center;justify-content:center;background:var(--bg)">
+            <img id="calsnap-img" style="max-width:100%;max-height:180px;object-fit:contain;border-radius:8px">
+          </div>
+          <div id="calsnap-output" style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:10px"></div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-g" onclick="aiSnapLogCals()" style="flex:1;font-size:11px" id="calsnap-log-btn">+ Log these cals</button>
+            <button class="btn" onclick="aiSnapReset()" style="font-size:11px">Retake</button>
+          </div>
+        </div>
+        <div id="calsnap-loading" style="display:none;text-align:center;padding:20px 0">
+          <div style="font-size:11px;color:var(--t3);letter-spacing:.1em" id="calsnap-loading-msg">Analyzing food...</div>
+        </div>
+        <div style="background:rgba(232,162,58,0.1);border:1px solid rgba(232,162,58,0.25);border-radius:6px;padding:7px 10px;margin-top:8px;font-size:10px;color:var(--am);line-height:1.5">
+          <strong>⚠️ ESTIMATE ONLY</strong> — AI photo estimates can be off by 20–40%. Use as a ballpark awareness tool. For accuracy, weigh your food or check the label.
+        </div>
+      </div>
+
+      <!-- Ingredient Check -->
+      <div class="card" style="border-top:3px solid var(--gn)">
+        <div class="card-t" style="margin-bottom:4px">🧪 Ingredient Check</div>
+        <div class="card-s" style="margin-bottom:12px">Scan a label · know what's in it</div>
+        <label style="display:block;background:var(--s2);border:1px dashed rgba(76,175,125,0.3);border-radius:10px;padding:20px;text-align:center;cursor:pointer;margin-bottom:10px" id="ingcheck-label">
+          <div style="font-size:28px;margin-bottom:6px">🔬</div>
+          <div style="font-size:11px;color:var(--t3)">Tap to scan label</div>
+          <input type="file" accept="image/*" capture="environment" id="ingcheck-input" style="display:none" onchange="aiCheckIngredients(this)">
+        </label>
+        <div id="ingcheck-result" style="display:none">
+          <div id="ingcheck-img-wrap" style="margin-bottom:10px;border-radius:8px;overflow:hidden;max-height:180px;display:flex;align-items:center;justify-content:center;background:var(--bg)">
+            <img id="ingcheck-img" style="max-width:100%;max-height:180px;object-fit:contain;border-radius:8px">
+          </div>
+          <div id="ingcheck-output" style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:10px"></div>
+          <button class="btn" onclick="ingCheckReset()" style="font-size:11px;width:100%">Scan another</button>
+        </div>
+        <div id="ingcheck-loading" style="display:none;text-align:center;padding:20px 0">
+          <div style="font-size:11px;color:var(--t3);letter-spacing:.1em" id="ingcheck-loading-msg">Reading label...</div>
+        </div>
+      </div>
+    </div>
+
     <div class="sh"><div class="st">Check-in History</div><div class="sd">last 7 days</div></div>
     <div id="ci-history">
       <div class="card" style="text-align:center;padding:24px;color:var(--t3);font-size:12px">No check-ins yet. Log today's above.</div>
@@ -3375,7 +3479,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
       <div style="font-family:'Fredoka',sans-serif;font-size:14px;font-weight:600;margin-bottom:12px">Log Studio Booking</div>
       <div class="afg">
         <div><div class="exp-lbl">Client name</div><input class="ei" id="bk-client" placeholder="e.g. Attendre"></div>
+        <div><div class="exp-lbl">Client email (for confirmation)</div><input class="ei" id="bk-client-email" type="email" placeholder="client@email.com"></div>
         <div><div class="exp-lbl">Date</div><input class="ei" id="bk-date" type="date"></div>
+        <div><div class="exp-lbl">Start time</div><input class="ei" id="bk-start-time" type="time" value="10:00"></div>
+        <div><div class="exp-lbl">Deposit collected ($)</div><input class="ei" id="bk-deposit" type="number" placeholder="0"></div>
         <div><div class="exp-lbl">Space</div>
           <select class="es" id="bk-space" onchange="calcBookingTotal()">
             <option value="lounge">Nova Lounge ($65/hr)</option>
@@ -3416,8 +3523,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
           <div><div style="color:var(--rd);margin-bottom:2px">Overhead share</div><div style="font-weight:600;color:var(--rd)" id="bk-prev-overhead">—</div></div>
         </div>
       </div>
+      <div id="bk-cal-status" style="display:none;background:rgba(76,175,125,0.08);border:1px solid rgba(76,175,125,0.2);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:11px;color:var(--gn)"></div>
       <div class="af-acts">
-        <button class="btn btn-g" onclick="saveBooking()">Save booking</button>
+        <button class="btn btn-g" id="bk-save-btn" onclick="saveBookingFull()">Save + Block Calendar</button>
         <button class="btn" onclick="document.getElementById('booking-form').classList.remove('show')">Cancel</button>
       </div>
     </div>
@@ -13464,6 +13572,412 @@ document.addEventListener('DOMContentLoaded', async function() {
   var token = await spGetValidToken();
   if(token) spInitPlayer(token);
 });
+
+</script>
+<script>
+// ════════════════════════════════════════════════════════
+//  BOOKING CALENDAR+GMAIL INTEGRATION
+// ════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════
+//  BOOKING — CALENDAR + GMAIL INTEGRATION
+// ════════════════════════════════════════════════════════
+
+var _SPACE_NAMES = {
+  lounge: 'Nova Lounge', gallery: 'Gallery', 'crimson-noir': 'Crimson Noir',
+  garden: 'Nova Garden', both: 'Multiple Spaces',
+  'membership-t1': 'Membership Tier 1', 'membership-t2': 'Membership Tier 2',
+  'membership-t3': 'Membership Tier 3'
+};
+
+async function saveBookingFull() {
+  var client     = (document.getElementById('bk-client')?.value || '').trim();
+  var email      = (document.getElementById('bk-client-email')?.value || '').trim();
+  var date       = document.getElementById('bk-date')?.value;
+  var startTime  = document.getElementById('bk-start-time')?.value || '10:00';
+  var deposit    = parseFloat(document.getElementById('bk-deposit')?.value) || 0;
+
+  if (!client || !date) { toast('Client name and date are required'); return; }
+
+  var total  = parseFloat(document.getElementById('bk-total')?.value) || 0;
+  var space  = document.getElementById('bk-space')?.value;
+  var hours  = parseFloat(document.getElementById('bk-hours')?.value) || 2;
+  var spaceName = _SPACE_NAMES[space] || space;
+
+  // Disable button and show loading
+  var btn = document.getElementById('bk-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+  var statusEl = document.getElementById('bk-cal-status');
+  if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = 'Saving booking...'; }
+
+  // 1. Save booking to localStorage (existing function logic)
+  saveBooking();
+
+  // 2. Block Google Calendar
+  var calResult = await bkCreateCalendarEvent(client, date, startTime, hours, spaceName, total, deposit);
+
+  // 3. Send Gmail confirmation draft if email provided
+  var gmailResult = null;
+  if (email) {
+    gmailResult = await bkCreateGmailDraft(client, email, date, startTime, hours, spaceName, total, deposit);
+  }
+
+  // Show results
+  var msgs = [];
+  if (calResult.ok) msgs.push('📅 Blocked on Google Calendar');
+  else msgs.push('⚠️ Calendar: ' + calResult.error);
+  if (email) {
+    if (gmailResult && gmailResult.ok) msgs.push('✉️ Confirmation draft ready in Gmail');
+    else if (gmailResult) msgs.push('⚠️ Gmail: ' + gmailResult.error);
+  }
+
+  if (statusEl) {
+    statusEl.textContent = msgs.join(' · ');
+    setTimeout(function() {
+      statusEl.style.display = 'none';
+      document.getElementById('booking-form').classList.remove('show');
+    }, 3000);
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Save + Block Calendar'; }
+}
+
+async function bkCreateCalendarEvent(client, date, startTime, hours, spaceName, total, deposit) {
+  try {
+    // Build start/end in RFC3339
+    var startDT = date + 'T' + startTime + ':00';
+    var endHour = parseInt(startTime.split(':')[0]) + Math.floor(hours);
+    var endMin  = parseInt(startTime.split(':')[1]) + Math.round((hours % 1) * 60);
+    if (endMin >= 60) { endHour += 1; endMin -= 60; }
+    var endDT = date + 'T' + String(endHour).padStart(2,'0') + ':' + String(endMin).padStart(2,'0') + ':00';
+
+    var description = [
+      'Studio: ' + spaceName,
+      'Duration: ' + hours + ' hrs',
+      total > 0 ? 'Total: $' + total : '',
+      deposit > 0 ? 'Deposit collected: $' + deposit : '',
+      deposit > 0 && total > 0 ? 'Balance due: $' + (total - deposit) : '',
+      '',
+      'Booked via DAYTODAY dashboard'
+    ].filter(Boolean).join('\n');
+
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        system: 'You are a calendar assistant. Create a Google Calendar event using the gcal_create_event tool. Use colorId "5" (yellow). Return only the result.',
+        messages: [{
+          role: 'user',
+          content: 'Create a calendar event: summary="NovaLight — ' + client + ' (' + spaceName + ')", start=' + startDT + ', end=' + endDT + ', timezone=America/New_York, description="' + description.replace(/\n/g, '\\n') + '", colorId=5'
+        }],
+        mcp_servers: [{ type: 'url', url: 'https://gcal.mcp.claude.com/mcp', name: 'gcal' }]
+      })
+    });
+
+    var data = await resp.json();
+    var text = (data.content || []).map(function(b){ return b.text || ''; }).join('');
+    var toolResults = (data.content || []).filter(function(b){ return b.type === 'mcp_tool_result'; });
+    if (toolResults.length > 0 || text.toLowerCase().includes('created') || text.toLowerCase().includes('event')) {
+      return { ok: true };
+    }
+    return { ok: false, error: 'Could not create event' };
+  } catch(e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+async function bkCreateGmailDraft(client, email, date, startTime, hours, spaceName, total, deposit) {
+  try {
+    var dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+    var balance = total - deposit;
+
+    var body = 'Hi ' + client + ',\n\nYour booking at NovaLight Studios is confirmed!\n\n' +
+      'Date: ' + dateFormatted + '\n' +
+      'Start time: ' + startTime + '\n' +
+      'Duration: ' + hours + ' hours\n' +
+      'Space: ' + spaceName + '\n' +
+      (total > 0 ? 'Total: $' + total + '\n' : '') +
+      (deposit > 0 ? 'Deposit paid: $' + deposit + '\n' : '') +
+      (balance > 0 ? 'Balance due at arrival: $' + balance + '\n' : '') +
+      '\nLocation: NovaLight Studios — 3237 Amber St, Philadelphia, PA\nHours: 7am – 12am\n\n' +
+      'Please arrive a few minutes early. If anything changes, reply to this email.\n\n' +
+      'Looking forward to it,\nChase\nNovaLight Studios';
+
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        system: 'You are an email assistant. Create a Gmail draft using the gmail_create_draft tool. Return only the result.',
+        messages: [{
+          role: 'user',
+          content: 'Create a Gmail draft to: ' + email + ', subject: "NovaLight Studios — Booking Confirmed (' + dateFormatted + ')", body: ' + JSON.stringify(body)
+        }],
+        mcp_servers: [{ type: 'url', url: 'https://gmail.mcp.claude.com/mcp', name: 'gmail' }]
+      })
+    });
+
+    var data = await resp.json();
+    var text = (data.content || []).map(function(b){ return b.text || ''; }).join('');
+    var toolResults = (data.content || []).filter(function(b){ return b.type === 'mcp_tool_result'; });
+    if (toolResults.length > 0 || text.toLowerCase().includes('draft') || text.toLowerCase().includes('created')) {
+      return { ok: true };
+    }
+    return { ok: false, error: 'Could not create draft' };
+  } catch(e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+// ── ALSO FIX CALORIE SNAP PROMPT for better estimates ────────────────────────
+// Overrides the system prompt used in aiSnapCalories
+var _CAL_SNAP_SYSTEM = 'You are a nutrition analyst. When given a food photo, provide a REALISTIC calorie estimate. Be specific about what you see. Format EXACTLY like this:\n\n⚠️ ESTIMATE — Photo accuracy varies 20-40%\n\nFOODS DETECTED: [list every item and estimated portion]\n\nESTIMATED CALORIES: [number] kcal\nPROTEIN: ~[number]g\nCARBS: ~[number]g\nFAT: ~[number]g\nFIBER: ~[number]g\n\nCONFIDENCE: [Low/Medium/High] — [why, e.g. "Medium — can see portions clearly but sauce unknown"]\n\nWHAT WOULD CHANGE THIS: [e.g. "If dressing is heavy, add 100-200 cals"]\n\nKeep it direct. No markdown. If unidentifiable, say so honestly.';
+
+// Patch aiSnapCalories to use better prompt
+var _origAiSnapCalories = typeof aiSnapCalories !== 'undefined' ? aiSnapCalories : null;
+function aiSnapCalories(input) {
+  var file = input.files[0];
+  if (!file) return;
+  document.getElementById('calsnap-label').style.display = 'none';
+  document.getElementById('calsnap-result').style.display = 'none';
+  document.getElementById('calsnap-loading').style.display = 'block';
+  var interval = aiMsgCycle(_calSnapMsgs, 'calsnap-loading-msg');
+  showImgPreview(file, 'calsnap-img');
+
+  fileToBase64(file).then(function(b64) {
+    var mediaType = file.type || 'image/jpeg';
+    return fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 700,
+        system: _CAL_SNAP_SYSTEM,
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: b64 } },
+          { type: 'text', text: 'Analyze this food photo. Give me your best calorie estimate and be upfront about uncertainty.' }
+        ]}]
+      })
+    });
+  }).then(function(resp) { return resp.json(); }).then(function(data) {
+    var text = (data.content || []).map(function(b){ return b.text || ''; }).join('');
+    clearInterval(interval);
+    document.getElementById('calsnap-loading').style.display = 'none';
+    document.getElementById('calsnap-result').style.display = 'block';
+    var calMatch = text.match(/ESTIMATED CALORIES:\s*~?(\d+)/i);
+    _calsnapEstimate = calMatch ? parseInt(calMatch[1]) : 0;
+    var foodMatch = text.match(/FOODS DETECTED:\s*(.+?)(?:\n|$)/i);
+    _calsnapLabel = foodMatch ? foodMatch[1].trim() : 'Food (AI estimate)';
+    // Highlight the ESTIMATE warning line in amber
+    var formatted = text
+      .replace(/(⚠️ ESTIMATE[^\n]*)/g, '<span style="color:var(--am);font-weight:700">$1</span>')
+      .replace(/CONFIDENCE: (Low)/g, 'CONFIDENCE: <span style="color:var(--rd)">Low</span>')
+      .replace(/CONFIDENCE: (Medium)/g, 'CONFIDENCE: <span style="color:var(--am)">Medium</span>')
+      .replace(/CONFIDENCE: (High)/g, 'CONFIDENCE: <span style="color:var(--gn)">High</span>')
+      .replace(/\n/g, '<br>');
+    document.getElementById('calsnap-output').innerHTML = formatted;
+    if (_calsnapEstimate > 0) {
+      document.getElementById('calsnap-log-btn').textContent = '+ Log ~' + _calsnapEstimate + ' cals (est.)';
+    }
+  }).catch(function(e) {
+    clearInterval(interval);
+    document.getElementById('calsnap-loading').style.display = 'none';
+    document.getElementById('calsnap-result').style.display = 'block';
+    document.getElementById('calsnap-output').textContent = 'Could not analyze. Try better lighting or a closer shot.';
+  });
+}
+
+// ════════════════════════════════════════════════════════
+//  AI FOOD SCANNER
+// ════════════════════════════════════════════════════════
+
+var _calsnapEstimate = 0;
+var _calsnapLabel = '';
+
+var _calSnapMsgs = ['Analyzing food...','Estimating portions...','Calculating macros...','Almost done...'];
+var _ingCheckMsgs = ['Reading label...','Scanning ingredients...','Flagging chemicals...','Almost done...'];
+
+function aiMsgCycle(msgs, elId) {
+  var i = 0;
+  var el = document.getElementById(elId);
+  if(el) el.textContent = msgs[0];
+  return setInterval(function(){
+    i = (i+1) % msgs.length;
+    var el = document.getElementById(elId);
+    if(el) el.textContent = msgs[i];
+  }, 1800);
+}
+
+function fileToBase64(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function(e) { resolve(e.target.result.split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function showImgPreview(file, imgId) {
+  var url = URL.createObjectURL(file);
+  var img = document.getElementById(imgId);
+  if(img) img.src = url;
+}
+
+// ── CALORIE SNAP ────────────────────────────────────────
+async function aiSnapCalories(input) {
+  var file = input.files[0];
+  if(!file) return;
+  // Show loading
+  document.getElementById('calsnap-label').style.display = 'none';
+  document.getElementById('calsnap-result').style.display = 'none';
+  document.getElementById('calsnap-loading').style.display = 'block';
+  var interval = aiMsgCycle(_calSnapMsgs, 'calsnap-loading-msg');
+  showImgPreview(file, 'calsnap-img');
+
+  try {
+    var b64 = await fileToBase64(file);
+    var mediaType = file.type || 'image/jpeg';
+
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        system: 'You are a nutrition analyst. When given a food photo, estimate calories and macros. Be honest about uncertainty. Format your response exactly like this:\n\nFOODS DETECTED: [list each item]\nESTIMATED CALORIES: [number] kcal\nPROTEIN: ~[number]g\nCARBS: ~[number]g\nFAT: ~[number]g\nCONFIDENCE: [Low/Medium/High] — [one sentence why]\nNOTE: [one practical tip about this meal]\n\nKeep it concise. No markdown. If you cannot identify food, say so.',
+        messages: [{
+          role: 'user',
+          content: [{
+            type: 'image',
+            source: { type: 'base64', media_type: mediaType, data: b64 }
+          }, {
+            type: 'text',
+            text: 'What food is this and what are the estimated calories and macros?'
+          }]
+        }]
+      })
+    });
+
+    var data = await resp.json();
+    var text = (data.content||[]).map(function(b){return b.text||'';}).join('');
+
+    clearInterval(interval);
+    document.getElementById('calsnap-loading').style.display = 'none';
+    document.getElementById('calsnap-result').style.display = 'block';
+
+    // Parse calories for logging
+    var calMatch = text.match(/ESTIMATED CALORIES:\s*~?(\d+)/i);
+    _calsnapEstimate = calMatch ? parseInt(calMatch[1]) : 0;
+    var foodMatch = text.match(/FOODS DETECTED:\s*(.+?)(?:
+|$)/i);
+    _calsnapLabel = foodMatch ? foodMatch[1].trim() : 'Food (AI estimate)';
+
+    // Format output nicely
+    document.getElementById('calsnap-output').innerHTML = text.replace(/
+/g, '<br>');
+    if(_calsnapEstimate > 0) {
+      document.getElementById('calsnap-log-btn').textContent = '+ Log ~' + _calsnapEstimate + ' cals';
+    }
+
+  } catch(e) {
+    clearInterval(interval);
+    document.getElementById('calsnap-loading').style.display = 'none';
+    document.getElementById('calsnap-result').style.display = 'block';
+    document.getElementById('calsnap-output').textContent = 'Could not analyze image. Try again with better lighting.';
+    console.error(e);
+  }
+}
+
+function aiSnapLogCals() {
+  if(!_calsnapEstimate) return;
+  // Use existing logCal infrastructure
+  var calAmt = document.getElementById('cal-amt');
+  var calLbl = document.getElementById('cal-lbl');
+  if(calAmt) calAmt.value = _calsnapEstimate;
+  if(calLbl) calLbl.value = _calsnapLabel + ' (AI est.)';
+  if(typeof logCal === 'function') logCal();
+  toast('Logged ~' + _calsnapEstimate + ' cals', 'ok');
+  aiSnapReset();
+}
+
+function aiSnapReset() {
+  _calsnapEstimate = 0;
+  _calsnapLabel = '';
+  document.getElementById('calsnap-input').value = '';
+  document.getElementById('calsnap-result').style.display = 'none';
+  document.getElementById('calsnap-loading').style.display = 'none';
+  document.getElementById('calsnap-label').style.display = 'block';
+}
+
+// ── INGREDIENT CHECK ─────────────────────────────────────
+async function aiCheckIngredients(input) {
+  var file = input.files[0];
+  if(!file) return;
+  document.getElementById('ingcheck-label').style.display = 'none';
+  document.getElementById('ingcheck-result').style.display = 'none';
+  document.getElementById('ingcheck-loading').style.display = 'block';
+  var interval = aiMsgCycle(_ingCheckMsgs, 'ingcheck-loading-msg');
+  showImgPreview(file, 'ingcheck-img');
+
+  try {
+    var b64 = await fileToBase64(file);
+    var mediaType = file.type || 'image/jpeg';
+
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 800,
+        system: 'You are a food ingredient analyst focused on health. When given an ingredients label photo, analyze it plainly. Format exactly like this:\n\nPRODUCT: [name if visible]\nOVERALL VERDICT: [✅ Clean / ⚠️ Mixed / 🚫 Avoid] — [one sentence]\n\nFLAGS:\n[List each concerning ingredient with: name — what it is — why it matters. Use bullet points with dashes. Be specific.]\n\nGREEN LIGHTS:\n[List genuinely good or neutral ingredients]\n\nBOTTOM LINE: [2 sentences max. Should you have this? When is it ok?]\n\nBe direct. No fluff. If the label is unreadable, say so.',
+        messages: [{
+          role: 'user',
+          content: [{
+            type: 'image',
+            source: { type: 'base64', media_type: mediaType, data: b64 }
+          }, {
+            type: 'text',
+            text: 'Analyze these ingredients. Flag anything I should know about.'
+          }]
+        }]
+      })
+    });
+
+    var data = await resp.json();
+    var text = (data.content||[]).map(function(b){return b.text||'';}).join('');
+
+    clearInterval(interval);
+    document.getElementById('ingcheck-loading').style.display = 'none';
+    document.getElementById('ingcheck-result').style.display = 'block';
+
+    // Color the verdict line
+    var formatted = text
+      .replace(/✅/g, '<span style="color:var(--gn)">✅</span>')
+      .replace(/⚠️/g, '<span style="color:var(--am)">⚠️</span>')
+      .replace(/🚫/g, '<span style="color:var(--rd)">🚫</span>')
+      .replace(/
+/g, '<br>');
+    document.getElementById('ingcheck-output').innerHTML = formatted;
+
+  } catch(e) {
+    clearInterval(interval);
+    document.getElementById('ingcheck-loading').style.display = 'none';
+    document.getElementById('ingcheck-result').style.display = 'block';
+    document.getElementById('ingcheck-output').textContent = 'Could not read label. Try better lighting or closer shot.';
+    console.error(e);
+  }
+}
+
+function ingCheckReset() {
+  document.getElementById('ingcheck-input').value = '';
+  document.getElementById('ingcheck-result').style.display = 'none';
+  document.getElementById('ingcheck-loading').style.display = 'none';
+  document.getElementById('ingcheck-label').style.display = 'block';
+}
 
 </script>
 <!-- ═══ MOBILE TAB BAR ═══ -->
