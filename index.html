@@ -3286,42 +3286,72 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
 
     <!-- Add booking form -->
     <div class="add-form" id="booking-form">
-      <div style="font-family:'Fredoka',sans-serif;font-size:14px;font-weight:600;margin-bottom:12px">Log Studio Booking</div>
+      <div style="font-family:'Fredoka',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px;color:var(--ac)">New Booking</div>
       <div class="afg">
-        <div><div class="exp-lbl">Client name</div><input class="ei" id="bk-client" placeholder="e.g. Attendre"></div>
-        <div><div class="exp-lbl">Client email</div><input class="ei" id="bk-client-email" type="email" placeholder="client@email.com"></div>
-        <div><div class="exp-lbl">Date</div><input class="ei" id="bk-date" type="date"></div>
-        <div><div class="exp-lbl">Start time</div><input class="ei" id="bk-start-time" type="time" value="10:00"></div>
-        <div><div class="exp-lbl">Deposit collected ($)</div><input class="ei" id="bk-deposit" type="number" placeholder="0" min="0"></div>
-        <div><div class="exp-lbl">Space</div>
-          <select class="es" id="bk-space" onchange="calcBookingTotal()">
-            <option value="lounge">Nova Lounge ($65/hr)</option>
-            <option value="gallery">Gallery ($75/hr)</option>
-            <option value="crimson-noir">Crimson Noir ($100/hr)</option>
-            <option value="garden">Nova Garden ($75/hr)</option>
-            <option value="both">Multiple spaces (combined rate)</option>
-            <option value="membership-t1">Membership — Tier 1 ($260)</option>
-            <option value="membership-t2">Membership — Tier 2 ($495)</option>
-            <option value="membership-t3">Membership — Tier 3 ($999)</option>
+        <div class="full"><div class="exp-lbl">Client name</div><input class="ei" id="bk-client" placeholder="e.g. Attendre" style="font-size:16px"></div>
+        <div class="full"><div class="exp-lbl">Client email (for confirmation)</div><input class="ei" id="bk-client-email" type="email" placeholder="client@email.com" style="font-size:16px"></div>
+        <div><div class="exp-lbl">Date</div><input class="ei" id="bk-date" type="date" style="font-size:16px"></div>
+        <div><div class="exp-lbl">Start time</div>
+          <select class="es" id="bk-start-time" style="font-size:16px">
+            <option value="07:00">7:00 AM</option>
+            <option value="08:00">8:00 AM</option>
+            <option value="09:00">9:00 AM</option>
+            <option value="10:00" selected>10:00 AM</option>
+            <option value="11:00">11:00 AM</option>
+            <option value="12:00">12:00 PM</option>
+            <option value="13:00">1:00 PM</option>
+            <option value="14:00">2:00 PM</option>
+            <option value="15:00">3:00 PM</option>
+            <option value="16:00">4:00 PM</option>
+            <option value="17:00">5:00 PM</option>
+            <option value="18:00">6:00 PM</option>
+            <option value="19:00">7:00 PM</option>
+            <option value="20:00">8:00 PM</option>
+            <option value="21:00">9:00 PM</option>
+            <option value="22:00">10:00 PM</option>
+            <option value="23:00">11:00 PM</option>
           </select>
         </div>
-        <div><div class="exp-lbl">Hours</div><input class="ei" id="bk-hours" type="number" step="0.5" placeholder="e.g. 3" oninput="calcBookingTotal()"></div>
-        <div><div class="exp-lbl">Extra guests over 15</div><input class="ei" id="bk-extra-guests" type="number" placeholder="0" min="0" oninput="calcBookingTotal()"></div>
-        <div><div class="exp-lbl">Custom rate override ($/hr)</div><input class="ei" id="bk-rate" type="number" placeholder="auto" oninput="calcBookingTotal()"></div>
-        <div><div class="exp-lbl">Total charged ($)</div><input class="ei" id="bk-total" type="number" placeholder="auto" style="color:var(--gn)" oninput="previewBookingSplit()"></div>
+        <div><div class="exp-lbl">Space</div>
+          <select class="es" id="bk-space" onchange="calcBookingTotal()" style="font-size:16px">
+            <option value="lounge">Nova Lounge ($75/hr)</option>
+            <option value="gallery">Gallery ($90/hr)</option>
+            <option value="crimson-noir">Crimson Noir ($100/hr)</option>
+            <option value="garden">Nova Garden ($75/hr)</option>
+            <option value="both">Multiple spaces</option>
+            <option value="membership-t1">Membership Tier 1 ($260)</option>
+            <option value="membership-t2">Membership Tier 2 ($495)</option>
+            <option value="membership-t3">Membership Tier 3 ($999)</option>
+          </select>
+        </div>
+        <div><div class="exp-lbl">Hours</div>
+          <select class="es" id="bk-hours" onchange="calcBookingTotal()" style="font-size:16px">
+            <option value="2">2 hours</option>
+            <option value="3">3 hours</option>
+            <option value="4">4 hours</option>
+            <option value="5">5 hours</option>
+            <option value="6">6 hours</option>
+            <option value="7">7 hours</option>
+            <option value="8">8 hours</option>
+            <option value="10">10 hours</option>
+            <option value="12">12 hours</option>
+          </select>
+        </div>
+        <div><div class="exp-lbl">Deposit collected ($)</div><input class="ei" id="bk-deposit" type="number" placeholder="0" min="0" style="font-size:16px"></div>
+        <div><div class="exp-lbl">Total charged ($)</div><input class="ei" id="bk-total" type="number" placeholder="auto-calculated" style="color:var(--gn);font-size:16px" oninput="previewBookingSplit()"></div>
         <div><div class="exp-lbl">New or repeat?</div>
-          <select class="es" id="bk-type">
+          <select class="es" id="bk-type" style="font-size:16px">
             <option value="new">New client</option>
             <option value="repeat">Repeat client</option>
           </select>
         </div>
         <div><div class="exp-lbl">Paid?</div>
-          <select class="es" id="bk-paid">
+          <select class="es" id="bk-paid" style="font-size:16px">
             <option value="paid">Paid</option>
             <option value="unpaid">Unpaid / pending</option>
           </select>
         </div>
-        <div class="full"><div class="exp-lbl">Notes</div><input class="ei" id="bk-notes" placeholder="type of shoot, event, anything notable"></div>
+        <div class="full"><div class="exp-lbl">Notes</div><input class="ei" id="bk-notes" placeholder="type of shoot, event, anything notable" style="font-size:16px"></div>
       </div>
       <!-- Live split preview -->
       <div id="bk-split-preview" style="display:none;background:var(--s2);border-radius:8px;padding:10px 14px;margin:10px 0">
@@ -3333,17 +3363,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
           <div><div style="color:var(--rd);margin-bottom:2px">Overhead share</div><div style="font-weight:600;color:var(--rd)" id="bk-prev-overhead">—</div></div>
         </div>
       </div>
-      <div id="bk-post-save" style="display:none;background:rgba(76,175,125,0.08);border:1px solid rgba(76,175,125,0.2);border-radius:10px;padding:14px;margin-bottom:10px">
-        <div style="font-size:12px;color:var(--gn);font-weight:700;margin-bottom:10px">✓ Booking saved to dashboard</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <a id="bk-cal-link" href="#" target="_blank" style="display:block;padding:12px 16px;background:var(--s2);border:1px solid rgba(232,213,163,0.3);border-radius:8px;color:var(--ac);font-size:13px;text-decoration:none;font-family:'Fredoka',sans-serif;font-weight:600;text-align:center">📅 Add to Google Calendar →</a>
-          <a id="bk-email-link" href="#" style="display:none;padding:12px 16px;background:var(--s2);border:1px solid rgba(91,156,246,0.3);border-radius:8px;color:var(--bl);font-size:13px;text-decoration:none;font-family:'Fredoka',sans-serif;font-weight:600;text-align:center">✉️ Send Confirmation Email →</a>
-          <button onclick="document.getElementById('bk-post-save').style.display='none';document.getElementById('booking-form').classList.remove('show')" style="padding:10px;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t3);font-size:12px;cursor:pointer">Done</button>
-        </div>
-      </div>
+      <!-- Post-save actions — rebuilt by showBookingResult() -->
+      <div id="bk-post-save" style="display:none;background:rgba(76,175,125,0.08);border:1px solid rgba(76,175,125,0.2);border-radius:10px;padding:14px;margin-bottom:10px"></div>
       <div class="af-acts" id="bk-save-acts">
-        <button class="btn btn-g" onclick="saveBookingWithLinks()" style="font-size:14px;padding:12px 24px">💾 Save Booking</button>
-        <button class="btn" onclick="document.getElementById('booking-form').classList.remove('show')">Cancel</button>
+        <button class="btn btn-g" id="bk-save-btn" onclick="saveBookingWithLinks()" style="font-size:15px;padding:14px 28px">💾 Save Booking</button>
+        <button class="btn" onclick="closeBookingForm()" style="font-size:14px;padding:14px 20px">Cancel</button>
       </div>
     </div>
 
@@ -13459,6 +13483,11 @@ function closeBookingResult() {
   if(bf) bf.classList.remove('show');
 }
 
+function closeBookingForm() {
+  var form = document.getElementById('booking-form');
+  if(form) form.classList.remove('show');
+}
+
 function openBookingForm() {
   var form = document.getElementById('booking-form');
   var postSave = document.getElementById('bk-post-save');
@@ -13476,6 +13505,9 @@ function openBookingForm() {
 
 function pad2(n) { return String(n).padStart(2,'0'); }
 
+// Store last booking for generatePaymentLink to use after form is cleared
+var _lastBooking = {};
+
 async function saveBookingWithLinks() {
   var client    = (document.getElementById('bk-client') ? document.getElementById('bk-client').value : '').trim();
   var email     = (document.getElementById('bk-client-email') ? document.getElementById('bk-client-email').value : '').trim();
@@ -13490,6 +13522,10 @@ async function saveBookingWithLinks() {
 
   if(!client) { if(typeof toast === 'function') toast('Client name required'); return; }
   if(!date) { if(typeof toast === 'function') toast('Date required'); return; }
+
+  // Store all values BEFORE saveBooking() clears the form
+  _lastBooking = { client: client, email: email, date: date, startTime: startTime,
+    deposit: deposit, total: total, space: space, hours: hours, notes: notes, spaceName: spaceName };
 
   // Show saving state
   var btn = document.getElementById('bk-save-btn');
@@ -13529,14 +13565,14 @@ async function saveBookingWithLinks() {
     if(postSave) {
       var calMsg = result.calendar === 'created' ? '📅 Added to Google Calendar' : ('⚠️ Calendar: ' + (result.calendar || 'failed'));
       var emailMsg = email ? (result.gmail === 'draft created' ? '✉️ Confirmation draft in Gmail' : ('⚠️ Email: ' + (result.gmail || 'failed'))) : '';
-      showBookingResult(postSave, true, calMsg, emailMsg);
+      showBookingResult('success', calMsg, emailMsg);
     }
     if(saveActs) saveActs.style.display = 'none';
   } catch(e) {
     if(typeof toast === 'function') toast('Saved locally. Calendar error: ' + e.message);
     var postSave2 = document.getElementById('bk-post-save');
     if(postSave2) {
-      showBookingResult(postSave2, false, 'Saved locally', 'Calendar error: ' + e.message);postSave2.style.display = 'block';
+      showBookingResult('partial', 'Saved locally — calendar/email failed', e.message);
     }
     var saveActs2 = document.getElementById('bk-save-acts');
     if(saveActs2) saveActs2.style.display = 'none';
@@ -13546,16 +13582,16 @@ async function saveBookingWithLinks() {
 }
 
 async function generatePaymentLink() {
-  var client    = (document.getElementById('bk-client') ? document.getElementById('bk-client').value : '').trim();
-  var date      = document.getElementById('bk-date') ? document.getElementById('bk-date').value : '';
-  var startTime = document.getElementById('bk-start-time') ? document.getElementById('bk-start-time').value : '10:00';
-  var total     = parseFloat(document.getElementById('bk-total') ? document.getElementById('bk-total').value : 0) || 0;
-  var space     = document.getElementById('bk-space') ? document.getElementById('bk-space').value : 'lounge';
-  var hours     = parseFloat(document.getElementById('bk-hours') ? document.getElementById('bk-hours').value : 2) || 2;
-  var spaceName = _BK_SPACES[space] || space;
+  // Read from _lastBooking since saveBooking() clears the form fields
+  var client    = _lastBooking.client || '';
+  var date      = _lastBooking.date || '';
+  var startTime = _lastBooking.startTime || '10:00';
+  var total     = _lastBooking.total || 0;
+  var hours     = _lastBooking.hours || 2;
+  var spaceName = _lastBooking.spaceName || 'Nova Lounge';
 
   if(!client || total <= 0) {
-    if(typeof toast === 'function') toast('Add client name and total to generate payment link');
+    if(typeof toast === 'function') toast('Save a booking first — client name and total are required');
     return;
   }
 
