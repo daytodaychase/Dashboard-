@@ -1913,7 +1913,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
         <label id="calsnap-label" style="display:block;background:var(--s2);border:1px dashed rgba(232,213,163,0.3);border-radius:10px;padding:18px 8px;text-align:center;cursor:pointer;margin-bottom:8px">
           <div style="font-size:26px;margin-bottom:4px">📷</div>
           <div style="font-size:10px;color:var(--t3)">Tap to use camera</div>
-          <input type="file" accept="image/*" capture="environment" id="calsnap-input" style="display:none">
+          <input type="file" accept="image/*" id="calsnap-input" style="display:none">
         </label>
         <div id="calsnap-loading" style="display:none;text-align:center;padding:16px 0">
           <div style="font-size:11px;color:var(--t3);letter-spacing:.08em" id="calsnap-loading-msg">Analyzing...</div>
@@ -1937,7 +1937,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
         <label id="ingcheck-label" style="display:block;background:var(--s2);border:1px dashed rgba(76,175,125,0.3);border-radius:10px;padding:18px 8px;text-align:center;cursor:pointer;margin-bottom:8px">
           <div style="font-size:26px;margin-bottom:4px">🔬</div>
           <div style="font-size:10px;color:var(--t3)">Tap to scan label</div>
-          <input type="file" accept="image/*" capture="environment" id="ingcheck-input" style="display:none">
+          <input type="file" accept="image/*" id="ingcheck-input" style="display:none">
         </label>
         <div id="ingcheck-loading" style="display:none;text-align:center;padding:16px 0">
           <div style="font-size:11px;color:var(--t3);letter-spacing:.08em" id="ingcheck-loading-msg">Reading label...</div>
@@ -13394,128 +13394,115 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 </script>
 <script>
-// ═══════════════════════════════════════════════════
-//  BOOKING — save + build calendar/email links
-// ═══════════════════════════════════════════════════
-
-function openBookingForm() {
-  var form = document.getElementById('booking-form');
-  var postSave = document.getElementById('bk-post-save');
-  var saveActs = document.getElementById('bk-save-acts');
-  if(!form) return;
-  // Reset state
-  if(postSave) postSave.style.display = 'none';
-  if(saveActs) saveActs.style.display = 'flex';
-  // Toggle
-  form.classList.toggle('show');
-  // Set today's date
-  var dateEl = document.getElementById('bk-date');
-  if(dateEl && typeof todayStr === 'function') dateEl.value = todayStr();
-  // Scroll form into view
-  if(form.classList.contains('show')) {
-    setTimeout(function(){ form.scrollIntoView({behavior:'smooth', block:'start'}); }, 100);
-  }
-}
-
+// BOOKING — save + build calendar/email links
 var _BK_SPACES = {
   lounge:'Nova Lounge', gallery:'Gallery', 'crimson-noir':'Crimson Noir',
   garden:'Nova Garden', both:'Multiple Spaces',
   'membership-t1':'Membership Tier 1','membership-t2':'Membership Tier 2','membership-t3':'Membership Tier 3'
 };
 
+function openBookingForm() {
+  var form = document.getElementById('booking-form');
+  var postSave = document.getElementById('bk-post-save');
+  var saveActs = document.getElementById('bk-save-acts');
+  if(!form) return;
+  if(postSave) postSave.style.display = 'none';
+  if(saveActs) saveActs.style.display = 'flex';
+  form.classList.toggle('show');
+  var dateEl = document.getElementById('bk-date');
+  if(dateEl && typeof todayStr === 'function') dateEl.value = todayStr();
+  if(form.classList.contains('show')) {
+    setTimeout(function(){ form.scrollIntoView({behavior:'smooth',block:'start'}); }, 100);
+  }
+}
+
+function pad2(n) { return String(n).padStart(2,'0'); }
+
 function saveBookingWithLinks() {
-  var client    = (document.getElementById('bk-client')?.value||'').trim();
-  var email     = (document.getElementById('bk-client-email')?.value||'').trim();
-  var date      = document.getElementById('bk-date')?.value || todayStr();
-  var startTime = document.getElementById('bk-start-time')?.value || '10:00';
-  var deposit   = parseFloat(document.getElementById('bk-deposit')?.value) || 0;
-  var total     = parseFloat(document.getElementById('bk-total')?.value) || 0;
-  var space     = document.getElementById('bk-space')?.value || 'lounge';
-  var hours     = parseFloat(document.getElementById('bk-hours')?.value) || 2;
-  var notes     = (document.getElementById('bk-notes')?.value||'').trim();
+  var client    = (document.getElementById('bk-client') ? document.getElementById('bk-client').value : '').trim();
+  var email     = (document.getElementById('bk-client-email') ? document.getElementById('bk-client-email').value : '').trim();
+  var date      = document.getElementById('bk-date') ? document.getElementById('bk-date').value : todayStr();
+  var startTime = document.getElementById('bk-start-time') ? document.getElementById('bk-start-time').value : '10:00';
+  var deposit   = parseFloat(document.getElementById('bk-deposit') ? document.getElementById('bk-deposit').value : 0) || 0;
+  var total     = parseFloat(document.getElementById('bk-total') ? document.getElementById('bk-total').value : 0) || 0;
+  var space     = document.getElementById('bk-space') ? document.getElementById('bk-space').value : 'lounge';
+  var hours     = parseFloat(document.getElementById('bk-hours') ? document.getElementById('bk-hours').value : 2) || 2;
+  var notes     = (document.getElementById('bk-notes') ? document.getElementById('bk-notes').value : '').trim();
   var spaceName = _BK_SPACES[space] || space;
   var balance   = total - deposit;
 
-  if(!client) { toast('Client name required'); return; }
+  if(!client) { if(typeof toast === 'function') toast('Client name required'); return; }
 
-  // Save to dashboard
-  saveBooking();
+  // Save to dashboard localStorage
+  if(typeof saveBooking === 'function') saveBooking();
 
   // Build Google Calendar URL
   var sh = parseInt(startTime.split(':')[0]);
   var sm = parseInt(startTime.split(':')[1]);
   var eh = sh + Math.floor(hours);
-  var em = sm + Math.round((hours%1)*60);
-  if(em>=60){eh++;em-=60;}
-  var dp = date.replace(/-/g,'');
-  function p2(n){return String(n).padStart(2,'0');}
-  var calStart = dp+'T'+p2(sh)+p2(sm)+'00';
-  var calEnd   = dp+'T'+p2(eh)+p2(em)+'00';
-
-  var calDesc = 'Space: '+spaceName+'\nDuration: '+hours+' hrs'
-    +(total>0?'\nTotal: $'+total:'')
-    +(deposit>0?'\nDeposit: $'+deposit:'')
-    +(balance>0?'\nBalance due: $'+balance:'')
-    +(notes?'\nNotes: '+notes:'')
-    +'\n\nNovaLight Studios — 3237 Amber St, Philadelphia PA';
+  var em = sm + Math.round((hours % 1) * 60);
+  if(em >= 60){ eh++; em -= 60; }
+  var dp = date.replace(/-/g, '');
+  var calStart = dp + 'T' + pad2(sh) + pad2(sm) + '00';
+  var calEnd   = dp + 'T' + pad2(eh) + pad2(em) + '00';
+  var NL = '%0A';
+  var calDetails = 'Space: ' + spaceName + NL + 'Duration: ' + hours + ' hrs'
+    + (total > 0 ? NL + 'Total: $' + total : '')
+    + (deposit > 0 ? NL + 'Deposit: $' + deposit : '')
+    + (balance > 0 ? NL + 'Balance due: $' + balance : '')
+    + (notes ? NL + 'Notes: ' + notes : '')
+    + NL + NL + 'NovaLight Studios — 3237 Amber St, Philadelphia PA';
 
   var calURL = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
-    +'&text='+encodeURIComponent('NovaLight — '+client+' ('+spaceName+')')
-    +'&dates='+calStart+'/'+calEnd
-    +'&details='+encodeURIComponent(calDesc)
-    +'&location='+encodeURIComponent('NovaLight Studios, 3237 Amber St, Philadelphia, PA')
-    +'&ctz=America/New_York';
+    + '&text=' + encodeURIComponent('NovaLight \u2014 ' + client + ' (' + spaceName + ')')
+    + '&dates=' + calStart + '/' + calEnd
+    + '&details=' + calDetails
+    + '&location=' + encodeURIComponent('NovaLight Studios, 3237 Amber St, Philadelphia, PA')
+    + '&ctz=America/New_York';
 
-  // Set calendar link
   var calLink = document.getElementById('bk-cal-link');
   if(calLink) calLink.href = calURL;
 
-  // Build email if address provided
-  var emailLink = document.getElementById('bk-email-link');
-  if(email && emailLink) {
-    var dateFmt = new Date(date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-    var body = 'Hi '+client+',
-
-Your booking at NovaLight Studios is confirmed!
-
-'
-      +'Date: '+dateFmt+'
-'
-      +'Start: '+startTime+'
-'
-      +'Duration: '+hours+' hours
-'
-      +'Space: '+spaceName+'
-'
-      +(total>0?'Total: $'+total+'
-':'')
-      +(deposit>0?'Deposit paid: $'+deposit+'
-':'')
-      +(balance>0?'Balance due at arrival: $'+balance+'
-':'')
-      +'
-Address: NovaLight Studios
-3237 Amber St, Philadelphia, PA
-'
-      +'Hours: 7am – 12am
-
-'
-      +'Please arrive a few minutes early.
-
-'
-      +'Looking forward to it,
-Chase
-NovaLight Studios';
-    var dateFmtShort = new Date(date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    emailLink.href = 'mailto:'+email
-      +'?subject='+encodeURIComponent('NovaLight Studios — Booking Confirmed ('+dateFmtShort+')')
-      +'&body='+encodeURIComponent(body);
-    emailLink.style.display = 'block';
-  } else if(emailLink) {
-    emailLink.style.display = 'none';
+  // Build mailto if email provided
+  if(email) {
+    var dateFmt = new Date(date + 'T12:00:00').toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'});
+    var dateFmtShort = new Date(date + 'T12:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'});
+    var lines = [
+      'Hi ' + client + ',',
+      '',
+      'Your booking at NovaLight Studios is confirmed!',
+      '',
+      'Date: ' + dateFmt,
+      'Start: ' + startTime,
+      'Duration: ' + hours + ' hours',
+      'Space: ' + spaceName
+    ];
+    if(total > 0) lines.push('Total: $' + total);
+    if(deposit > 0) lines.push('Deposit paid: $' + deposit);
+    if(balance > 0) lines.push('Balance due at arrival: $' + balance);
+    lines.push('');
+    lines.push('Address: NovaLight Studios');
+    lines.push('3237 Amber St, Philadelphia, PA');
+    lines.push('Hours: 7am \u2013 12am');
+    lines.push('');
+    lines.push('Please arrive a few minutes early. If anything changes, reply to this email.');
+    lines.push('');
+    lines.push('Looking forward to it,');
+    lines.push('Chase');
+    lines.push('NovaLight Studios');
+    var bodyStr = lines.join('\n');
+    var emailLink = document.getElementById('bk-email-link');
+    if(emailLink) {
+      emailLink.href = 'mailto:' + email
+        + '?subject=' + encodeURIComponent('NovaLight Studios \u2014 Booking Confirmed (' + dateFmtShort + ')')
+        + '&body=' + encodeURIComponent(bodyStr);
+      emailLink.style.display = 'block';
+    }
+  } else {
+    var emailLink2 = document.getElementById('bk-email-link');
+    if(emailLink2) emailLink2.style.display = 'none';
   }
 
-  // Show post-save actions, hide save button
   var postSave = document.getElementById('bk-post-save');
   var saveActs = document.getElementById('bk-save-acts');
   if(postSave) postSave.style.display = 'block';
@@ -13523,20 +13510,18 @@ NovaLight Studios';
 }
 </script>
 <script>
-// ═══════════════════════════════════════════════════
-//  AI FOOD SCANNER
-// ═══════════════════════════════════════════════════
+// AI FOOD SCANNER
 var _calsnapEstimate = 0;
 var _calsnapLabel = '';
 
 function aiMsgCycle(msgs, elId) {
-  var i = 0;
+  var idx = 0;
   var el = document.getElementById(elId);
   if(el) el.textContent = msgs[0];
   return setInterval(function(){
-    i = (i+1) % msgs.length;
+    idx = (idx + 1) % msgs.length;
     var el2 = document.getElementById(elId);
-    if(el2) el2.textContent = msgs[i];
+    if(el2) el2.textContent = msgs[idx];
   }, 1800);
 }
 
@@ -13560,6 +13545,12 @@ function aiSnapCalories(input) {
   var imgEl = document.getElementById('calsnap-img');
   if(imgEl) imgEl.src = URL.createObjectURL(file);
 
+  var systemPrompt = 'You are a nutrition analyst. Analyze food photos and estimate calories.'
+    + ' Always lead with: WARNING ESTIMATE accuracy varies 20-40 percent.'
+    + ' Format: FOODS DETECTED: list each item. ESTIMATED CALORIES: number kcal.'
+    + ' PROTEIN: approx grams. CARBS: approx grams. FAT: approx grams.'
+    + ' CONFIDENCE: Low or Medium or High and brief reason. Be concise and honest.';
+
   fileToBase64(file).then(function(b64) {
     return fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -13572,17 +13563,7 @@ function aiSnapCalories(input) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 600,
-        system: 'You are a nutrition analyst. Analyze food photos and estimate calories. Always lead with: "⚠️ ESTIMATE — accuracy varies 20-40%"
-
-Format:
-FOODS DETECTED: [list each item and estimated portion]
-ESTIMATED CALORIES: [number] kcal
-PROTEIN: ~[number]g
-CARBS: ~[number]g
-FAT: ~[number]g
-CONFIDENCE: [Low/Medium/High] — [brief reason]
-
-Be concise and honest.',
+        system: systemPrompt,
         messages: [{
           role: 'user',
           content: [
@@ -13598,28 +13579,24 @@ Be concise and honest.',
     clearInterval(interval);
     document.getElementById('calsnap-loading').style.display = 'none';
     document.getElementById('calsnap-result').style.display = 'block';
-    var text = (data.content||[]).map(function(b){return b.text||'';}).join('');
-    var calMatch = text.match(/ESTIMATED CALORIES:\s*~?(\d+)/i);
+    var text = (data.content || []).map(function(b){ return b.text || ''; }).join('');
+    if(data.error) {
+      document.getElementById('calsnap-output').innerHTML = '<span style="color:var(--rd)">API Error: ' + (data.error.message || 'Check your API key') + '</span>';
+      return;
+    }
+    var calMatch = text.match(/ESTIMATED CALORIES[:\s]*~?(\d+)/i);
     _calsnapEstimate = calMatch ? parseInt(calMatch[1]) : 0;
-    var foodMatch = text.match(/FOODS DETECTED:\s*(.+)/i);
+    var foodMatch = text.match(/FOODS DETECTED[:\s]*(.+)/i);
     _calsnapLabel = foodMatch ? foodMatch[1].trim() : 'Food (AI estimate)';
-    var formatted = text
-      .replace(/(⚠️ ESTIMATE[^
-]*)/g, '<span style="color:var(--am);font-weight:700">$1</span>')
-      .replace(/CONFIDENCE: Low/g, 'CONFIDENCE: <span style="color:var(--rd)">Low</span>')
-      .replace(/CONFIDENCE: Medium/g, 'CONFIDENCE: <span style="color:var(--am)">Medium</span>')
-      .replace(/CONFIDENCE: High/g, 'CONFIDENCE: <span style="color:var(--gn)">High</span>')
-      .split('
-').join('<br>');
-    document.getElementById('calsnap-output').innerHTML = formatted || '<span style="color:var(--rd)">Could not analyze. Try better lighting.</span>';
+    document.getElementById('calsnap-output').innerHTML = text.split('\n').join('<br>') || '<span style="color:var(--rd)">Could not analyze. Try better lighting.</span>';
     var logBtn = document.getElementById('calsnap-log-btn');
     if(logBtn && _calsnapEstimate > 0) logBtn.textContent = '+ Log ~' + _calsnapEstimate + ' cals (est.)';
   }).catch(function(e) {
     clearInterval(interval);
     document.getElementById('calsnap-loading').style.display = 'none';
     document.getElementById('calsnap-result').style.display = 'block';
-    var msg = !window.ANTHROPIC_KEY || window.ANTHROPIC_KEY === 'PASTE-YOUR-KEY-HERE'
-      ? 'API key missing — add your key to the top of index.html'
+    var msg = (!window.ANTHROPIC_KEY || window.ANTHROPIC_KEY === 'PASTE-YOUR-KEY-HERE')
+      ? 'API key missing — add your key near the top of index.html'
       : 'Error: ' + (e.message || 'Unknown error');
     document.getElementById('calsnap-output').innerHTML = '<span style="color:var(--rd)">' + msg + '</span>';
   });
@@ -13636,6 +13613,12 @@ function aiCheckIngredients(input) {
   var imgEl = document.getElementById('ingcheck-img');
   if(imgEl) imgEl.src = URL.createObjectURL(file);
 
+  var systemPrompt = 'You are a food ingredient analyst. Analyze ingredient labels.'
+    + ' Format: PRODUCT: name if visible. OVERALL VERDICT: Clean or Mixed or Avoid and one sentence.'
+    + ' FLAGS: list each bad ingredient, what it is, why it matters.'
+    + ' GREEN LIGHTS: good or neutral ingredients.'
+    + ' BOTTOM LINE: should you eat this, 2 sentences max. Be direct.';
+
   fileToBase64(file).then(function(b64) {
     return fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -13648,21 +13631,7 @@ function aiCheckIngredients(input) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 700,
-        system: 'You are a food ingredient analyst. Analyze ingredient labels and give plain-English verdicts.
-
-Format:
-PRODUCT: [name if visible]
-OVERALL VERDICT: [✅ Clean / ⚠️ Mixed / 🚫 Avoid] — [one sentence]
-
-FLAGS:
-- [ingredient] — [what it is] — [why it matters]
-
-GREEN LIGHTS:
-[good/neutral ingredients]
-
-BOTTOM LINE: [should you eat this? 2 sentences max]
-
-Be direct. If label is unreadable, say so.',
+        system: systemPrompt,
         messages: [{
           role: 'user',
           content: [
@@ -13678,19 +13647,17 @@ Be direct. If label is unreadable, say so.',
     clearInterval(interval);
     document.getElementById('ingcheck-loading').style.display = 'none';
     document.getElementById('ingcheck-result').style.display = 'block';
-    var text = (data.content||[]).map(function(b){return b.text||'';}).join('');
-    var formatted = text
-      .replace(/✅/g, '<span style="color:var(--gn)">✅</span>')
-      .replace(/⚠️/g, '<span style="color:var(--am)">⚠️</span>')
-      .replace(/🚫/g, '<span style="color:var(--rd)">🚫</span>')
-      .split('
-').join('<br>');
-    document.getElementById('ingcheck-output').innerHTML = formatted || '<span style="color:var(--rd)">Could not read label. Try better lighting or closer shot.</span>';
+    var text = (data.content || []).map(function(b){ return b.text || ''; }).join('');
+    if(data.error) {
+      document.getElementById('ingcheck-output').innerHTML = '<span style="color:var(--rd)">API Error: ' + (data.error.message || 'Check your API key') + '</span>';
+      return;
+    }
+    document.getElementById('ingcheck-output').innerHTML = text.split('\n').join('<br>') || '<span style="color:var(--rd)">Could not read label.</span>';
   }).catch(function(e) {
     clearInterval(interval);
     document.getElementById('ingcheck-loading').style.display = 'none';
     document.getElementById('ingcheck-result').style.display = 'block';
-    document.getElementById('ingcheck-output').innerHTML = '<span style="color:var(--rd)">Error: ' + (e.message||'Unknown') + '</span>';
+    document.getElementById('ingcheck-output').innerHTML = '<span style="color:var(--rd)">Error: ' + (e.message || 'Unknown') + '</span>';
   });
 }
 
@@ -13719,7 +13686,6 @@ function ingCheckReset() {
   document.getElementById('ingcheck-loading').style.display = 'none';
   document.getElementById('ingcheck-label').style.display = 'block';
 }
-
 </script>
 <!-- ═══ MOBILE TAB BAR ═══ -->
 <nav class="mob-tabbar" id="mob-tabbar">
