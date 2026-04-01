@@ -3173,6 +3173,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
     <!-- ═══ BOOKINGS ═══ -->
   <div class="pg" id="pg-bookings">
 
+    <!-- Quick action button — always visible on mobile -->
+    <button onclick="document.getElementById('booking-form').classList.toggle('show');document.getElementById('bk-date').value=todayStr();" style="width:100%;padding:14px;font-family:'Fredoka',sans-serif;font-size:16px;font-weight:700;background:var(--ac);color:#0f0f0f;border:none;border-radius:12px;cursor:pointer;margin-bottom:14px">+ New Booking</button>
+
     <!-- Money split settings -->
     <div style="background:var(--s2);border-radius:10px;padding:14px 18px;margin-bottom:14px">
       <div style="font-family:'Fredoka',sans-serif;font-size:13px;font-weight:600;margin-bottom:10px">💰 Money Split Settings</div>
@@ -3237,7 +3240,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
       <div style="font-family:'Fredoka',sans-serif;font-size:14px;font-weight:600;margin-bottom:12px">Log Studio Booking</div>
       <div class="afg">
         <div><div class="exp-lbl">Client name</div><input class="ei" id="bk-client" placeholder="e.g. Attendre"></div>
+        <div><div class="exp-lbl">Client email</div><input class="ei" id="bk-client-email" type="email" placeholder="client@email.com"></div>
         <div><div class="exp-lbl">Date</div><input class="ei" id="bk-date" type="date"></div>
+        <div><div class="exp-lbl">Start time</div><input class="ei" id="bk-start-time" type="time" value="10:00"></div>
+        <div><div class="exp-lbl">Deposit collected ($)</div><input class="ei" id="bk-deposit" type="number" placeholder="0" min="0"></div>
         <div><div class="exp-lbl">Space</div>
           <select class="es" id="bk-space" onchange="calcBookingTotal()">
             <option value="lounge">Nova Lounge ($65/hr)</option>
@@ -3278,8 +3284,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
           <div><div style="color:var(--rd);margin-bottom:2px">Overhead share</div><div style="font-weight:600;color:var(--rd)" id="bk-prev-overhead">—</div></div>
         </div>
       </div>
-      <div class="af-acts">
-        <button class="btn btn-g" onclick="saveBooking()">Save booking</button>
+      <div id="bk-post-save" style="display:none;background:rgba(76,175,125,0.08);border:1px solid rgba(76,175,125,0.2);border-radius:10px;padding:14px;margin-bottom:10px">
+        <div style="font-size:12px;color:var(--gn);font-weight:700;margin-bottom:10px">✓ Booking saved to dashboard</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <a id="bk-cal-link" href="#" target="_blank" style="display:block;padding:12px 16px;background:var(--s2);border:1px solid rgba(232,213,163,0.3);border-radius:8px;color:var(--ac);font-size:13px;text-decoration:none;font-family:'Fredoka',sans-serif;font-weight:600;text-align:center">📅 Add to Google Calendar →</a>
+          <a id="bk-email-link" href="#" style="display:none;padding:12px 16px;background:var(--s2);border:1px solid rgba(91,156,246,0.3);border-radius:8px;color:var(--bl);font-size:13px;text-decoration:none;font-family:'Fredoka',sans-serif;font-weight:600;text-align:center">✉️ Send Confirmation Email →</a>
+          <button onclick="document.getElementById('bk-post-save').style.display='none';document.getElementById('booking-form').classList.remove('show')" style="padding:10px;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t3);font-size:12px;cursor:pointer">Done</button>
+        </div>
+      </div>
+      <div class="af-acts" id="bk-save-acts">
+        <button class="btn btn-g" onclick="saveBookingWithLinks()" style="font-size:14px;padding:12px 24px">💾 Save Booking</button>
         <button class="btn" onclick="document.getElementById('booking-form').classList.remove('show')">Cancel</button>
       </div>
     </div>
@@ -13327,6 +13341,115 @@ document.addEventListener('DOMContentLoaded', async function() {
   if(token) spInitPlayer(token);
 });
 
+</script>
+<script>
+// ═══════════════════════════════════════════════════
+//  BOOKING — save + build calendar/email links
+// ═══════════════════════════════════════════════════
+var _BK_SPACES = {
+  lounge:'Nova Lounge', gallery:'Gallery', 'crimson-noir':'Crimson Noir',
+  garden:'Nova Garden', both:'Multiple Spaces',
+  'membership-t1':'Membership Tier 1','membership-t2':'Membership Tier 2','membership-t3':'Membership Tier 3'
+};
+
+function saveBookingWithLinks() {
+  var client    = (document.getElementById('bk-client')?.value||'').trim();
+  var email     = (document.getElementById('bk-client-email')?.value||'').trim();
+  var date      = document.getElementById('bk-date')?.value || todayStr();
+  var startTime = document.getElementById('bk-start-time')?.value || '10:00';
+  var deposit   = parseFloat(document.getElementById('bk-deposit')?.value) || 0;
+  var total     = parseFloat(document.getElementById('bk-total')?.value) || 0;
+  var space     = document.getElementById('bk-space')?.value || 'lounge';
+  var hours     = parseFloat(document.getElementById('bk-hours')?.value) || 2;
+  var notes     = (document.getElementById('bk-notes')?.value||'').trim();
+  var spaceName = _BK_SPACES[space] || space;
+  var balance   = total - deposit;
+
+  if(!client) { toast('Client name required'); return; }
+
+  // Save to dashboard
+  saveBooking();
+
+  // Build Google Calendar URL
+  var sh = parseInt(startTime.split(':')[0]);
+  var sm = parseInt(startTime.split(':')[1]);
+  var eh = sh + Math.floor(hours);
+  var em = sm + Math.round((hours%1)*60);
+  if(em>=60){eh++;em-=60;}
+  var dp = date.replace(/-/g,'');
+  function p2(n){return String(n).padStart(2,'0');}
+  var calStart = dp+'T'+p2(sh)+p2(sm)+'00';
+  var calEnd   = dp+'T'+p2(eh)+p2(em)+'00';
+
+  var calDesc = 'Space: '+spaceName+'\nDuration: '+hours+' hrs'
+    +(total>0?'\nTotal: $'+total:'')
+    +(deposit>0?'\nDeposit: $'+deposit:'')
+    +(balance>0?'\nBalance due: $'+balance:'')
+    +(notes?'\nNotes: '+notes:'')
+    +'\n\nNovaLight Studios — 3237 Amber St, Philadelphia PA';
+
+  var calURL = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+    +'&text='+encodeURIComponent('NovaLight — '+client+' ('+spaceName+')')
+    +'&dates='+calStart+'/'+calEnd
+    +'&details='+encodeURIComponent(calDesc)
+    +'&location='+encodeURIComponent('NovaLight Studios, 3237 Amber St, Philadelphia, PA')
+    +'&ctz=America/New_York';
+
+  // Set calendar link
+  var calLink = document.getElementById('bk-cal-link');
+  if(calLink) calLink.href = calURL;
+
+  // Build email if address provided
+  var emailLink = document.getElementById('bk-email-link');
+  if(email && emailLink) {
+    var dateFmt = new Date(date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    var body = 'Hi '+client+',
+
+Your booking at NovaLight Studios is confirmed!
+
+'
+      +'Date: '+dateFmt+'
+'
+      +'Start: '+startTime+'
+'
+      +'Duration: '+hours+' hours
+'
+      +'Space: '+spaceName+'
+'
+      +(total>0?'Total: $'+total+'
+':'')
+      +(deposit>0?'Deposit paid: $'+deposit+'
+':'')
+      +(balance>0?'Balance due at arrival: $'+balance+'
+':'')
+      +'
+Address: NovaLight Studios
+3237 Amber St, Philadelphia, PA
+'
+      +'Hours: 7am – 12am
+
+'
+      +'Please arrive a few minutes early.
+
+'
+      +'Looking forward to it,
+Chase
+NovaLight Studios';
+    var dateFmtShort = new Date(date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    emailLink.href = 'mailto:'+email
+      +'?subject='+encodeURIComponent('NovaLight Studios — Booking Confirmed ('+dateFmtShort+')')
+      +'&body='+encodeURIComponent(body);
+    emailLink.style.display = 'block';
+  } else if(emailLink) {
+    emailLink.style.display = 'none';
+  }
+
+  // Show post-save actions, hide save button
+  var postSave = document.getElementById('bk-post-save');
+  var saveActs = document.getElementById('bk-save-acts');
+  if(postSave) postSave.style.display = 'block';
+  if(saveActs) saveActs.style.display = 'none';
+}
 </script>
 <!-- ═══ MOBILE TAB BAR ═══ -->
 <nav class="mob-tabbar" id="mob-tabbar">
