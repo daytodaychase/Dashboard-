@@ -1899,6 +1899,57 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
       </div>
     </div>
 
+
+    <!-- ═══ AI FOOD SCANNER ═══ -->
+    <div class="sh" style="margin-top:24px">
+      <div class="st">📸 AI Food Scanner</div>
+      <div class="sd">tap to use camera</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <!-- Calorie Snap -->
+      <div class="card" style="border-top:3px solid var(--ac)">
+        <div class="card-t" style="margin-bottom:4px">🔥 Calorie Snap</div>
+        <div class="card-s" style="margin-bottom:10px">Photo your food · get an estimate</div>
+        <label id="calsnap-label" style="display:block;background:var(--s2);border:1px dashed rgba(232,213,163,0.3);border-radius:10px;padding:18px 8px;text-align:center;cursor:pointer;margin-bottom:8px">
+          <div style="font-size:26px;margin-bottom:4px">📷</div>
+          <div style="font-size:10px;color:var(--t3)">Tap to use camera</div>
+          <input type="file" accept="image/*" capture="environment" id="calsnap-input" style="display:none">
+        </label>
+        <div id="calsnap-loading" style="display:none;text-align:center;padding:16px 0">
+          <div style="font-size:11px;color:var(--t3);letter-spacing:.08em" id="calsnap-loading-msg">Analyzing...</div>
+        </div>
+        <div id="calsnap-result" style="display:none">
+          <img id="calsnap-img" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-bottom:8px">
+          <div id="calsnap-output" style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:8px"></div>
+          <div style="display:flex;gap:6px">
+            <button id="calsnap-log-btn" class="btn btn-g" onclick="aiSnapLogCals()" style="flex:1;font-size:11px">+ Log cals</button>
+            <button class="btn" onclick="aiSnapReset()" style="font-size:11px">Retake</button>
+          </div>
+        </div>
+        <div style="background:rgba(232,162,58,0.08);border:1px solid rgba(232,162,58,0.2);border-radius:6px;padding:6px 8px;margin-top:6px;font-size:9px;color:var(--am);line-height:1.5">
+          ⚠️ ESTIMATE ONLY — can be off 20-40%. Use as ballpark only.
+        </div>
+      </div>
+      <!-- Ingredient Check -->
+      <div class="card" style="border-top:3px solid var(--gn)">
+        <div class="card-t" style="margin-bottom:4px">🧪 Ingredient Check</div>
+        <div class="card-s" style="margin-bottom:10px">Scan a label · know what's in it</div>
+        <label id="ingcheck-label" style="display:block;background:var(--s2);border:1px dashed rgba(76,175,125,0.3);border-radius:10px;padding:18px 8px;text-align:center;cursor:pointer;margin-bottom:8px">
+          <div style="font-size:26px;margin-bottom:4px">🔬</div>
+          <div style="font-size:10px;color:var(--t3)">Tap to scan label</div>
+          <input type="file" accept="image/*" capture="environment" id="ingcheck-input" style="display:none">
+        </label>
+        <div id="ingcheck-loading" style="display:none;text-align:center;padding:16px 0">
+          <div style="font-size:11px;color:var(--t3);letter-spacing:.08em" id="ingcheck-loading-msg">Reading label...</div>
+        </div>
+        <div id="ingcheck-result" style="display:none">
+          <img id="ingcheck-img" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-bottom:8px">
+          <div id="ingcheck-output" style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:8px"></div>
+          <button class="btn" onclick="ingCheckReset()" style="width:100%;font-size:11px">Scan another</button>
+        </div>
+      </div>
+    </div>
+
     <div class="sh"><div class="st">Check-in History</div><div class="sd">last 7 days</div></div>
     <div id="ci-history">
       <div class="card" style="text-align:center;padding:24px;color:var(--t3);font-size:12px">No check-ins yet. Log today's above.</div>
@@ -3174,7 +3225,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-he
   <div class="pg" id="pg-bookings">
 
     <!-- Quick action button — always visible on mobile -->
-    <button onclick="document.getElementById('booking-form').classList.toggle('show');document.getElementById('bk-date').value=todayStr();" style="width:100%;padding:14px;font-family:'Fredoka',sans-serif;font-size:16px;font-weight:700;background:var(--ac);color:#0f0f0f;border:none;border-radius:12px;cursor:pointer;margin-bottom:14px">+ New Booking</button>
+    <button onclick="openBookingForm()" style="width:100%;padding:14px;font-family:'Fredoka',sans-serif;font-size:16px;font-weight:700;background:var(--ac);color:#0f0f0f;border:none;border-radius:12px;cursor:pointer;margin-bottom:14px">+ New Booking</button>
 
     <!-- Money split settings -->
     <div style="background:var(--s2);border-radius:10px;padding:14px 18px;margin-bottom:14px">
@@ -13346,6 +13397,26 @@ document.addEventListener('DOMContentLoaded', async function() {
 // ═══════════════════════════════════════════════════
 //  BOOKING — save + build calendar/email links
 // ═══════════════════════════════════════════════════
+
+function openBookingForm() {
+  var form = document.getElementById('booking-form');
+  var postSave = document.getElementById('bk-post-save');
+  var saveActs = document.getElementById('bk-save-acts');
+  if(!form) return;
+  // Reset state
+  if(postSave) postSave.style.display = 'none';
+  if(saveActs) saveActs.style.display = 'flex';
+  // Toggle
+  form.classList.toggle('show');
+  // Set today's date
+  var dateEl = document.getElementById('bk-date');
+  if(dateEl && typeof todayStr === 'function') dateEl.value = todayStr();
+  // Scroll form into view
+  if(form.classList.contains('show')) {
+    setTimeout(function(){ form.scrollIntoView({behavior:'smooth', block:'start'}); }, 100);
+  }
+}
+
 var _BK_SPACES = {
   lounge:'Nova Lounge', gallery:'Gallery', 'crimson-noir':'Crimson Noir',
   garden:'Nova Garden', both:'Multiple Spaces',
@@ -13451,6 +13522,205 @@ NovaLight Studios';
   if(saveActs) saveActs.style.display = 'none';
 }
 </script>
+<script>
+// ═══════════════════════════════════════════════════
+//  AI FOOD SCANNER
+// ═══════════════════════════════════════════════════
+var _calsnapEstimate = 0;
+var _calsnapLabel = '';
+
+function aiMsgCycle(msgs, elId) {
+  var i = 0;
+  var el = document.getElementById(elId);
+  if(el) el.textContent = msgs[0];
+  return setInterval(function(){
+    i = (i+1) % msgs.length;
+    var el2 = document.getElementById(elId);
+    if(el2) el2.textContent = msgs[i];
+  }, 1800);
+}
+
+function fileToBase64(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function(e) { resolve(e.target.result.split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function aiSnapCalories(input) {
+  var file = input.files && input.files[0];
+  if(!file) return;
+  document.getElementById('calsnap-label').style.display = 'none';
+  document.getElementById('calsnap-result').style.display = 'none';
+  document.getElementById('calsnap-loading').style.display = 'block';
+  var msgs = ['Analyzing food...','Estimating portions...','Calculating macros...','Almost done...'];
+  var interval = aiMsgCycle(msgs, 'calsnap-loading-msg');
+  var imgEl = document.getElementById('calsnap-img');
+  if(imgEl) imgEl.src = URL.createObjectURL(file);
+
+  fileToBase64(file).then(function(b64) {
+    return fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': window.ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        system: 'You are a nutrition analyst. Analyze food photos and estimate calories. Always lead with: "⚠️ ESTIMATE — accuracy varies 20-40%"
+
+Format:
+FOODS DETECTED: [list each item and estimated portion]
+ESTIMATED CALORIES: [number] kcal
+PROTEIN: ~[number]g
+CARBS: ~[number]g
+FAT: ~[number]g
+CONFIDENCE: [Low/Medium/High] — [brief reason]
+
+Be concise and honest.',
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: file.type || 'image/jpeg', data: b64 } },
+            { type: 'text', text: 'Analyze this food and estimate calories.' }
+          ]
+        }]
+      })
+    });
+  }).then(function(r) {
+    return r.json();
+  }).then(function(data) {
+    clearInterval(interval);
+    document.getElementById('calsnap-loading').style.display = 'none';
+    document.getElementById('calsnap-result').style.display = 'block';
+    var text = (data.content||[]).map(function(b){return b.text||'';}).join('');
+    var calMatch = text.match(/ESTIMATED CALORIES:\s*~?(\d+)/i);
+    _calsnapEstimate = calMatch ? parseInt(calMatch[1]) : 0;
+    var foodMatch = text.match(/FOODS DETECTED:\s*(.+)/i);
+    _calsnapLabel = foodMatch ? foodMatch[1].trim() : 'Food (AI estimate)';
+    var formatted = text
+      .replace(/(⚠️ ESTIMATE[^
+]*)/g, '<span style="color:var(--am);font-weight:700">$1</span>')
+      .replace(/CONFIDENCE: Low/g, 'CONFIDENCE: <span style="color:var(--rd)">Low</span>')
+      .replace(/CONFIDENCE: Medium/g, 'CONFIDENCE: <span style="color:var(--am)">Medium</span>')
+      .replace(/CONFIDENCE: High/g, 'CONFIDENCE: <span style="color:var(--gn)">High</span>')
+      .split('
+').join('<br>');
+    document.getElementById('calsnap-output').innerHTML = formatted || '<span style="color:var(--rd)">Could not analyze. Try better lighting.</span>';
+    var logBtn = document.getElementById('calsnap-log-btn');
+    if(logBtn && _calsnapEstimate > 0) logBtn.textContent = '+ Log ~' + _calsnapEstimate + ' cals (est.)';
+  }).catch(function(e) {
+    clearInterval(interval);
+    document.getElementById('calsnap-loading').style.display = 'none';
+    document.getElementById('calsnap-result').style.display = 'block';
+    var msg = !window.ANTHROPIC_KEY || window.ANTHROPIC_KEY === 'PASTE-YOUR-KEY-HERE'
+      ? 'API key missing — add your key to the top of index.html'
+      : 'Error: ' + (e.message || 'Unknown error');
+    document.getElementById('calsnap-output').innerHTML = '<span style="color:var(--rd)">' + msg + '</span>';
+  });
+}
+
+function aiCheckIngredients(input) {
+  var file = input.files && input.files[0];
+  if(!file) return;
+  document.getElementById('ingcheck-label').style.display = 'none';
+  document.getElementById('ingcheck-result').style.display = 'none';
+  document.getElementById('ingcheck-loading').style.display = 'block';
+  var msgs = ['Reading label...','Scanning ingredients...','Flagging chemicals...','Almost done...'];
+  var interval = aiMsgCycle(msgs, 'ingcheck-loading-msg');
+  var imgEl = document.getElementById('ingcheck-img');
+  if(imgEl) imgEl.src = URL.createObjectURL(file);
+
+  fileToBase64(file).then(function(b64) {
+    return fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': window.ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 700,
+        system: 'You are a food ingredient analyst. Analyze ingredient labels and give plain-English verdicts.
+
+Format:
+PRODUCT: [name if visible]
+OVERALL VERDICT: [✅ Clean / ⚠️ Mixed / 🚫 Avoid] — [one sentence]
+
+FLAGS:
+- [ingredient] — [what it is] — [why it matters]
+
+GREEN LIGHTS:
+[good/neutral ingredients]
+
+BOTTOM LINE: [should you eat this? 2 sentences max]
+
+Be direct. If label is unreadable, say so.',
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: file.type || 'image/jpeg', data: b64 } },
+            { type: 'text', text: 'Analyze these ingredients.' }
+          ]
+        }]
+      })
+    });
+  }).then(function(r) {
+    return r.json();
+  }).then(function(data) {
+    clearInterval(interval);
+    document.getElementById('ingcheck-loading').style.display = 'none';
+    document.getElementById('ingcheck-result').style.display = 'block';
+    var text = (data.content||[]).map(function(b){return b.text||'';}).join('');
+    var formatted = text
+      .replace(/✅/g, '<span style="color:var(--gn)">✅</span>')
+      .replace(/⚠️/g, '<span style="color:var(--am)">⚠️</span>')
+      .replace(/🚫/g, '<span style="color:var(--rd)">🚫</span>')
+      .split('
+').join('<br>');
+    document.getElementById('ingcheck-output').innerHTML = formatted || '<span style="color:var(--rd)">Could not read label. Try better lighting or closer shot.</span>';
+  }).catch(function(e) {
+    clearInterval(interval);
+    document.getElementById('ingcheck-loading').style.display = 'none';
+    document.getElementById('ingcheck-result').style.display = 'block';
+    document.getElementById('ingcheck-output').innerHTML = '<span style="color:var(--rd)">Error: ' + (e.message||'Unknown') + '</span>';
+  });
+}
+
+function aiSnapLogCals() {
+  if(!_calsnapEstimate) return;
+  var calAmt = document.getElementById('cal-amt');
+  var calLbl = document.getElementById('cal-lbl');
+  if(calAmt) calAmt.value = _calsnapEstimate;
+  if(calLbl) calLbl.value = _calsnapLabel + ' (AI est.)';
+  if(typeof logCal === 'function') logCal();
+  if(typeof toast === 'function') toast('Logged ~' + _calsnapEstimate + ' cals', 'ok');
+  aiSnapReset();
+}
+
+function aiSnapReset() {
+  _calsnapEstimate = 0; _calsnapLabel = '';
+  var inp = document.getElementById('calsnap-input'); if(inp) inp.value = '';
+  document.getElementById('calsnap-result').style.display = 'none';
+  document.getElementById('calsnap-loading').style.display = 'none';
+  document.getElementById('calsnap-label').style.display = 'block';
+}
+
+function ingCheckReset() {
+  var inp = document.getElementById('ingcheck-input'); if(inp) inp.value = '';
+  document.getElementById('ingcheck-result').style.display = 'none';
+  document.getElementById('ingcheck-loading').style.display = 'none';
+  document.getElementById('ingcheck-label').style.display = 'block';
+}
+
+</script>
 <!-- ═══ MOBILE TAB BAR ═══ -->
 <nav class="mob-tabbar" id="mob-tabbar">
   <div class="mob-subtray" id="mob-subtray"></div>
@@ -13523,18 +13793,19 @@ function mobTab(tab){
 window.addEventListener('load',function(){
   if(window.innerWidth>768)return;
   mobTab('today');
-  // Wire up camera inputs
-  ['calsnap-input','ingcheck-input'].forEach(function(id){
-    var el=document.getElementById(id);
-    if(!el)return;
-    // Remove inline onchange if any
-    el.removeAttribute('onchange');
-    el.addEventListener('change',function(){
-      if(!this.files||!this.files[0])return;
-      if(id==='calsnap-input'&&typeof aiSnapCalories==='function')aiSnapCalories(this);
-      if(id==='ingcheck-input'&&typeof aiCheckIngredients==='function')aiCheckIngredients(this);
+  // Wire up iOS-safe camera inputs
+  var calsnapEl = document.getElementById('calsnap-input');
+  if(calsnapEl) {
+    calsnapEl.addEventListener('change', function(){
+      if(this.files && this.files[0] && typeof aiSnapCalories==='function') aiSnapCalories(this);
     });
-  });
+  }
+  var ingcheckEl = document.getElementById('ingcheck-input');
+  if(ingcheckEl) {
+    ingcheckEl.addEventListener('change', function(){
+      if(this.files && this.files[0] && typeof aiCheckIngredients==='function') aiCheckIngredients(this);
+    });
+  }
 });
 
 // Swipe left/right to switch tabs
