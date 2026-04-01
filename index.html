@@ -8,10 +8,8 @@
 <meta name="apple-mobile-web-app-title" content="DAYTODAY">
 <meta name="theme-color" content="#0f0f0f">
 <title>Chase — Life Dashboard</title>
-<!-- API KEY — replace PASTE-YOUR-KEY-HERE with your Anthropic key from console.anthropic.com -->
-<script>window.ANTHROPIC_KEY = 'sk-ant-aрі0З-MХwZsFcLqnqgFхspksIiDpn0ng2fd
-KZVapNVGdczjM0AJIаjHRbvP1UеHТxkn-7spQWgLdj
-bF4jdDRY_PHCrkQ-8eNbRgAA';</script>
+<!-- Cloudflare Worker handles the API key securely -->
+<script>window.WORKER_URL = 'https://daytoday-api.bookdaytodaystudios.workers.dev/';</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -5825,9 +5823,9 @@ async function generateDebrief() {
   var prompt = 'You are Chase Epstein\'s personal weekly debrief assistant. Be direct, honest, operator-tone — not a life coach. No fluff.\n\nWeek: '+d.weekLabel+'\nMoney earned: $'+(d.money||0)+'\nAverage energy: '+(d.energy||'unknown')+'/10\nStudio bookings: '+(d.bookings||0)+'\nScripts approved: '+(d.scripts||0)+'\nHealth check-ins logged: '+(d.checkins||0)+'\n\nHis notes:\nWhat worked: '+(worked||'not filled in')+'\nWhat didn\'t: '+(didnt||'not filled in')+'\nOne thing to change: '+(change||'not filled in')+'\nBiggest win: '+(win||'not filled in')+'\n\nGive him:\n1. A WEEK IN ONE SENTENCE (brutal honest summary)\n2. THE NUMBER THAT MATTERS MOST this week and why\n3. ONE PATTERN you see that he might be missing\n4. NEXT WEEK\'S PRIORITY — one sentence, specific\n5. A QUESTION to sit with this weekend\n\nKeep the whole thing under 200 words. No headers with # symbols. Use the labels above as plain text.';
 
   try {
-    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    var resp = await fetch('https://daytoday-api.bookdaytodaystudios.workers.dev/', {
       method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':window.ANTHROPIC_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:600,
@@ -8634,9 +8632,9 @@ async function runBrainDump() {
       ? 'Here is my raw brain dump. Turn this into a script in my voice:\n\n' + input
       : 'Brain dump (focus: ' + focusLabel + '):\n\n' + input;
 
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
+    var response = await fetch('https://daytoday-api.bookdaytodaystudios.workers.dev/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': window.ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: isYap ? 2000 : 1000,
@@ -12043,9 +12041,9 @@ async function analyzeContentIdeas() {
       return 'DUMP ' + (i+1) + ' (' + d.date + '):\n' + d.inputPreview + '\n\nOUTPUT PREVIEW:\n' + (d.output || '').slice(0, 400);
     }).join('\n\n---\n\n');
 
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
+    var response = await fetch('https://daytoday-api.bookdaytodaystudios.workers.dev/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': window.ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
@@ -13394,12 +13392,52 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 </script>
 <script>
-// BOOKING — save + build calendar/email links
+// BOOKING — save + auto-create calendar event + Gmail draft
 var _BK_SPACES = {
   lounge:'Nova Lounge', gallery:'Gallery', 'crimson-noir':'Crimson Noir',
   garden:'Nova Garden', both:'Multiple Spaces',
   'membership-t1':'Membership Tier 1','membership-t2':'Membership Tier 2','membership-t3':'Membership Tier 3'
 };
+
+function showBookingResult(type, calMsg, emailMsg) {
+  var postSave = document.getElementById('bk-post-save');
+  if(!postSave) return;
+  var color = type === 'success' ? 'var(--gn)' : 'var(--am)';
+  var icon = type === 'success' ? '✓' : '~';
+  // Clear and rebuild with DOM
+  postSave.innerHTML = '';
+  var title = document.createElement('div');
+  title.style.cssText = 'font-size:13px;font-weight:700;margin-bottom:8px;color:' + color;
+  title.textContent = icon + ' Booking saved!';
+  postSave.appendChild(title);
+  var cal = document.createElement('div');
+  cal.style.cssText = 'font-size:12px;color:var(--t2);margin-bottom:4px';
+  cal.textContent = (type === 'success' ? '📅 ' : '⚠️ ') + calMsg;
+  postSave.appendChild(cal);
+  if(emailMsg) {
+    var em = document.createElement('div');
+    em.style.cssText = 'font-size:12px;color:var(--t2);margin-bottom:12px';
+    em.textContent = (emailMsg.indexOf('draft') > -1 ? '✉️ ' : '⚠️ ') + emailMsg;
+    postSave.appendChild(em);
+  } else {
+    var sp = document.createElement('div');
+    sp.style.marginBottom = '12px';
+    postSave.appendChild(sp);
+  }
+  var btn = document.createElement('button');
+  btn.style.cssText = 'width:100%;padding:10px;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t3);font-size:12px;cursor:pointer';
+  btn.textContent = 'Done';
+  btn.addEventListener('click', closeBookingResult);
+  postSave.appendChild(btn);
+  postSave.style.display = 'block';
+}
+
+function closeBookingResult() {
+  var ps = document.getElementById('bk-post-save');
+  var bf = document.getElementById('booking-form');
+  if(ps) ps.style.display = 'none';
+  if(bf) bf.classList.remove('show');
+}
 
 function openBookingForm() {
   var form = document.getElementById('booking-form');
@@ -13412,16 +13450,16 @@ function openBookingForm() {
   var dateEl = document.getElementById('bk-date');
   if(dateEl && typeof todayStr === 'function') dateEl.value = todayStr();
   if(form.classList.contains('show')) {
-    setTimeout(function(){ form.scrollIntoView({behavior:'smooth',block:'start'}); }, 100);
+    setTimeout(function(){ form.scrollIntoView({behavior:'smooth', block:'start'}); }, 100);
   }
 }
 
 function pad2(n) { return String(n).padStart(2,'0'); }
 
-function saveBookingWithLinks() {
+async function saveBookingWithLinks() {
   var client    = (document.getElementById('bk-client') ? document.getElementById('bk-client').value : '').trim();
   var email     = (document.getElementById('bk-client-email') ? document.getElementById('bk-client-email').value : '').trim();
-  var date      = document.getElementById('bk-date') ? document.getElementById('bk-date').value : todayStr();
+  var date      = document.getElementById('bk-date') ? document.getElementById('bk-date').value : (typeof todayStr === 'function' ? todayStr() : '');
   var startTime = document.getElementById('bk-start-time') ? document.getElementById('bk-start-time').value : '10:00';
   var deposit   = parseFloat(document.getElementById('bk-deposit') ? document.getElementById('bk-deposit').value : 0) || 0;
   var total     = parseFloat(document.getElementById('bk-total') ? document.getElementById('bk-total').value : 0) || 0;
@@ -13429,84 +13467,62 @@ function saveBookingWithLinks() {
   var hours     = parseFloat(document.getElementById('bk-hours') ? document.getElementById('bk-hours').value : 2) || 2;
   var notes     = (document.getElementById('bk-notes') ? document.getElementById('bk-notes').value : '').trim();
   var spaceName = _BK_SPACES[space] || space;
-  var balance   = total - deposit;
 
   if(!client) { if(typeof toast === 'function') toast('Client name required'); return; }
+  if(!date) { if(typeof toast === 'function') toast('Date required'); return; }
 
-  // Save to dashboard localStorage
+  // Show saving state
+  var btn = document.getElementById('bk-save-btn');
+  if(btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+  // 1. Save to dashboard localStorage
   if(typeof saveBooking === 'function') saveBooking();
 
-  // Build Google Calendar URL
-  var sh = parseInt(startTime.split(':')[0]);
-  var sm = parseInt(startTime.split(':')[1]);
-  var eh = sh + Math.floor(hours);
-  var em = sm + Math.round((hours % 1) * 60);
-  if(em >= 60){ eh++; em -= 60; }
-  var dp = date.replace(/-/g, '');
-  var calStart = dp + 'T' + pad2(sh) + pad2(sm) + '00';
-  var calEnd   = dp + 'T' + pad2(eh) + pad2(em) + '00';
-  var NL = '%0A';
-  var calDetails = 'Space: ' + spaceName + NL + 'Duration: ' + hours + ' hrs'
-    + (total > 0 ? NL + 'Total: $' + total : '')
-    + (deposit > 0 ? NL + 'Deposit: $' + deposit : '')
-    + (balance > 0 ? NL + 'Balance due: $' + balance : '')
-    + (notes ? NL + 'Notes: ' + notes : '')
-    + NL + NL + 'NovaLight Studios — 3237 Amber St, Philadelphia PA';
+  // 2. Call Worker to create calendar event + Gmail draft
+  var statusEl = document.getElementById('bk-status-msg');
+  if(statusEl) statusEl.textContent = 'Creating calendar event...';
 
-  var calURL = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
-    + '&text=' + encodeURIComponent('NovaLight \u2014 ' + client + ' (' + spaceName + ')')
-    + '&dates=' + calStart + '/' + calEnd
-    + '&details=' + calDetails
-    + '&location=' + encodeURIComponent('NovaLight Studios, 3237 Amber St, Philadelphia, PA')
-    + '&ctz=America/New_York';
-
-  var calLink = document.getElementById('bk-cal-link');
-  if(calLink) calLink.href = calURL;
-
-  // Build mailto if email provided
-  if(email) {
-    var dateFmt = new Date(date + 'T12:00:00').toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'});
-    var dateFmtShort = new Date(date + 'T12:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'});
-    var lines = [
-      'Hi ' + client + ',',
-      '',
-      'Your booking at NovaLight Studios is confirmed!',
-      '',
-      'Date: ' + dateFmt,
-      'Start: ' + startTime,
-      'Duration: ' + hours + ' hours',
-      'Space: ' + spaceName
-    ];
-    if(total > 0) lines.push('Total: $' + total);
-    if(deposit > 0) lines.push('Deposit paid: $' + deposit);
-    if(balance > 0) lines.push('Balance due at arrival: $' + balance);
-    lines.push('');
-    lines.push('Address: NovaLight Studios');
-    lines.push('3237 Amber St, Philadelphia, PA');
-    lines.push('Hours: 7am \u2013 12am');
-    lines.push('');
-    lines.push('Please arrive a few minutes early. If anything changes, reply to this email.');
-    lines.push('');
-    lines.push('Looking forward to it,');
-    lines.push('Chase');
-    lines.push('NovaLight Studios');
-    var bodyStr = lines.join('\n');
-    var emailLink = document.getElementById('bk-email-link');
-    if(emailLink) {
-      emailLink.href = 'mailto:' + email
-        + '?subject=' + encodeURIComponent('NovaLight Studios \u2014 Booking Confirmed (' + dateFmtShort + ')')
-        + '&body=' + encodeURIComponent(bodyStr);
-      emailLink.style.display = 'block';
+  try {
+    var resp = await fetch('https://daytoday-api.bookdaytodaystudios.workers.dev/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'booking',
+        booking: {
+          client: client,
+          email: email,
+          date: date,
+          startTime: startTime,
+          hours: hours,
+          spaceName: spaceName,
+          total: total,
+          deposit: deposit,
+          notes: notes
+        }
+      })
+    });
+    var result = await resp.json();
+    
+    // Show result
+    var postSave = document.getElementById('bk-post-save');
+    var saveActs = document.getElementById('bk-save-acts');
+    if(postSave) {
+      var calMsg = result.calendar === 'created' ? '📅 Added to Google Calendar' : ('⚠️ Calendar: ' + (result.calendar || 'failed'));
+      var emailMsg = email ? (result.gmail === 'draft created' ? '✉️ Confirmation draft in Gmail' : ('⚠️ Email: ' + (result.gmail || 'failed'))) : '';
+      showBookingResult(postSave, true, calMsg, emailMsg);
     }
-  } else {
-    var emailLink2 = document.getElementById('bk-email-link');
-    if(emailLink2) emailLink2.style.display = 'none';
+    if(saveActs) saveActs.style.display = 'none';
+  } catch(e) {
+    if(typeof toast === 'function') toast('Saved locally. Calendar error: ' + e.message);
+    var postSave2 = document.getElementById('bk-post-save');
+    if(postSave2) {
+      showBookingResult(postSave2, false, 'Saved locally', 'Calendar error: ' + e.message);postSave2.style.display = 'block';
+    }
+    var saveActs2 = document.getElementById('bk-save-acts');
+    if(saveActs2) saveActs2.style.display = 'none';
   }
 
-  var postSave = document.getElementById('bk-post-save');
-  var saveActs = document.getElementById('bk-save-acts');
-  if(postSave) postSave.style.display = 'block';
-  if(saveActs) saveActs.style.display = 'none';
+  if(btn) { btn.disabled = false; btn.textContent = 'Save Booking'; }
 }
 </script>
 <script>
@@ -13552,13 +13568,10 @@ function aiSnapCalories(input) {
     + ' CONFIDENCE: Low or Medium or High and brief reason. Be concise and honest.';
 
   fileToBase64(file).then(function(b64) {
-    return fetch('https://api.anthropic.com/v1/messages', {
+    return fetch('https://daytoday-api.bookdaytodaystudios.workers.dev/', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': window.ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
@@ -13620,13 +13633,10 @@ function aiCheckIngredients(input) {
     + ' BOTTOM LINE: should you eat this, 2 sentences max. Be direct.';
 
   fileToBase64(file).then(function(b64) {
-    return fetch('https://api.anthropic.com/v1/messages', {
+    return fetch('https://daytoday-api.bookdaytodaystudios.workers.dev/', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': window.ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
