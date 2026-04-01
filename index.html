@@ -13429,6 +13429,26 @@ function showBookingResult(type, calMsg, emailMsg) {
   btn.textContent = 'Done';
   btn.addEventListener('click', closeBookingResult);
   postSave.appendChild(btn);
+  // Payment link button
+  var payBtn = document.createElement('button');
+  payBtn.id = 'bk-payment-btn';
+  payBtn.style.cssText = 'width:100%;margin-top:8px;padding:12px;background:#635BFF;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer';
+  payBtn.textContent = 'Generate Payment Link';
+  payBtn.addEventListener('click', generatePaymentLink);
+  postSave.appendChild(payBtn);
+  var payWrap = document.createElement('div');
+  payWrap.id = 'bk-payment-link-wrap';
+  payWrap.style.cssText = 'display:none;margin-top:8px;padding:10px;background:var(--s2);border:1px solid rgba(99,91,255,0.3);border-radius:8px';
+  var payLabel = document.createElement('div');
+  payLabel.style.cssText = 'font-size:10px;color:var(--t3);margin-bottom:4px';
+  payLabel.textContent = 'Copy and send this link to your client:';
+  var payAnchor = document.createElement('a');
+  payAnchor.id = 'bk-payment-link';
+  payAnchor.target = '_blank';
+  payAnchor.style.cssText = 'color:#635BFF;font-size:11px;word-break:break-all;display:block';
+  payWrap.appendChild(payLabel);
+  payWrap.appendChild(payAnchor);
+  postSave.appendChild(payWrap);
   postSave.style.display = 'block';
 }
 
@@ -13523,6 +13543,53 @@ async function saveBookingWithLinks() {
   }
 
   if(btn) { btn.disabled = false; btn.textContent = 'Save Booking'; }
+}
+
+async function generatePaymentLink() {
+  var client    = (document.getElementById('bk-client') ? document.getElementById('bk-client').value : '').trim();
+  var date      = document.getElementById('bk-date') ? document.getElementById('bk-date').value : '';
+  var startTime = document.getElementById('bk-start-time') ? document.getElementById('bk-start-time').value : '10:00';
+  var total     = parseFloat(document.getElementById('bk-total') ? document.getElementById('bk-total').value : 0) || 0;
+  var space     = document.getElementById('bk-space') ? document.getElementById('bk-space').value : 'lounge';
+  var hours     = parseFloat(document.getElementById('bk-hours') ? document.getElementById('bk-hours').value : 2) || 2;
+  var spaceName = _BK_SPACES[space] || space;
+
+  if(!client || total <= 0) {
+    if(typeof toast === 'function') toast('Add client name and total to generate payment link');
+    return;
+  }
+
+  var payBtn = document.getElementById('bk-payment-btn');
+  if(payBtn) { payBtn.disabled = true; payBtn.textContent = 'Generating...'; }
+
+  try {
+    var resp = await fetch('https://daytoday-api.bookdaytodaystudios.workers.dev/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'create_payment',
+        booking: { client: client, date: date, startTime: startTime, hours: hours, spaceName: spaceName, total: total }
+      })
+    });
+    var result = await resp.json();
+    if(result.url) {
+      // Show the payment link
+      var linkEl = document.getElementById('bk-payment-link');
+      var wrapEl = document.getElementById('bk-payment-link-wrap');
+      if(linkEl) {
+        linkEl.href = result.url;
+        linkEl.textContent = result.url;
+      }
+      if(wrapEl) wrapEl.style.display = 'block';
+      if(typeof toast === 'function') toast('Payment link ready!', 'ok');
+    } else {
+      if(typeof toast === 'function') toast('Could not generate link: ' + (result.error || 'Unknown error'));
+    }
+  } catch(e) {
+    if(typeof toast === 'function') toast('Error: ' + e.message);
+  }
+
+  if(payBtn) { payBtn.disabled = false; payBtn.textContent = '💳 Generate Payment Link'; }
 }
 </script>
 <script>
