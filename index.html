@@ -16243,10 +16243,24 @@ function renderMine() {
 
   if (!isLive) { totalViews=259200; totalPosts=8; totalEng=20700; totalFollowers=0; }
 
-  var vSpark = genSpark(10, 35000, 42000);
-  var eSpark = genSpark(10, 900, 1100);
-  var pSpark = genSpark(10, 4, 7);
-  var fSpark = genSpark(10, 200, 600);
+  // Spark bars: use real video data when live, random only for mock mode
+  var vSpark, eSpark, pSpark, fSpark;
+  if (isLive) {
+    var realVideos = (SC.ytData && SC.ytData.videos || []).concat(SC.igData && SC.igData.posts || []).slice(0, 10);
+    if (realVideos.length) {
+      vSpark = realVideos.map(function(v){ return v.views || 0; });
+      eSpark = realVideos.map(function(v){ return (v.likes||0) + (v.comments||0); });
+      pSpark = realVideos.map(function(_,i){ return i < realVideos.length ? 1 : 0; });
+      fSpark = Array(realVideos.length).fill(0);
+    } else {
+      vSpark = eSpark = pSpark = fSpark = [0,0,0,0,0,0,0,0,0,0];
+    }
+  } else {
+    vSpark = genSpark(10, 35000, 42000);
+    eSpark = genSpark(10, 900, 1100);
+    pSpark = genSpark(10, 4, 7);
+    fSpark = genSpark(10, 200, 600);
+  }
 
   // Settings panel
   var settingsHTML = SC.showSettings ? (
@@ -16712,7 +16726,10 @@ window.SC_getInsight = async function(){
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514', max_tokens:150,
         system:'You are Chase Epstein\'s social media advisor. Give one sharp, actionable sentence. No hyphens. Operator tone.',
-        messages:[{role:'user',content:'My content this week: '+MOCK_CONTENT.slice(0,3).map(function(c){return c.title+' ('+fmt(c.views)+' views)';}).join(', ')+'. What should I focus on?'}]
+        messages:[{role:'user',content:'My content this week: '+(
+          (SC.ytData&&SC.ytData.videos&&SC.ytData.videos.length ? SC.ytData.videos : MOCK_CONTENT)
+          .slice(0,3).map(function(c){return c.title+' ('+fmt(c.views)+' views)';}).join(', ')
+        )+'. What should I focus on?'}]
       })
     });
     var data = await res.json();
