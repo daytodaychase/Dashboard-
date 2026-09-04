@@ -108,6 +108,7 @@
   <div class="sub">Guest Command Center</div>
   <div class="tag">talk shows show people talking. mine shows people doing.</div>
   <div class="nudge" id="nudge"></div>
+  <div class="nudge" id="caltest" style="cursor:pointer" onclick="calCheck()">calendar link: tap to test</div>
 </header>
 
 <div class="grid" id="stats"></div>
@@ -194,7 +195,7 @@
 // ───────── CONFIG ─────────
 const SB_URL='https://gzupnelfmehgdxfhntar.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6dXBuZWxmbWVoZ2R4ZmhudGFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0OTA4MjMsImV4cCI6MjEwNDA2NjgyM30.ENMxPs3-9ECG0Z-KyabZ1TSFYAbyB4M1cz3c-KTS0yo';
-const WORKER='https://daytoday-api.bookdaytodaystudios.workers.dev/';
+const WORKER=SB_URL+'/functions/v1/show-shoot';
 const PROOF_LINK='';  // paste a link to your best episode or one take video here
 const STAGES=['Candidate','Reached Out','Replied','Booked','Shot','Posted'];
 const PLATFORMS=[{p:'YouTube',k:'youtube'},{p:'TikTok',k:'tiktok'},{p:'Instagram',k:'instagram'},{p:'Facebook',k:'facebook'}];
@@ -314,7 +315,7 @@ async function del(){
 }
 async function syncShoot(g){
   try{
-    const r=await fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'shoot',handle:g.handle,date:g.date,eventId:g.eventId||null,notes:g.seg})});
+    const r=await fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json','x-show-key':showKey,'apikey':SB_KEY},body:JSON.stringify({action:'shoot',handle:g.handle,date:g.date,eventId:g.eventId||null,notes:g.seg})});
     const d=await r.json();
     if(g.date&&!d.eventId){toast('calendar refused: '+String(d.error||JSON.stringify(d)).slice(0,140));return}
     await sb('show_guests?id=eq.'+g.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({calendar_event_id:d.eventId||null})});
@@ -332,6 +333,14 @@ function renderNudge(){
   const waiting=guests.filter(g=>g.stage==='Shot'&&!g.foot);
   if(waiting.length)lines.push(`${waiting.length} guest${waiting.length>1?'s':''} still waiting on footage.`);
   document.getElementById('nudge').textContent=lines.join(' ');
+}
+async function calCheck(){
+  const el=document.getElementById('caltest');el.textContent='calendar link: testing…';
+  try{
+    const r=await fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json','x-show-key':showKey,'apikey':SB_KEY},body:JSON.stringify({action:'check'})});
+    const d=await r.json();
+    el.textContent=d.ok?'calendar link: working ✓':'calendar link: '+(d.error||JSON.stringify(d));
+  }catch(e){el.textContent='calendar link: unreachable ('+e.message+')'}
 }
 function openIG(h){const u='https://instagram.com/'+h.replace('@','');const w=window.open(u,'_blank');if(!w)location.href=u}
 
