@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DAYTODAY SHOW</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Courier+Prime:wght@400;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#1a1410;--panel:#241c16;--panel2:#2e241c;--line:#3b2f25;--cream:#f2e8d5;--cream2:#b9ab94;--orange:#d9622b;--orange2:#f08a4b}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--cream);font-family:'Courier Prime',monospace;padding:20px 16px 60px;max-width:1200px;margin:0 auto}
+  h1{font-family:'Anton',sans-serif;font-size:clamp(30px,9.5vw,64px);white-space:nowrap;letter-spacing:.02em;line-height:.95;text-transform:uppercase}
+  .sub{font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:13px;color:var(--cream2);margin-top:8px}
+  .tag{font-family:'Caveat',cursive;color:var(--orange2);font-size:26px;margin-top:6px}
+  header{margin-bottom:28px}
+  .nudge{margin-top:14px;font-size:13px;color:var(--cream);border-left:3px solid var(--orange);padding:6px 10px;background:var(--panel);min-height:20px}
+  .nudge:empty{display:none}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:14px}
+  .stat{background:var(--panel);border-top:5px solid var(--orange);padding:14px 14px 12px;min-height:118px;cursor:pointer}
+  .stat .plat{font-size:12px;color:var(--cream2);letter-spacing:.06em;text-transform:uppercase}
+  .stat .big{font-family:'Anton',sans-serif;font-size:36px;line-height:1;margin:8px 0 6px}
+  .stat .delta{font-size:12px;color:var(--orange2)}
+  .stat .delta.down{color:var(--cream2)}
+  .stat .top{font-size:11px;color:var(--cream2);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stat .upd{font-size:10px;color:var(--cream2);margin-top:4px;opacity:.7}
+  .apps{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:36px}
+  .app{background:var(--panel);padding:16px 14px;display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--cream);border:1px solid var(--line);cursor:pointer}
+  .app:active{background:var(--panel2)}
+  .app .ico{font-size:28px}
+  .app .name{font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.06em;font-size:16px}
+  .app .what{font-size:11px;color:var(--cream2);margin-top:2px}
+  .boardhead{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+  .boardhead h2{font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.06em;font-size:26px}
+  .btn{background:var(--orange);color:#1a1410;border:0;font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:14px;padding:10px 16px;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--cream2);border:1px solid var(--line)}
+  .btn.pitch{width:100%;background:var(--panel2);color:var(--cream);border:1px solid var(--orange)}
+  .chips{display:none;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .chip{background:var(--panel);border:1px solid var(--line);color:var(--cream2);font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.06em;font-size:12px;padding:7px 10px;cursor:pointer}
+  .chip span{color:var(--orange2);margin-left:5px;font-family:'Courier Prime',monospace}
+  .chip.on{background:var(--orange);color:#1a1410;border-color:var(--orange)}
+  .chip.on span{color:#1a1410}
+  .board{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+  .col{background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+  .col h3{font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:14px;padding:10px 12px;border-bottom:2px solid var(--orange);display:flex;justify-content:space-between}
+  .col h3 span{color:var(--cream2);font-family:'Courier Prime',monospace;font-size:12px}
+  .cards{padding:8px;flex:1}
+  .card{background:var(--panel2);padding:10px;margin-bottom:8px;cursor:pointer;border-left:3px solid transparent}
+  .card:active{border-left-color:var(--orange)}
+  .card .ep{font-family:'Anton',sans-serif;font-size:11px;letter-spacing:.1em;color:var(--orange2)}
+  .card .h{font-weight:700;font-size:14px}
+  .card .h a{color:var(--cream);text-decoration:none;border-bottom:1px dotted var(--orange)}
+  .card .m{font-size:11px;color:var(--cream2);margin-top:3px}
+  .card .seg{font-size:12px;margin-top:6px}
+  .card .dl{display:inline-block;font-size:11px;color:var(--cream2);margin-top:6px;text-decoration:none;border-bottom:1px dotted var(--cream2)}
+  .card .chk{font-size:11px;color:var(--orange2);margin-top:6px}
+  .empty{font-size:12px;color:var(--cream2);padding:14px 8px;text-align:center}
+  @media(max-width:900px){.chips{display:flex}.board{display:block}.col{display:none}.col.show{display:flex}.col h3{display:none}.cards{padding:0}}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:flex-end;justify-content:center;z-index:9}
+  .modal.open{display:flex}
+  .sheet{background:var(--panel);width:100%;max-width:520px;padding:18px 16px 24px;border-top:5px solid var(--orange);max-height:92vh;overflow-y:auto}
+  .sheet h4{font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.06em;font-size:20px;margin-bottom:12px}
+  label{display:block;font-size:11px;color:var(--cream2);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.06em}
+  input,select,textarea{width:100%;background:var(--bg);color:var(--cream);border:1px solid var(--line);padding:10px;font-family:'Courier Prime',monospace;font-size:14px}
+  textarea{min-height:70px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .check{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px}
+  .check input{width:auto}
+  .actions{display:flex;gap:10px;margin-top:18px}
+  .actions .btn{flex:1}
+  .del{background:none;border:0;color:var(--cream2);font-family:'Courier Prime',monospace;font-size:12px;margin-top:14px;cursor:pointer;text-decoration:underline}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);max-width:92vw;white-space:normal;text-align:center;background:var(--orange);color:#1a1410;font-family:'Anton',sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:10px 18px;font-size:13px;display:none;z-index:10}
+  .sheetview{position:fixed;inset:0;background:var(--bg);display:none;z-index:11;overflow-y:auto;padding:16px}
+  .sheetview.open{display:block}
+  .sheetbar{display:flex;gap:10px;justify-content:space-between;margin-bottom:16px}
+  .runsheet{background:#fff;color:#111;font-family:'Courier Prime',monospace;padding:28px 24px;max-width:720px;margin:0 auto;font-size:14px}
+  .runsheet h1{font-size:34px;color:#111;margin-bottom:2px;white-space:normal}
+  .runsheet .rs-sub{font-family:'Anton',sans-serif;letter-spacing:.14em;text-transform:uppercase;font-size:12px;color:#d9622b;margin-bottom:18px}
+  .runsheet table{width:100%;border-collapse:collapse;margin-bottom:18px}
+  .runsheet td{padding:7px 0;border-bottom:1px solid #ddd;vertical-align:top}
+  .runsheet td:first-child{width:36%;color:#777;text-transform:uppercase;font-size:11px;letter-spacing:.06em}
+  .runsheet h2{font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:16px;margin:18px 0 8px;border-bottom:3px solid #d9622b;padding-bottom:4px}
+  .runsheet ul{list-style:none}
+  .runsheet li{padding:5px 0;border-bottom:1px dotted #ccc}
+  .runsheet li::before{content:'☐ ';color:#d9622b}
+  .runsheet li.done::before{content:'☑ '}
+  .runsheet .blank{border-bottom:1px solid #999;display:inline-block;min-width:200px}
+  .runsheet .lines div{border-bottom:1px solid #ccc;height:24px}
+  @media print{body>*{display:none!important}.sheetview{display:block!important;position:static;padding:0;background:#fff}.sheetbar{display:none!important}.runsheet{padding:0;max-width:none}}
+  @media(min-width:700px){.modal{align-items:center}}
+  .lock{position:fixed;inset:0;background:var(--bg);z-index:20;display:flex;align-items:center;justify-content:center;padding:20px}
+  .lock .box{max-width:360px;width:100%}
+  .lock h1{font-size:40px;margin-bottom:14px}
+</style>
+</head>
+<body>
+
+<div class="lock" id="lock">
+  <div class="box">
+    <h1>Daytoday Show</h1>
+    <label>Show key</label>
+    <input id="pin" type="password" autocomplete="off" placeholder="enter key" onkeydown="if(event.key==='Enter')unlock()">
+    <button class="btn" style="width:100%;margin-top:12px" onclick="unlock()">Open</button>
+  </div>
+</div>
+
+<header>
+  <h1>Daytoday Show</h1>
+  <div class="sub">Guest Command Center</div>
+  <div class="tag">talk shows show people talking. mine shows people doing.</div>
+  <div class="nudge" id="nudge"></div>
+</header>
+
+<div class="grid" id="stats"></div>
+
+<div class="apps">
+  <a class="app" href="https://www.opus.pro" target="_blank"><span class="ico">✂️</span><div><div class="name">Open Opus</div><div class="what">cut + schedule clips</div></div></a>
+  <a class="app" href="https://www.bootstrapmediagroup.com/robin-login" target="_blank"><span class="ico">🤖</span><div><div class="name">Open Robin</div><div class="what">replies + posts</div></div></a>
+  <a class="app" href="https://drive.google.com/drive/folders/168PTbbSwxkomJgj7kd6FcVu-7EfNPfac" target="_blank"><span class="ico">📁</span><div><div class="name">Show Drive</div><div class="what">assets + guest folders</div></div></a>
+</div>
+
+<div class="boardhead">
+  <h2>Guests</h2>
+  <button class="btn" onclick="openNew()">+ Add Guest</button>
+</div>
+<div class="chips" id="chips"></div>
+<div class="board" id="board"></div>
+
+<div class="toast" id="toast"></div>
+
+<div class="sheetview" id="sheetview">
+  <div class="sheetbar">
+    <button class="btn ghost" onclick="sheetview.classList.remove('open')">Back</button>
+    <button class="btn" onclick="window.print()">Print / Save PDF</button>
+  </div>
+  <div class="runsheet" id="runsheet"></div>
+</div>
+
+<div class="modal" id="smodal" onclick="if(event.target===this)closeStat()">
+  <div class="sheet">
+    <h4 id="smtitle">Platform</h4>
+    <label>Followers / subs</label>
+    <input id="s_n" placeholder="12900 or 12.9K" inputmode="decimal">
+    <label>Top post this week</label>
+    <input id="s_top" placeholder="chest wax poem · 210K views">
+    <div class="actions">
+      <button class="btn ghost" onclick="closeStat()">Cancel</button>
+      <button class="btn" onclick="saveStat()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="sheet">
+    <h4 id="mtitle">Guest</h4>
+    <div class="row">
+      <div><label>Handle</label><input id="f_handle" placeholder="@name"></div>
+      <div><label>Episode #</label><input id="f_ep" placeholder="07" inputmode="numeric"></div>
+    </div>
+    <div class="row">
+      <div><label>Followers</label><input id="f_fol" placeholder="52K"></div>
+      <div><label>They are a</label><select id="f_type"><option>Musician</option><option>Creator</option><option>Comedian</option><option>Chef</option><option>Athlete</option><option>CEO</option><option>Artist</option><option>Other</option></select></div>
+    </div>
+    <label>Stage</label><select id="f_stage"></select>
+    <label>The ending / the day we do together</label>
+    <input id="f_seg" placeholder="one take music video">
+    <div class="row">
+      <div><label>Shoot date</label><input id="f_date" type="date"></div>
+      <div><label>Call time</label><input id="f_call" placeholder="10:00 AM"></div>
+    </div>
+    <div class="row">
+      <div><label>Location</label><input id="f_loc" placeholder="studio / their spot"></div>
+      <div><label>Part 2 is</label><select id="f_p2"><option value="studio">In studio (2 to 3 hrs)</option><option value="allday">Follow them (all day)</option></select></div>
+    </div>
+    <label>Guest Clips folder link</label>
+    <input id="f_drive" placeholder="paste Drive share link">
+    <label>Notes</label>
+    <textarea id="f_notes"></textarea>
+    <div class="check"><input type="checkbox" id="f_known"><label for="f_known" style="margin:0">I know them</label></div>
+    <div class="check"><input type="checkbox" id="f_rel"><label for="f_rel" style="margin:0">Release form signed</label></div>
+    <div class="check"><input type="checkbox" id="f_foot"><label for="f_foot" style="margin:0">Footage delivered to guest</label></div>
+    <div class="row" style="margin-top:18px">
+      <button class="btn pitch" onclick="copyPitch()">📋 Copy pitch</button>
+      <button class="btn pitch" onclick="runSheet()">📄 Run sheet</button>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="save()">Save</button>
+    </div>
+    <button class="del" id="delbtn" onclick="del()">remove guest</button>
+  </div>
+</div>
+
+<script>
+// ───────── CONFIG ─────────
+const SB_URL='https://gzupnelfmehgdxfhntar.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6dXBuZWxmbWVoZ2R4ZmhudGFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0OTA4MjMsImV4cCI6MjEwNDA2NjgyM30.ENMxPs3-9ECG0Z-KyabZ1TSFYAbyB4M1cz3c-KTS0yo';
+const WORKER='https://daytoday-api.bookdaytodaystudios.workers.dev/';
+const PROOF_LINK='';  // paste a link to your best episode or one take video here
+const STAGES=['Candidate','Reached Out','Replied','Booked','Shot','Posted'];
+const PLATFORMS=[{p:'YouTube',k:'youtube'},{p:'TikTok',k:'tiktok'},{p:'Instagram',k:'instagram'},{p:'Facebook',k:'facebook'}];
+let showKey='';
+
+// ───────── SUPABASE (PostgREST) ─────────
+function hdr(extra){return Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'x-show-key':showKey,'Content-Type':'application/json'},extra||{})}
+async function sb(path,opt){
+  const r=await fetch(SB_URL+'/rest/v1/'+path,Object.assign({headers:hdr(opt&&opt.headers)},opt||{}));
+  if(!r.ok){const t=await r.text();throw new Error(r.status+' '+t)}
+  const t=await r.text();return t?JSON.parse(t):null;
+}
+const toRow=g=>({handle:g.handle,followers:g.fol||null,guest_type:g.type,stage:g.stage,ending:g.seg||null,episode:g.ep||null,shoot_date:g.date||null,call_time:g.call||null,location:g.loc||null,part2:g.p2||'studio',drive_link:g.drive||null,notes:g.notes||null,known:!!g.known,release_signed:!!g.rel,footage_delivered:!!g.foot,reached_at:g.reachedAt||null,calendar_event_id:g.eventId||null});
+const fromRow=r=>({id:r.id,handle:r.handle,fol:r.followers||'',type:r.guest_type,stage:r.stage,seg:r.ending||'',ep:r.episode||'',date:r.shoot_date||'',call:r.call_time||'',loc:r.location||'',p2:r.part2||'studio',drive:r.drive_link||'',notes:r.notes||'',known:r.known,rel:r.release_signed,foot:r.footage_delivered,reachedAt:r.reached_at||'',eventId:r.calendar_event_id||''});
+
+// ───────── STATE ─────────
+let guests=[],statRows=[],editing=null,editStat=null,activeStage='Candidate';
+
+async function unlock(){
+  showKey=pin.value.trim();
+  try{await loadAll();lock.style.display='none';try{localStorage.setItem('dtd_show_key',showKey)}catch(e){}}
+  catch(e){const m=String(e.message||e);toast(m.includes('42501')||m.includes('permission')?'wrong key':m.slice(0,80));console.error(e);try{localStorage.removeItem('dtd_show_key')}catch(x){}}
+}
+async function loadAll(){
+  const [g,s]=await Promise.all([
+    sb('show_guests?select=*&order=created_at.asc'),
+    sb('show_stats?select=*&order=date.desc&limit=2')
+  ]);
+  guests=g.map(fromRow);statRows=s;
+  renderStats();renderBoard();renderNudge();
+}
+
+// ───────── STATS ─────────
+function short(n){n=Number(n)||0;return n>=1e6?(n/1e6).toFixed(1).replace('.0','')+'M':n>=1e3?(n/1e3).toFixed(1).replace('.0','')+'K':String(n)}
+function num(x){const s=String(x).trim().toUpperCase();const m=s.match(/^([\d.]+)\s*([KM])?$/);if(!m)return parseInt(s.replace(/[^0-9]/g,''))||0;let v=parseFloat(m[1]);if(m[2]==='K')v*=1e3;if(m[2]==='M')v*=1e6;return Math.round(v)}
+function renderStats(){
+  const cur=statRows[0]||{},prev=statRows[1]||{};
+  document.getElementById('stats').innerHTML=PLATFORMS.map((pl,i)=>{
+    const n=cur[pl.k+'_followers'],p=prev[pl.k+'_followers'],top=cur[pl.k+'_top_post'];
+    const has=n!=null,diff=(has&&p!=null)?n-p:null;
+    const delta=!has?'tap to enter':diff==null?'first entry':diff===0?'no change':(diff>0?'+':'−')+short(Math.abs(diff))+' since '+fmt(prev.date);
+    return `<div class="stat" onclick="openStat(${i})">
+      <div class="plat">${pl.p}</div>
+      <div class="big">${has?short(n):'—'}</div>
+      <div class="delta ${diff<0?'down':''}">${delta}</div>
+      ${top?`<div class="top">${esc(top)}</div>`:''}
+      ${has&&cur.date?`<div class="upd">as of ${fmt(cur.date)}</div>`:''}
+    </div>`}).join('');
+}
+function openStat(i){editStat=PLATFORMS[i];const cur=statRows[0]||{};smtitle.textContent=editStat.p;s_n.value=cur[editStat.k+'_followers']??'';s_top.value=cur[editStat.k+'_top_post']||'';smodal.classList.add('open');s_n.focus()}
+function closeStat(){smodal.classList.remove('open')}
+async function saveStat(){
+  const today=new Date().toISOString().slice(0,10);
+  const row={date:today};row[editStat.k+'_followers']=s_n.value.trim()?num(s_n.value):null;row[editStat.k+'_top_post']=s_top.value.trim()||null;
+  closeStat();
+  try{
+    await sb('show_stats?on_conflict=date',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(row)});
+    statRows=await sb('show_stats?select=*&order=date.desc&limit=2');renderStats();toast('saved');
+  }catch(e){toast('save failed');console.error(e)}
+}
+
+// ───────── BOARD ─────────
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function fmt(d){if(!d)return'';const x=new Date(d+'T00:00');return x.toLocaleDateString('en-US',{month:'short',day:'numeric'})}
+function setStage(st){activeStage=st;renderBoard()}
+function renderBoard(){
+  document.getElementById('chips').innerHTML=STAGES.map(st=>`<button class="chip ${st===activeStage?'on':''}" onclick="setStage('${st}')">${st}<span>${guests.filter(g=>g.stage===st).length}</span></button>`).join('');
+  document.getElementById('board').innerHTML=STAGES.map(st=>{
+    const list=guests.filter(g=>g.stage===st);
+    return `<div class="col ${st===activeStage?'show':''}"><h3>${st}<span>${list.length}</span></h3><div class="cards">${
+      list.length?list.map(g=>`
+        <div class="card" onclick="openEdit('${g.id}')">
+          ${g.ep?`<div class="ep">EP ${String(g.ep).padStart(2,'0')}</div>`:''}
+          <div class="h"><a href="https://instagram.com/${esc(g.handle.replace('@',''))}" target="_blank" rel="noopener" onclick="event.stopPropagation();openIG('${esc(g.handle)}');return false">${esc(g.handle)} ↗</a></div>
+          <div class="m">${esc(g.fol||'—')} · ${esc(g.type)}${g.date?' · '+fmt(g.date):''}</div>
+          ${g.seg?`<div class="seg">${esc(g.seg)}</div>`:''}
+          ${g.drive?`<a class="dl" href="${esc(g.drive)}" target="_blank" onclick="event.stopPropagation()">📁 guest clips</a>`:''}
+          ${g.foot?`<div class="chk">✓ footage sent</div>`:''}
+        </div>`).join(''):`<div class="empty">nobody here yet</div>`
+    }</div></div>`;
+  }).join('');
+}
+function fill(g){
+  f_handle.value=g.handle||'';f_fol.value=g.fol||'';f_type.value=g.type||'Creator';f_stage.value=g.stage||'Candidate';
+  f_seg.value=g.seg||'';f_date.value=g.date||'';f_notes.value=g.notes||'';f_foot.checked=!!g.foot;f_ep.value=g.ep||'';
+  f_drive.value=g.drive||'';f_known.checked=!!g.known;f_call.value=g.call||'';f_loc.value=g.loc||'';f_rel.checked=!!g.rel;f_p2.value=g.p2||'studio';
+}
+function openNew(){editing=null;mtitle.textContent='New guest';delbtn.style.display='none';fill({});modal.classList.add('open');f_handle.focus()}
+function openEdit(id){editing=guests.find(g=>g.id===id);mtitle.textContent=editing.handle;delbtn.style.display='inline';fill(editing);modal.classList.add('open')}
+function closeModal(){modal.classList.remove('open')}
+async function save(){
+  const g={handle:f_handle.value.trim()||'@unknown',fol:f_fol.value.trim(),type:f_type.value,stage:f_stage.value,seg:f_seg.value.trim(),date:f_date.value,notes:f_notes.value.trim(),foot:f_foot.checked,ep:f_ep.value.trim(),drive:f_drive.value.trim(),known:f_known.checked,call:f_call.value.trim(),loc:f_loc.value.trim(),rel:f_rel.checked,p2:f_p2.value};
+  if(g.stage==='Reached Out'&&!(editing&&editing.stage==='Reached Out'))g.reachedAt=new Date().toISOString().slice(0,10);
+  else g.reachedAt=editing?editing.reachedAt:'';
+  g.eventId=editing?editing.eventId:'';
+  const before=editing?{date:editing.date,handle:editing.handle}:{date:'',handle:''};
+  closeModal();
+  try{
+    let rec;
+    if(editing){
+      const r=await sb('show_guests?id=eq.'+editing.id,{method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(toRow(g))});
+      rec=fromRow(r[0]);guests[guests.findIndex(x=>x.id===editing.id)]=rec;
+    }else{
+      const r=await sb('show_guests',{method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify(toRow(g))});
+      rec=fromRow(r[0]);guests.push(rec);
+    }
+    activeStage=rec.stage;renderBoard();renderNudge();toast('saved');
+    if((before.date!==rec.date||before.handle!==rec.handle)&&(rec.date||rec.eventId))await syncShoot(rec);
+  }catch(e){toast('save failed');console.error(e)}
+}
+async function del(){
+  const g=editing;closeModal();
+  try{await sb('show_guests?id=eq.'+g.id,{method:'DELETE'});guests=guests.filter(x=>x.id!==g.id);renderBoard();renderNudge();toast('removed');
+    if(g.eventId)await syncShoot({...g,date:''});
+  }catch(e){toast('remove failed');console.error(e)}
+}
+async function syncShoot(g){
+  try{
+    const r=await fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'shoot',handle:g.handle,date:g.date,eventId:g.eventId||null,notes:g.seg})});
+    const d=await r.json();
+    await sb('show_guests?id=eq.'+g.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({calendar_event_id:d.eventId||null})});
+    const live=guests.find(x=>x.id===g.id);if(live)live.eventId=d.eventId||'';
+    toast(g.date?'calendar updated':'calendar cleared');
+  }catch(e){toast('calendar did not update');console.error(e)}
+}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',6000)}
+function renderNudge(){
+  const now=new Date();now.setHours(0,0,0,0);const lines=[];
+  const stale=guests.filter(g=>g.stage==='Reached Out'&&g.reachedAt&&(now-new Date(g.reachedAt+'T00:00'))/864e5>=7);
+  if(stale.length)lines.push(`${stale.length} guest${stale.length>1?'s':''} reached out over a week ago with no reply.`);
+  const next=guests.filter(g=>g.date&&new Date(g.date+'T00:00')>=now).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  if(next){const days=Math.round((new Date(next.date+'T00:00')-now)/864e5);lines.push(`${next.handle} shoots ${days===0?'today':days===1?'tomorrow':'in '+days+' days'}.`)}
+  const waiting=guests.filter(g=>g.stage==='Shot'&&!g.foot);
+  if(waiting.length)lines.push(`${waiting.length} guest${waiting.length>1?'s':''} still waiting on footage.`);
+  document.getElementById('nudge').textContent=lines.join(' ');
+}
+function openIG(h){const u='https://instagram.com/'+h.replace('@','');const w=window.open(u,'_blank');if(!w)location.href=u}
+
+// ───────── PITCH ─────────
+const GIFTS={
+  Musician:'I want to shoot you a one take music video. free.',
+  Comedian:'I want to shoot you a skit. free. you write it, I film it and cut it.',
+  Chef:'I want to shoot you a commercial for your food. free.',
+  Athlete:'I want to shoot you a hype sizzle. free. we train, both of us mic\'d up, I cut it.',
+  CEO:'I want to shoot a day in the life doc of you. free.',
+  Artist:'I want to film you making a piece and cut it into a short doc. free.',
+  Creator:'I want to spend a day doing your thing on camera with you and hand you the whole edit. free.',
+  Other:'I want to spend a day doing your thing on camera with you and hand you the whole edit. free.'
+};
+const ENDINGS={Musician:'one take music video of the guest performing',Creator:'a day doing their thing, on camera together',Comedian:'a skit or prank, shot together',Chef:'cook together, then film a commercial for their food',Athlete:'train together, both mic\'d up, cut a hype sizzle',CEO:'day in the life, shot like a doc',Artist:'film them making a piece, cut a short doc',Other:'a day doing their thing, on camera together'};
+function pitchText(){
+  const seg=f_seg.value.trim();
+  const gift=seg?`I want to shoot ${seg} with you. free.`:(GIFTS[f_type.value]||GIFTS.Other);
+  const proof=PROOF_LINK?`\n\nhere's the last one I did: ${PROOF_LINK}`:'';
+  if(f_known.checked)return `yo ${gift} it's for my show. we yap at the desk for 20 min, then we go make it. you keep everything.${proof}\n\npick a day.`;
+  return `yo. ${gift} no catch.\n\nit's for my show. we sit at a desk and yap for 20 min, then we go make it. you walk with the finished piece and every clip from the day.${proof}\n\nI'm shooting 6 of these this fall. want one?`;
+}
+async function copyPitch(){
+  const t=pitchText();
+  try{await navigator.clipboard.writeText(t)}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}
+  if(f_stage.value==='Candidate')f_stage.value='Reached Out';
+  toast('pitch copied');
+}
+
+// ───────── RUN SHEET ─────────
+function schedule(call,p2){
+  const m=String(call).match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+  if(!m)return {a:'call',b:'+0:30',c:'+2:30',d:p2==='allday'?'+12:00':'+5:30'};
+  let h=parseInt(m[1]),min=parseInt(m[2]||'0');const ap=(m[3]||'').toLowerCase();
+  if(ap==='pm'&&h<12)h+=12;if(ap==='am'&&h===12)h=0;
+  const t=x=>{const hh=((Math.floor(x/60)%24)+24)%24,mm=x%60;return `${hh%12||12}:${String(mm).padStart(2,'0')} ${hh>=12?'PM':'AM'}`};
+  const s0=h*60+min;return {a:t(s0),b:t(s0+30),c:t(s0+150),d:t(s0+(p2==='allday'?720:330))};
+}
+function runSheet(){
+  const g={handle:f_handle.value.trim(),ep:f_ep.value.trim(),type:f_type.value,seg:f_seg.value.trim(),date:f_date.value,call:f_call.value.trim(),loc:f_loc.value.trim(),notes:f_notes.value.trim(),drive:f_drive.value.trim(),rel:f_rel.checked,foot:f_foot.checked,p2:f_p2.value};
+  const end=g.seg||(ENDINGS[g.type]||ENDINGS.Other);const sched=schedule(g.call,g.p2);
+  const dateStr=g.date?new Date(g.date+'T00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'<span class="blank"></span>';
+  document.getElementById('runsheet').innerHTML=`
+    <h1>${g.ep?'EP '+String(g.ep).padStart(2,'0')+' · ':''}${esc(g.handle||'@guest')}</h1>
+    <div class="rs-sub">Day To Day Show · Run Sheet</div>
+    <table>
+      <tr><td>Shoot date</td><td>${dateStr}</td></tr>
+      <tr><td>Call time</td><td>${esc(g.call)||'<span class="blank"></span>'}</td></tr>
+      <tr><td>Location</td><td>${esc(g.loc)||'<span class="blank"></span>'}</td></tr>
+      <tr><td>Guest is a</td><td>${g.type}</td></tr>
+      <tr><td>The ending</td><td>${esc(end)}</td></tr>
+      <tr><td>Footage folder</td><td>${g.drive?'linked on card':'<span class="blank"></span>'}</td></tr>
+    </table>
+    <h2>Schedule</h2>
+    <table>
+      <tr><td>${sched.a}</td><td>Crew call, set, guest arrives</td></tr>
+      <tr><td>${sched.b}</td><td>Part 1 · the desk (1 to 2 hrs)</td></tr>
+      <tr><td>${sched.c}</td><td>Part 2 · the ending (${g.p2==='allday'?'all day, up to 10 hrs':'2 to 3 hrs'})</td></tr>
+      <tr><td>${sched.d}</td><td>Wrap</td></tr>
+    </table>
+    <h2>Before we roll</h2>
+    <ul><li class="${g.rel?'done':''}">Release form signed</li><li>Guest confirmed call time the day before</li><li>Cards formatted, batteries charged, audio checked</li><li>Desk set dressed, suit on</li></ul>
+    <h2>Part 1 · The desk</h2>
+    <ul><li>Cold open / intro</li><li>Sit down, 20 min yap</li><li>"What's the craziest day of your life?"</li><li>Tease the ending on camera</li></ul>
+    <h2>Part 2 · The ending</h2>
+    <p style="margin-bottom:8px">${esc(end)}</p>
+    <div class="lines"><div></div><div></div><div></div><div></div></div>
+    <h2>Crew and gear</h2>
+    <div class="lines"><div></div><div></div><div></div></div>
+    <h2>After</h2>
+    <ul><li>Raw dumped to Drive / Raw</li><li>Thank you DM sent same day</li><li class="${g.foot?'done':''}">Guest Clips folder shared with guest</li></ul>
+    ${g.notes?`<h2>Notes</h2><p>${esc(g.notes).replace(/\n/g,'<br>')}</p>`:''}`;
+  sheetview.classList.add('open');
+}
+
+// ───────── BOOT ─────────
+f_stage.innerHTML=STAGES.map(s=>`<option>${s}</option>`).join('');
+(async()=>{let k='';try{k=localStorage.getItem('dtd_show_key')||''}catch(e){}
+  if(k){pin.value=k;await unlock()}else{pin.focus()}})();
+</script>
+</body>
+</html>
