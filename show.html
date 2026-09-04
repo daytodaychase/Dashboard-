@@ -181,14 +181,14 @@
     <h4 id="mtitle">Guest</h4>
     <div class="row">
       <div><label>Handle</label><input id="f_handle" placeholder="@name" autocapitalize="off" autocorrect="off"></div>
+      <div><label>Followers</label><input id="f_fol" placeholder="52K" inputmode="decimal"></div>
+    </div>
+    <div class="row">
       <div><label>They are a</label><select id="f_type"><option>Musician</option><option>Creator</option><option>Comedian</option><option>Chef</option><option>Athlete</option><option>CEO</option><option>Artist</option><option>Other</option></select></div>
     </div>
     <div class="check"><input type="checkbox" id="f_known"><label for="f_known" style="margin:0">I know them</label></div>
     <div><label>Stage</label><select id="f_stage" onchange="unfold()"></select></div>
-    <div data-min="1" class="row">
-      <div><label>Followers</label><input id="f_fol" placeholder="52K"></div>
-      <div><label>Guest email</label><input id="f_email" type="email" placeholder="them@gmail.com" autocomplete="off" autocapitalize="off"></div>
-    </div>
+    <div data-min="1"><label>Guest email</label><input id="f_email" type="email" placeholder="them@gmail.com" autocomplete="off" autocapitalize="off"></div>
     <div data-min="3">
       <label>The ending / the day we do together</label>
       <input id="f_seg" placeholder="one take music video">
