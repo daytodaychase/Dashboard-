@@ -471,7 +471,6 @@ function pitchText(){
 async function copyPitch(){
   const t=pitchText();
   try{await navigator.clipboard.writeText(t)}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}
-  if(f_stage.value==='Candidate'){f_stage.value='Reached Out';if(editing)unfold()}
   toast('pitch copied');
 }
 
