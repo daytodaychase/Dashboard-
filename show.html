@@ -316,6 +316,7 @@ async function syncShoot(g){
   try{
     const r=await fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'shoot',handle:g.handle,date:g.date,eventId:g.eventId||null,notes:g.seg})});
     const d=await r.json();
+    if(g.date&&!d.eventId){toast('calendar refused: '+String(d.error||JSON.stringify(d)).slice(0,140));return}
     await sb('show_guests?id=eq.'+g.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({calendar_event_id:d.eventId||null})});
     const live=guests.find(x=>x.id===g.id);if(live)live.eventId=d.eventId||'';
     toast(g.date?'calendar updated':'calendar cleared');
