@@ -314,10 +314,11 @@ function fill(g){
   f_handle.value=g.handle||'';f_fol.value=g.fol||'';f_type.value=g.type||'Creator';f_stage.value=g.stage||'Candidate';
   f_seg.value=g.seg||'';f_date.value=g.date||'';f_date_show.value=g.date?longDate(g.date):'';f_notes.value=g.notes||'';f_foot.checked=!!g.foot;f_ep.value=g.ep||'';
   f_drive.value=g.drive||'';f_known.checked=!!g.known;f_call.value=g.call||'';f_loc.value=g.loc||'';f_rel.checked=!!g.rel;f_rel_lbl.textContent=g.rel?('Release signed'+(g.signedName?' by '+g.signedName:'')):'Release not signed yet';f_p2.value=g.p2||'studio';f_email.value=g.email||'';
-  f_links.innerHTML=[g.folder?`<a class="on" href="${esc(g.folder)}" target="_blank">📁 episode folder</a>`:'',g.raw?`<a href="${esc(g.raw)}" target="_blank">raw</a>`:'',g.drive?`<a href="${esc(g.drive)}" target="_blank">guest clips</a>`:'',g.token&&g.id?`<a href="#" onclick="copyText('${SIGN_URL+g.token}','release link copied');return false">🔗 copy release link</a>`:'',g.pdf?`<a class="on" href="${esc(g.pdf)}" target="_blank">signed pdf</a>`:''].join('');
+  f_links.innerHTML=[g.folder?`<a class="on" href="${esc(g.folder)}" target="_blank">📁 episode folder</a>`:'',g.raw?`<a href="${esc(g.raw)}" target="_blank">raw</a>`:'',g.drive?`<a href="${esc(g.drive)}" target="_blank">guest clips</a>`:'',g.token&&g.id?`<a href="#" onclick="copyText('${SIGN_URL+g.token}','release link copied');return false">🔗 copy release link</a>`:'',g.pdf?`<a class="on" href="${esc(g.pdf)}" target="_blank">signed release</a>`:''].join('');
 }
-function openNew(){editing=null;mtitle.textContent='New guest';delbtn.style.display='none';fill({});modal.classList.add('open');f_handle.focus()}
-function openEdit(id){editing=guests.find(g=>g.id===id);mtitle.textContent=editing.handle;delbtn.style.display='inline';fill(editing);modal.classList.add('open')}
+function lockStages(cur){const i=STAGES.indexOf(cur);[...f_stage.options].forEach((o,k)=>{o.disabled=cur?!(k===i||k===i+1):false})}
+function openNew(){editing=null;mtitle.textContent='New guest';delbtn.style.display='none';fill({});lockStages('');modal.classList.add('open');f_handle.focus()}
+function openEdit(id){editing=guests.find(g=>g.id===id);mtitle.textContent=editing.handle;delbtn.style.display='inline';fill(editing);lockStages(editing.stage);modal.classList.add('open')}
 function closeModal(){modal.classList.remove('open')}
 async function save(){
   const g={handle:f_handle.value.trim()||'@unknown',fol:f_fol.value.trim(),type:f_type.value,stage:f_stage.value,seg:f_seg.value.trim(),date:f_date.value,notes:f_notes.value.trim(),foot:f_foot.checked,ep:f_ep.value.trim(),known:f_known.checked,call:f_call.value.trim(),loc:f_loc.value.trim(),p2:f_p2.value,email:f_email.value.trim()};
