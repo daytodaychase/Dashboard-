@@ -180,36 +180,40 @@
   <div class="sheet">
     <h4 id="mtitle">Guest</h4>
     <div class="row">
-      <div><label>Handle</label><input id="f_handle" placeholder="@name"></div>
-      <div><label>Episode #</label><input id="f_ep" placeholder="07" inputmode="numeric"></div>
-    </div>
-    <div class="row">
-      <div><label>Followers</label><input id="f_fol" placeholder="52K"></div>
+      <div><label>Handle</label><input id="f_handle" placeholder="@name" autocapitalize="off" autocorrect="off"></div>
       <div><label>They are a</label><select id="f_type"><option>Musician</option><option>Creator</option><option>Comedian</option><option>Chef</option><option>Athlete</option><option>CEO</option><option>Artist</option><option>Other</option></select></div>
     </div>
-    <label>Stage</label><select id="f_stage"></select>
-    <label>The ending / the day we do together</label>
-    <input id="f_seg" placeholder="one take music video">
-    <div class="row">
-      <div><label>Shoot date</label><input id="f_date_show" readonly placeholder="tap to pick" onclick="openCal()"><input id="f_date" type="hidden"></div>
-      <div><label>Call time</label><select id="f_call"></select></div>
+    <div class="check"><input type="checkbox" id="f_known"><label for="f_known" style="margin:0">I know them</label></div>
+    <div><label>Stage</label><select id="f_stage" onchange="unfold()"></select></div>
+    <div data-min="1" class="row">
+      <div><label>Followers</label><input id="f_fol" placeholder="52K"></div>
+      <div><label>Guest email</label><input id="f_email" type="email" placeholder="them@gmail.com" autocomplete="off" autocapitalize="off"></div>
     </div>
-    <div class="row">
-      <div><label>Location</label><input id="f_loc" placeholder="studio / their spot"></div>
-      <div><label>Part 2 is</label><select id="f_p2"><option value="studio">In studio (2 to 3 hrs)</option><option value="allday">Follow them (all day)</option></select></div>
+    <div data-min="3">
+      <label>The ending / the day we do together</label>
+      <input id="f_seg" placeholder="one take music video">
+      <div class="row">
+        <div><label>Shoot date</label><input id="f_date_show" readonly placeholder="tap to pick" onclick="openCal()"><input id="f_date" type="hidden"></div>
+        <div><label>Call time</label><select id="f_call"></select></div>
+      </div>
+      <div class="row">
+        <div><label>Location</label><input id="f_loc" placeholder="studio / their spot"></div>
+        <div><label>Part 2 is</label><select id="f_p2"><option value="studio">In studio (2 to 3 hrs)</option><option value="allday">Follow them (all day)</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>Episode #</label><input id="f_ep" placeholder="auto" inputmode="numeric"></div>
+        <div></div>
+      </div>
     </div>
-    <label>Guest email (for sharing clips + release form)</label>
-    <input id="f_email" type="email" placeholder="them@gmail.com" autocomplete="off">
+
     <div id="f_links" class="links"></div>
     <input id="f_drive" type="hidden">
-    <label>Notes</label>
-    <textarea id="f_notes"></textarea>
-    <div class="check"><input type="checkbox" id="f_known"><label for="f_known" style="margin:0">I know them</label></div>
-    <div class="check"><input type="checkbox" id="f_rel" disabled><label for="f_rel" style="margin:0" id="f_rel_lbl">Release form signed</label></div>
-    <div class="check"><input type="checkbox" id="f_foot"><label for="f_foot" style="margin:0">Footage delivered to guest</label></div>
+    <div data-min="1"><label>Notes</label><textarea id="f_notes"></textarea></div>
+    <div data-min="3" class="check"><input type="checkbox" id="f_rel" disabled><label for="f_rel" style="margin:0" id="f_rel_lbl">Release form signed</label></div>
+    <div data-min="4" class="check"><input type="checkbox" id="f_foot"><label for="f_foot" style="margin:0">Footage delivered to guest</label></div>
     <div class="row" style="margin-top:18px">
-      <button class="btn pitch" onclick="copyPitch()">📋 Copy pitch</button>
-      <button class="btn pitch" onclick="runSheet()">📄 Run sheet</button>
+      <button class="btn pitch" id="btn_pitch" onclick="copyPitch()">📋 Copy pitch</button>
+      <button class="btn pitch" id="btn_sheet" onclick="runSheet()">📄 Run sheet</button>
     </div>
     <div class="actions">
       <button class="btn ghost" onclick="closeModal()">Cancel</button>
@@ -316,9 +320,15 @@ function fill(g){
   f_drive.value=g.drive||'';f_known.checked=!!g.known;f_call.value=g.call||'';f_loc.value=g.loc||'';f_rel.checked=!!g.rel;f_rel_lbl.textContent=g.rel?('Release signed'+(g.signedName?' by '+g.signedName:'')):'Release not signed yet';f_p2.value=g.p2||'studio';f_email.value=g.email||'';
   f_links.innerHTML=[g.folder?`<a class="on" href="${esc(g.folder)}" target="_blank">📁 episode folder</a>`:'',g.raw?`<a href="${esc(g.raw)}" target="_blank">raw</a>`:'',g.drive?`<a href="${esc(g.drive)}" target="_blank">guest clips</a>`:'',g.token&&g.id?`<a href="#" onclick="copyText('${SIGN_URL+g.token}','release link copied');return false">🔗 copy release link</a>`:'',g.pdf?`<a class="on" href="${esc(g.pdf)}" target="_blank">signed release</a>`:''].join('');
 }
+function unfold(){
+  const idx=Math.max(0,STAGES.indexOf(f_stage.value));
+  document.querySelectorAll('#modal [data-min]').forEach(el=>{el.style.display=idx>=parseInt(el.dataset.min)?'':'none'});
+  btn_pitch.style.display=idx<=2?'':'none';
+  btn_sheet.style.display=idx>=3?'':'none';
+}
 function lockStages(cur){const i=STAGES.indexOf(cur);[...f_stage.options].forEach((o,k)=>{o.disabled=cur?!(k===i||k===i+1):false})}
-function openNew(){editing=null;mtitle.textContent='New guest';delbtn.style.display='none';fill({});lockStages('');modal.classList.add('open');f_handle.focus()}
-function openEdit(id){editing=guests.find(g=>g.id===id);mtitle.textContent=editing.handle;delbtn.style.display='inline';fill(editing);lockStages(editing.stage);modal.classList.add('open')}
+function openNew(){editing=null;f_stage.value='Candidate';mtitle.textContent='New guest';delbtn.style.display='none';fill({});lockStages('');unfold();modal.classList.add('open');f_handle.focus()}
+function openEdit(id){editing=guests.find(g=>g.id===id);mtitle.textContent=editing.handle;delbtn.style.display='inline';fill(editing);lockStages(editing.stage);unfold();modal.classList.add('open')}
 function closeModal(){modal.classList.remove('open')}
 async function save(){
   const g={handle:f_handle.value.trim()||'@unknown',fol:f_fol.value.trim(),type:f_type.value,stage:f_stage.value,seg:f_seg.value.trim(),date:f_date.value,notes:f_notes.value.trim(),foot:f_foot.checked,ep:f_ep.value.trim(),known:f_known.checked,call:f_call.value.trim(),loc:f_loc.value.trim(),p2:f_p2.value,email:f_email.value.trim()};
@@ -461,7 +471,7 @@ function pitchText(){
 async function copyPitch(){
   const t=pitchText();
   try{await navigator.clipboard.writeText(t)}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}
-  if(f_stage.value==='Candidate')f_stage.value='Reached Out';
+  if(f_stage.value==='Candidate'){f_stage.value='Reached Out';if(editing)unfold()}
   toast('pitch copied');
 }
 
