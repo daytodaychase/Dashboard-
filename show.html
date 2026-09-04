@@ -345,9 +345,14 @@ async function save(){
   }catch(e){toast('save failed: '+String(e.message||e).slice(0,120));console.error(e)}
 }
 async function del(){
-  const g=editing;closeModal();
-  try{await sb('show_guests?id=eq.'+g.id,{method:'DELETE'});guests=guests.filter(x=>x.id!==g.id);renderBoard();renderNudge();toast('removed');
-    if(g.eventId)await syncShoot({...g,date:''});
+  const g=editing;
+  const what=[g.folder?'their Drive folder goes to trash':'',g.eventId?'calendar event deleted':''].filter(Boolean).join(', ');
+  if(!confirm(`Remove ${g.handle}?${what?'\n\n'+what+'.':''}`))return;
+  closeModal();toast('removing…');
+  try{
+    const d=await fn({action:'remove',id:g.id});
+    if(!d.ok){toast('remove failed: '+(d.error||''));return}
+    guests=guests.filter(x=>x.id!==g.id);renderBoard();renderNudge();toast((d.done||['removed']).join(' · '));
   }catch(e){toast('remove failed: '+String(e.message||e).slice(0,120));console.error(e)}
 }
 async function syncShoot(g){
