@@ -253,7 +253,7 @@ async function saveStat(){
   try{
     await sb('show_stats?on_conflict=date',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(row)});
     statRows=await sb('show_stats?select=*&order=date.desc&limit=2');renderStats();toast('saved');
-  }catch(e){toast('save failed');console.error(e)}
+  }catch(e){toast('save failed: '+String(e.message||e).slice(0,120));console.error(e)}
 }
 
 // ───────── BOARD ─────────
@@ -303,13 +303,13 @@ async function save(){
     }
     activeStage=rec.stage;renderBoard();renderNudge();toast('saved');
     if((before.date!==rec.date||before.handle!==rec.handle)&&(rec.date||rec.eventId))await syncShoot(rec);
-  }catch(e){toast('save failed');console.error(e)}
+  }catch(e){toast('save failed: '+String(e.message||e).slice(0,120));console.error(e)}
 }
 async function del(){
   const g=editing;closeModal();
   try{await sb('show_guests?id=eq.'+g.id,{method:'DELETE'});guests=guests.filter(x=>x.id!==g.id);renderBoard();renderNudge();toast('removed');
     if(g.eventId)await syncShoot({...g,date:''});
-  }catch(e){toast('remove failed');console.error(e)}
+  }catch(e){toast('remove failed: '+String(e.message||e).slice(0,120));console.error(e)}
 }
 async function syncShoot(g){
   try{
@@ -318,7 +318,7 @@ async function syncShoot(g){
     await sb('show_guests?id=eq.'+g.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({calendar_event_id:d.eventId||null})});
     const live=guests.find(x=>x.id===g.id);if(live)live.eventId=d.eventId||'';
     toast(g.date?'calendar updated':'calendar cleared');
-  }catch(e){toast('calendar did not update');console.error(e)}
+  }catch(e){toast('calendar did not update: '+String(e.message||e).slice(0,120));console.error(e)}
 }
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',6000)}
 function renderNudge(){
