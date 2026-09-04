@@ -325,7 +325,7 @@ async function save(){
   if(g.stage==='Reached Out'&&!(editing&&editing.stage==='Reached Out'))g.reachedAt=new Date().toISOString().slice(0,10);
   else g.reachedAt=editing?editing.reachedAt:'';
   g.eventId=editing?editing.eventId:'';
-  const before=editing?{date:editing.date,handle:editing.handle,call:editing.call}:{date:'',handle:'',call:''};
+  const before=editing?{date:editing.date,handle:editing.handle,call:editing.call,email:editing.email}:{date:'',handle:'',call:'',email:''};
   closeModal();
   try{
     let rec;
@@ -340,7 +340,7 @@ async function save(){
     const enteredBooked=rec.stage==='Booked'&&wasStage!=='Booked';
     const enteredShot=rec.stage==='Shot'&&wasStage!=='Shot';
     if(enteredBooked||(rec.stage==='Booked'&&!rec.folder))await onBooked(rec);
-    else if((before.date!==rec.date||before.handle!==rec.handle||before.call!==rec.call)&&(rec.date||rec.eventId))await syncShoot(rec);
+    else if((before.date!==rec.date||before.handle!==rec.handle||before.call!==rec.call||before.email!==rec.email)&&(rec.date||rec.eventId))await syncShoot(rec);
     if(enteredShot)await onShot(rec);
   }catch(e){toast('save failed: '+String(e.message||e).slice(0,120));console.error(e)}
 }
@@ -357,7 +357,7 @@ async function del(){
 }
 async function syncShoot(g){
   try{
-    const r=await fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json','x-show-key':showKey,'apikey':SB_KEY},body:JSON.stringify({action:'shoot',handle:g.handle,date:g.date,eventId:g.eventId||null,notes:g.seg,call:g.call,part2:g.p2})});
+    const r=await fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json','x-show-key':showKey,'apikey':SB_KEY},body:JSON.stringify({action:'shoot',handle:g.handle,date:g.date,eventId:g.eventId||null,notes:g.seg,call:g.call,part2:g.p2,email:g.email||''})});
     const d=await r.json();
     if(g.date&&!d.eventId){toast('calendar refused: '+String(d.error||JSON.stringify(d)).slice(0,140));return}
     await sb('show_guests?id=eq.'+g.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({calendar_event_id:d.eventId||null})});
