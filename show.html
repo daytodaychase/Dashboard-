@@ -203,7 +203,8 @@ let showKey='';
 // ───────── SUPABASE (PostgREST) ─────────
 function hdr(extra){return Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'x-show-key':showKey,'Content-Type':'application/json'},extra||{})}
 async function sb(path,opt){
-  const r=await fetch(SB_URL+'/rest/v1/'+path,Object.assign({headers:hdr(opt&&opt.headers)},opt||{}));
+  opt=opt||{};const o=Object.assign({},opt);delete o.headers;o.headers=hdr(opt.headers);
+  const r=await fetch(SB_URL+'/rest/v1/'+path,o);
   if(!r.ok){const t=await r.text();throw new Error(r.status+' '+t)}
   const t=await r.text();return t?JSON.parse(t):null;
 }
