@@ -58,6 +58,10 @@
 
   <label>Your full legal name</label>
   <input id="name" placeholder="First Last" autocomplete="name">
+  <div id="emailWrap" style="display:none">
+    <label>Your email (we send your signed copy here)</label>
+    <input id="email" type="email" placeholder="you@gmail.com" autocomplete="email" autocapitalize="off">
+  </div>
   <div class="check"><input type="checkbox" id="minor"><label for="minor" style="margin:0">I am under 18</label></div>
   <div id="guardianWrap" style="display:none">
     <label>Parent or guardian full name</label>
@@ -78,6 +82,8 @@
 <div class="box done" id="done" style="display:none">
   <div class="big">Signed ✓</div>
   <p style="margin-top:12px">You're all set. See you on shoot day.</p>
+  <p id="mailnote" style="margin-top:10px;font-size:13px;color:var(--cream2)"></p>
+  <div class="row" id="dlrow" style="display:none;margin-top:16px"><button class="btn" onclick="downloadPdf()">Download your signed copy (PDF)</button></div>
 </div>
 
 <script>
@@ -94,6 +100,7 @@ async function load(){
   $('who').textContent=`${d.handle}${d.date?' · shoot '+fmt(d.date):''}`;
   if(d.signed){$('done').style.display='block';$('done').querySelector('p').textContent='Already signed by '+(d.signedName||'you')+'.';return}
   if(d.resign)$('resign').style.display='block';
+  if(!d.hasEmail)$('emailWrap').style.display='block';
   $('deal').innerHTML=(d.summary||[]).map(t=>`<p>${esc(t)}</p>`).join('');
   $('full').innerHTML=`<h3>${esc(d.title)}</h3>`+(d.sections||[]).map(s=>`<h3>${esc(s.h)}</h3>`+s.p.map(p=>`<p>${esc(p)}</p>`).join('')).join('');
   $('form').style.display='block';
@@ -105,7 +112,12 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 
 $('minor').addEventListener('change',e=>{$('guardianWrap').style.display=e.target.checked?'block':'none'});
 
-let ctx,drawing=false,drew=false,cv;
+let ctx,drawing=false,drew=false,cv,pdfData='';
+function downloadPdf(){
+  const bin=atob(pdfData);const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  const blob=new Blob([bytes],{type:'application/pdf'});const u=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=u;a.download='Day To Day Show Release - signed.pdf';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);
+}
 function initPad(){
   cv=$('pad');const scale=window.devicePixelRatio||1;
   cv.width=cv.clientWidth*scale;cv.height=180*scale;
@@ -121,9 +133,10 @@ function initPad(){
 function clearPad(){ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.clientWidth,180);drew=false}
 
 async function submit(){
-  const name=$('name').value.trim(),minor=$('minor').checked,guardian=$('guardian').value.trim();
+  const name=$('name').value.trim(),minor=$('minor').checked,guardian=$('guardian').value.trim(),email=$('email').value.trim();
   $('err').textContent='';
   if(!name){$('err').textContent='type your full name';return}
+  if($('emailWrap').style.display==='block'&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){$('err').textContent='type a real email so we can send your copy';return}
   if(minor&&!guardian){$('err').textContent='parent or guardian name needed';return}
   if(!openedFull){$('err').textContent='open and read the full agreement first';$('fulldetails').open=true;return}
   if(!$('readok').checked){$('err').textContent='tick the box to confirm you read it';return}
@@ -131,9 +144,14 @@ async function submit(){
   $('signBtn').disabled=true;$('signBtn').textContent='saving…';
   const sig=cv.toDataURL('image/jpeg',0.85);
   try{
-    const r=await fetch(FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'sign',token,name,minor,guardian,signature:sig,readConfirmed:true,readConfirmedAt:new Date().toISOString(),openedAt})});
+    const r=await fetch(FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'sign',token,name,minor,guardian,email,signature:sig,readConfirmed:true,readConfirmedAt:new Date().toISOString(),openedAt})});
     const d=await r.json();
-    if(d.ok){$('form').style.display='none';$('done').style.display='block'}
+    if(d.ok){
+      $('form').style.display='none';$('done').style.display='block';
+      if(d.pdfB64){pdfData=d.pdfB64;$('dlrow').style.display='flex'}
+      $('mailnote').textContent=d.emailed?('A copy was also sent to '+d.email+'.'):(d.email?'We could not email your copy automatically. Download it below.':'');
+      window.scrollTo(0,0);
+    }
     else{$('err').textContent=d.error||'something went wrong';$('signBtn').disabled=false;$('signBtn').textContent='I agree and sign'}
   }catch(e){$('err').textContent='no connection, try again';$('signBtn').disabled=false;$('signBtn').textContent='I agree and sign'}
 }
