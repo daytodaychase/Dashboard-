@@ -81,7 +81,10 @@
   .calgrid .dow{font-size:10px;color:var(--cream2);text-align:center;text-transform:uppercase;letter-spacing:.06em;padding:4px 0}
   .calgrid button{background:var(--panel2);color:var(--cream);border:1px solid transparent;font-family:'Courier Prime',monospace;font-size:15px;height:42px;cursor:pointer}
   .calgrid button:disabled{opacity:.25}
-  .calgrid button.today{border-color:var(--line)}
+  .calgrid button.today{border:2px solid var(--orange2);color:var(--orange2);font-weight:700;position:relative}
+  .calgrid button.today::after{content:'today';position:absolute;bottom:2px;left:0;right:0;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--orange2)}
+  .calgrid button.sel.today{color:#1a1410}
+  .calgrid button.sel.today::after{color:#1a1410}
   .calgrid button.sel{background:var(--orange);color:#1a1410;font-weight:700}
   .calgrid button.has{box-shadow:inset 0 -3px 0 var(--orange2)}
   .calfoot{display:flex;justify-content:space-between;margin-top:10px}
@@ -437,7 +440,7 @@ function renderCal(){
   const first=new Date(calY,calM,1),dim=new Date(calY,calM+1,0).getDate(),pad=first.getDay();
   const today=new Date();today.setHours(0,0,0,0);const tISO=iso(today);
   const taken=new Set(guests.filter(g=>g.date&&(!editing||g.id!==editing.id)).map(g=>g.date));
-  calmo.textContent=first.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  calmo.textContent=first.toLocaleDateString('en-US',{month:'long',year:'numeric'})+(calY===today.getFullYear()&&calM===today.getMonth()?'':' · '+today.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' is today');
   let h=['S','M','T','W','T','F','S'].map(d=>`<div class="dow">${d}</div>`).join('');
   for(let i=0;i<pad;i++)h+='<div></div>';
   for(let d=1;d<=dim;d++){const v=iso(new Date(calY,calM,d));const cls=[v===f_date.value?'sel':'',v===tISO?'today':'',taken.has(v)?'has':''].join(' ');h+=`<button class="${cls}" onclick="pickDate('${v}')">${d}</button>`}
