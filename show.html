@@ -208,6 +208,8 @@
         <div><label>Episode #</label><input id="f_ep" placeholder="auto" inputmode="numeric"></div>
         <div></div>
       </div>
+      <label>Crew (one per line, prints on the run sheet)</label>
+      <textarea id="f_crew" placeholder="Sam, B cam\nVi, audio"></textarea>
     </div>
 
     <div id="f_links" class="links"></div>
@@ -246,8 +248,8 @@ async function sb(path,opt){
   if(!r.ok){const t=await r.text();throw new Error(r.status+' '+t)}
   const t=await r.text();return t?JSON.parse(t):null;
 }
-const toRow=g=>({handle:g.handle,followers:g.fol||null,guest_type:g.type,stage:g.stage,ending:g.seg||null,episode:g.ep||null,shoot_date:g.date||null,call_time:g.call||null,location:g.loc||null,location2:g.loc2||null,part2:g.p2||'studio',notes:g.notes||null,known:!!g.known,footage_delivered:!!g.foot,reached_at:g.reachedAt||null,guest_email:g.email||null});
-const fromRow=r=>({id:r.id,handle:r.handle,fol:r.followers||'',type:r.guest_type,stage:r.stage,seg:r.ending||'',ep:r.episode||'',date:r.shoot_date||'',call:r.call_time||'',loc:r.location||'',loc2:r.location2||'',p2:r.part2||'studio',drive:r.drive_link||'',folder:r.folder_link||'',raw:r.raw_link||'',notes:r.notes||'',known:r.known,rel:r.release_signed,foot:r.footage_delivered,reachedAt:r.reached_at||'',eventId:r.calendar_event_id||'',email:r.guest_email||'',token:r.sign_token||'',signedName:r.signed_name||'',pdf:r.release_pdf_link||'',exp:r.export_link||'',opus:r.opus_project_id||''});
+const toRow=g=>({handle:g.handle,followers:g.fol||null,guest_type:g.type,stage:g.stage,ending:g.seg||null,episode:g.ep||null,shoot_date:g.date||null,call_time:g.call||null,location:g.loc||null,location2:g.loc2||null,part2:g.p2||'studio',notes:g.notes||null,known:!!g.known,footage_delivered:!!g.foot,reached_at:g.reachedAt||null,guest_email:g.email||null,crew:g.crew||null});
+const fromRow=r=>({id:r.id,handle:r.handle,fol:r.followers||'',type:r.guest_type,stage:r.stage,seg:r.ending||'',ep:r.episode||'',date:r.shoot_date||'',call:r.call_time||'',loc:r.location||'',loc2:r.location2||'',p2:r.part2||'studio',drive:r.drive_link||'',folder:r.folder_link||'',raw:r.raw_link||'',notes:r.notes||'',known:r.known,rel:r.release_signed,foot:r.footage_delivered,reachedAt:r.reached_at||'',eventId:r.calendar_event_id||'',email:r.guest_email||'',token:r.sign_token||'',signedName:r.signed_name||'',pdf:r.release_pdf_link||'',exp:r.export_link||'',opus:r.opus_project_id||'',crew:r.crew||''});
 const SIGN_URL='https://daytodaychase.github.io/Dashboard-/sign.html?t=';
 const fn=(payload)=>fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json','x-show-key':showKey,'apikey':SB_KEY},body:JSON.stringify(payload)}).then(r=>r.json());
 
@@ -322,7 +324,7 @@ function renderBoard(){
 function fill(g){
   f_handle.value=g.handle||'';f_fol.value=g.fol||'';f_type.value=g.type||'Creator';f_stage.value=g.stage||'Candidate';
   f_seg.value=g.seg||'';f_date.value=g.date||'';f_date_show.value=g.date?longDate(g.date):'';f_notes.value=g.notes||'';f_foot.checked=!!g.foot;f_ep.value=g.ep||'';
-  f_drive.value=g.drive||'';f_known.checked=!!g.known;f_call.value=g.call||'';f_loc.value=g.loc||STUDIO;f_loc2.value=g.loc2||(g.p2==='allday'?'':STUDIO);f_rel.checked=!!g.rel;f_rel_lbl.textContent=g.rel?('Release signed'+(g.signedName?' by '+g.signedName:'')):'Release not signed yet';f_p2.value=g.p2||'studio';f_email.value=g.email||'';
+  f_drive.value=g.drive||'';f_known.checked=!!g.known;f_call.value=g.call||'';f_loc.value=g.loc||STUDIO;f_loc2.value=g.loc2||(g.p2==='allday'?'':STUDIO);f_rel.checked=!!g.rel;f_rel_lbl.textContent=g.rel?('Release signed'+(g.signedName?' by '+g.signedName:'')):'Release not signed yet';f_p2.value=g.p2||'studio';f_email.value=g.email||'';f_crew.value=g.crew||'';
   f_links.innerHTML=[g.folder?`<a class="on" href="${esc(g.folder)}" target="_blank">📁 episode folder</a>`:'',g.raw?`<a href="${esc(g.raw)}" target="_blank">raw</a>`:'',g.exp?`<a href="${esc(g.exp)}" target="_blank">final export</a>`:'',(g.exp&&STAGES.indexOf(g.stage)>=4)?`<a href="#" class="on" onclick="sendOpus('${g.id}');return false">${g.opus?'✓ in Opus · resend':'✂️ send to Opus'}</a>`:'',g.drive?`<a href="${esc(g.drive)}" target="_blank">guest clips</a>`:'',g.token&&g.id?`<a href="#" onclick="copyText('${SIGN_URL+g.token}','release link copied');return false">🔗 copy release link</a>`:'',g.pdf?`<a class="on" href="${esc(g.pdf)}" target="_blank">signed release</a>`:''].join('');
 }
 function loc2Default(){if(f_p2.value==='allday'&&f_loc2.value===STUDIO)f_loc2.value='';if(f_p2.value==='studio'&&!f_loc2.value)f_loc2.value=STUDIO}
@@ -342,7 +344,7 @@ async function save(){
   h='@'+h.toLowerCase();
   const dup=guests.find(x=>x.handle.toLowerCase()===h&&(!editing||x.id!==editing.id));
   if(dup){toast(dup.handle+' is already on the board ('+dup.stage+')');return}
-  const g={handle:h,fol:f_fol.value.trim(),type:f_type.value,stage:f_stage.value,seg:f_seg.value.trim(),date:f_date.value,notes:f_notes.value.trim(),foot:f_foot.checked,ep:f_ep.value.trim(),known:f_known.checked,call:f_call.value.trim(),loc:f_loc.value.trim(),loc2:f_loc2.value.trim(),p2:f_p2.value,email:f_email.value.trim()};
+  const g={handle:h,fol:f_fol.value.trim(),type:f_type.value,stage:f_stage.value,seg:f_seg.value.trim(),date:f_date.value,notes:f_notes.value.trim(),foot:f_foot.checked,ep:f_ep.value.trim(),known:f_known.checked,call:f_call.value.trim(),loc:f_loc.value.trim(),loc2:f_loc2.value.trim(),p2:f_p2.value,email:f_email.value.trim(),crew:f_crew.value.trim()};
   const wasStage=editing?editing.stage:'';
   if(g.stage==='Shot'&&wasStage!=='Shot'&&g.date&&new Date(g.date+'T00:00')>new Date()){if(!confirm(`Shoot date is ${longDate(g.date)}, that's in the future. Mark as shot anyway?`))return}
   if(g.stage==='Reached Out'&&!(editing&&editing.stage==='Reached Out'))g.reachedAt=new Date().toISOString().slice(0,10);
@@ -552,7 +554,7 @@ function runSheet(){
       <li>Batteries charged, audio checked</li>
     </ul>
     <h2>Crew</h2>
-    <div class="lines"><div></div><div></div></div>
+    ${g.crew?`<ul>${g.crew.split('\n').filter(Boolean).map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:'<div class="lines"><div></div><div></div></div>'}
     <h2>After</h2>
     <ul><li>Raw dumped to Drive / Raw</li><li>Thank you DM sent same day</li><li class="${g.foot?'done':''}">Guest Clips folder shared with guest</li></ul>
     ${g.notes?`<h2>Notes</h2><p>${esc(g.notes).replace(/\n/g,'<br>')}</p>`:''}`;
