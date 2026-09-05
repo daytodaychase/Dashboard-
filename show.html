@@ -196,10 +196,14 @@
         <div><label>Shoot date</label><input id="f_date_show" readonly placeholder="tap to pick" onclick="openCal()"><input id="f_date" type="hidden"></div>
         <div><label>Call time</label><select id="f_call"></select></div>
       </div>
+      <label>Part 1 location (interview)</label>
+      <input id="f_loc" placeholder="studio">
       <div class="row">
-        <div><label>Location</label><input id="f_loc" placeholder="studio / their spot"></div>
-        <div><label>Part 2 is</label><select id="f_p2"><option value="studio">In studio (2 to 3 hrs)</option><option value="allday">Follow them (all day)</option></select></div>
+        <div><label>Part 2 is</label><select id="f_p2" onchange="loc2Default()"><option value="studio">In studio (2 to 3 hrs)</option><option value="allday">Follow them (all day)</option></select></div>
+        <div></div>
       </div>
+      <label>Part 2 location (the ending)</label>
+      <input id="f_loc2" placeholder="studio / their spot">
       <div class="row">
         <div><label>Episode #</label><input id="f_ep" placeholder="auto" inputmode="numeric"></div>
         <div></div>
@@ -229,6 +233,7 @@ const SB_URL='https://gzupnelfmehgdxfhntar.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6dXBuZWxmbWVoZ2R4ZmhudGFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0OTA4MjMsImV4cCI6MjEwNDA2NjgyM30.ENMxPs3-9ECG0Z-KyabZ1TSFYAbyB4M1cz3c-KTS0yo';
 const WORKER=SB_URL+'/functions/v1/show-shoot';
 const PROOF_LINK='';  // paste a link to your best episode or one take video here
+const STUDIO='3401 Grays Ferry Ave, Philadelphia, PA 19146';
 const STAGES=['Candidate','Reached Out','Replied','Booked','Shot','Posted'];
 const PLATFORMS=[{p:'YouTube',k:'youtube'},{p:'TikTok',k:'tiktok'},{p:'Instagram',k:'instagram'},{p:'Facebook',k:'facebook'}];
 let showKey='';
@@ -241,8 +246,8 @@ async function sb(path,opt){
   if(!r.ok){const t=await r.text();throw new Error(r.status+' '+t)}
   const t=await r.text();return t?JSON.parse(t):null;
 }
-const toRow=g=>({handle:g.handle,followers:g.fol||null,guest_type:g.type,stage:g.stage,ending:g.seg||null,episode:g.ep||null,shoot_date:g.date||null,call_time:g.call||null,location:g.loc||null,part2:g.p2||'studio',notes:g.notes||null,known:!!g.known,footage_delivered:!!g.foot,reached_at:g.reachedAt||null,guest_email:g.email||null});
-const fromRow=r=>({id:r.id,handle:r.handle,fol:r.followers||'',type:r.guest_type,stage:r.stage,seg:r.ending||'',ep:r.episode||'',date:r.shoot_date||'',call:r.call_time||'',loc:r.location||'',p2:r.part2||'studio',drive:r.drive_link||'',folder:r.folder_link||'',raw:r.raw_link||'',notes:r.notes||'',known:r.known,rel:r.release_signed,foot:r.footage_delivered,reachedAt:r.reached_at||'',eventId:r.calendar_event_id||'',email:r.guest_email||'',token:r.sign_token||'',signedName:r.signed_name||'',pdf:r.release_pdf_link||''});
+const toRow=g=>({handle:g.handle,followers:g.fol||null,guest_type:g.type,stage:g.stage,ending:g.seg||null,episode:g.ep||null,shoot_date:g.date||null,call_time:g.call||null,location:g.loc||null,location2:g.loc2||null,part2:g.p2||'studio',notes:g.notes||null,known:!!g.known,footage_delivered:!!g.foot,reached_at:g.reachedAt||null,guest_email:g.email||null});
+const fromRow=r=>({id:r.id,handle:r.handle,fol:r.followers||'',type:r.guest_type,stage:r.stage,seg:r.ending||'',ep:r.episode||'',date:r.shoot_date||'',call:r.call_time||'',loc:r.location||'',loc2:r.location2||'',p2:r.part2||'studio',drive:r.drive_link||'',folder:r.folder_link||'',raw:r.raw_link||'',notes:r.notes||'',known:r.known,rel:r.release_signed,foot:r.footage_delivered,reachedAt:r.reached_at||'',eventId:r.calendar_event_id||'',email:r.guest_email||'',token:r.sign_token||'',signedName:r.signed_name||'',pdf:r.release_pdf_link||''});
 const SIGN_URL='https://daytodaychase.github.io/Dashboard-/sign.html?t=';
 const fn=(payload)=>fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json','x-show-key':showKey,'apikey':SB_KEY},body:JSON.stringify(payload)}).then(r=>r.json());
 
@@ -317,9 +322,10 @@ function renderBoard(){
 function fill(g){
   f_handle.value=g.handle||'';f_fol.value=g.fol||'';f_type.value=g.type||'Creator';f_stage.value=g.stage||'Candidate';
   f_seg.value=g.seg||'';f_date.value=g.date||'';f_date_show.value=g.date?longDate(g.date):'';f_notes.value=g.notes||'';f_foot.checked=!!g.foot;f_ep.value=g.ep||'';
-  f_drive.value=g.drive||'';f_known.checked=!!g.known;f_call.value=g.call||'';f_loc.value=g.loc||'';f_rel.checked=!!g.rel;f_rel_lbl.textContent=g.rel?('Release signed'+(g.signedName?' by '+g.signedName:'')):'Release not signed yet';f_p2.value=g.p2||'studio';f_email.value=g.email||'';
+  f_drive.value=g.drive||'';f_known.checked=!!g.known;f_call.value=g.call||'';f_loc.value=g.loc||STUDIO;f_loc2.value=g.loc2||(g.p2==='allday'?'':STUDIO);f_rel.checked=!!g.rel;f_rel_lbl.textContent=g.rel?('Release signed'+(g.signedName?' by '+g.signedName:'')):'Release not signed yet';f_p2.value=g.p2||'studio';f_email.value=g.email||'';
   f_links.innerHTML=[g.folder?`<a class="on" href="${esc(g.folder)}" target="_blank">📁 episode folder</a>`:'',g.raw?`<a href="${esc(g.raw)}" target="_blank">raw</a>`:'',g.drive?`<a href="${esc(g.drive)}" target="_blank">guest clips</a>`:'',g.token&&g.id?`<a href="#" onclick="copyText('${SIGN_URL+g.token}','release link copied');return false">🔗 copy release link</a>`:'',g.pdf?`<a class="on" href="${esc(g.pdf)}" target="_blank">signed release</a>`:''].join('');
 }
+function loc2Default(){if(f_p2.value==='allday'&&f_loc2.value===STUDIO)f_loc2.value='';if(f_p2.value==='studio'&&!f_loc2.value)f_loc2.value=STUDIO}
 function unfold(){
   const idx=Math.max(0,STAGES.indexOf(f_stage.value));
   document.querySelectorAll('#modal [data-min]').forEach(el=>{el.style.display=idx>=parseInt(el.dataset.min)?'':'none'});
@@ -331,7 +337,7 @@ function openNew(){editing=null;f_stage.value='Candidate';mtitle.textContent='Ne
 function openEdit(id){editing=guests.find(g=>g.id===id);mtitle.textContent=editing.handle;delbtn.style.display='inline';fill(editing);lockStages(editing.stage);unfold();modal.classList.add('open')}
 function closeModal(){modal.classList.remove('open')}
 async function save(){
-  const g={handle:f_handle.value.trim()||'@unknown',fol:f_fol.value.trim(),type:f_type.value,stage:f_stage.value,seg:f_seg.value.trim(),date:f_date.value,notes:f_notes.value.trim(),foot:f_foot.checked,ep:f_ep.value.trim(),known:f_known.checked,call:f_call.value.trim(),loc:f_loc.value.trim(),p2:f_p2.value,email:f_email.value.trim()};
+  const g={handle:f_handle.value.trim()||'@unknown',fol:f_fol.value.trim(),type:f_type.value,stage:f_stage.value,seg:f_seg.value.trim(),date:f_date.value,notes:f_notes.value.trim(),foot:f_foot.checked,ep:f_ep.value.trim(),known:f_known.checked,call:f_call.value.trim(),loc:f_loc.value.trim(),loc2:f_loc2.value.trim(),p2:f_p2.value,email:f_email.value.trim()};
   const wasStage=editing?editing.stage:'';
   if(g.stage==='Reached Out'&&!(editing&&editing.stage==='Reached Out'))g.reachedAt=new Date().toISOString().slice(0,10);
   else g.reachedAt=editing?editing.reachedAt:'';
@@ -368,7 +374,7 @@ async function del(){
 }
 async function syncShoot(g){
   try{
-    const r=await fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json','x-show-key':showKey,'apikey':SB_KEY},body:JSON.stringify({action:'shoot',handle:g.handle,date:g.date,eventId:g.eventId||null,notes:g.seg,call:g.call,part2:g.p2,email:g.email||''})});
+    const r=await fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json','x-show-key':showKey,'apikey':SB_KEY},body:JSON.stringify({action:'shoot',handle:g.handle,date:g.date,eventId:g.eventId||null,notes:g.seg,call:g.call,part2:g.p2,email:g.email||'',loc:g.loc||'',loc2:g.loc2||''})});
     const d=await r.json();
     if(g.date&&!d.eventId){toast('calendar refused: '+String(d.error||JSON.stringify(d)).slice(0,140));return}
     await sb('show_guests?id=eq.'+g.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({calendar_event_id:d.eventId||null})});
@@ -415,8 +421,8 @@ async function onShot(g){
 }
 function confirmDM(g,address){
   const d=g.date?new Date(g.date+'T00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'TBD';
-  const where=g.loc||address||'the studio';
-  return `locked in! here's the plan:\n\n📅 ${d}\n⏰ call time ${g.call||'TBD'}\n📍 ${where}\n\nwe yap at the desk for about 20 min, then ${g.seg||'we go make it'}.\n\none thing before shoot day, sign this real quick (30 seconds on your phone):\n${SIGN_URL+g.token}\n\nsee you there 🎬`;
+  const where=g.loc||address||'the studio';const where2=g.loc2||where;
+  return `locked in! here's the plan:\n\n📅 ${d}\n⏰ call time ${g.call||'TBD'}\n📍 ${where}${where2!==where?'\n📍 then '+where2:''}\n\nwe yap at the desk for about 20 min, then ${g.seg||'we go make it'}.\n\none thing before shoot day, sign this real quick (30 seconds on your phone):\n${SIGN_URL+g.token}\n\nsee you there 🎬`;
 }
 async function copyText(t,msg){
   try{await navigator.clipboard.writeText(t)}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}
@@ -493,7 +499,8 @@ function runSheet(){
     <table>
       <tr><td>Shoot date</td><td>${dateStr}</td></tr>
       <tr><td>Call time</td><td>${esc(g.call)||'<span class="blank"></span>'}</td></tr>
-      <tr><td>Location</td><td>${esc(g.loc)||'<span class="blank"></span>'}</td></tr>
+      <tr><td>Part 1 location</td><td>${esc(g.loc)||'<span class="blank"></span>'}</td></tr>
+      <tr><td>Part 2 location</td><td>${esc(f_loc2.value.trim()||g.loc)||'<span class="blank"></span>'}</td></tr>
       <tr><td>Guest is a</td><td>${g.type}</td></tr>
       <tr><td>The ending</td><td>${esc(end)}</td></tr>
       <tr><td>Footage folder</td><td>${g.drive?'linked on card':'<span class="blank"></span>'}</td></tr>
