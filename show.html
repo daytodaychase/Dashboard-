@@ -337,7 +337,12 @@ function openNew(){editing=null;f_stage.value='Candidate';mtitle.textContent='Ne
 function openEdit(id){editing=guests.find(g=>g.id===id);mtitle.textContent=editing.handle;delbtn.style.display='inline';fill(editing);lockStages(editing.stage);unfold();modal.classList.add('open')}
 function closeModal(){modal.classList.remove('open')}
 async function save(){
-  const g={handle:f_handle.value.trim()||'@unknown',fol:f_fol.value.trim(),type:f_type.value,stage:f_stage.value,seg:f_seg.value.trim(),date:f_date.value,notes:f_notes.value.trim(),foot:f_foot.checked,ep:f_ep.value.trim(),known:f_known.checked,call:f_call.value.trim(),loc:f_loc.value.trim(),loc2:f_loc2.value.trim(),p2:f_p2.value,email:f_email.value.trim()};
+  let h=f_handle.value.trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i,'').replace(/[\/?].*$/,'').replace(/^@+/,'');
+  if(!h){toast('handle needed');return}
+  h='@'+h.toLowerCase();
+  const dup=guests.find(x=>x.handle.toLowerCase()===h&&(!editing||x.id!==editing.id));
+  if(dup){toast(dup.handle+' is already on the board ('+dup.stage+')');return}
+  const g={handle:h,fol:f_fol.value.trim(),type:f_type.value,stage:f_stage.value,seg:f_seg.value.trim(),date:f_date.value,notes:f_notes.value.trim(),foot:f_foot.checked,ep:f_ep.value.trim(),known:f_known.checked,call:f_call.value.trim(),loc:f_loc.value.trim(),loc2:f_loc2.value.trim(),p2:f_p2.value,email:f_email.value.trim()};
   const wasStage=editing?editing.stage:'';
   if(g.stage==='Reached Out'&&!(editing&&editing.stage==='Reached Out'))g.reachedAt=new Date().toISOString().slice(0,10);
   else g.reachedAt=editing?editing.reachedAt:'';
@@ -354,16 +359,18 @@ async function save(){
       rec=fromRow(r[0]);guests.push(rec);
     }
     activeStage=rec.stage;renderBoard();renderNudge();toast('saved');
+    const idx=STAGES.indexOf(rec.stage);
     const enteredBooked=rec.stage==='Booked'&&wasStage!=='Booked';
     const enteredShot=rec.stage==='Shot'&&wasStage!=='Shot';
     if(enteredBooked||(rec.stage==='Booked'&&!rec.folder))await onBooked(rec);
-    else if((before.date!==rec.date||before.handle!==rec.handle||before.call!==rec.call||before.email!==rec.email)&&(rec.date||rec.eventId))await syncShoot(rec);
-    if(enteredShot)await onShot(rec);
+    else if(idx>=3&&editing)await resync(rec);
+    if(enteredShot||(rec.stage==='Shot'&&!rec.foot&&rec.email&&before.email!==rec.email))await onShot(rec);
   }catch(e){toast('save failed: '+String(e.message||e).slice(0,120));console.error(e)}
 }
 async function del(){
   const g=editing;
-  const what=[g.folder?'their Drive folder goes to trash':'',g.eventId?'calendar event deleted':''].filter(Boolean).join(', ');
+  const keep=g.stage==='Shot'||g.stage==='Posted'||g.rel;
+  const what=[g.folder?(keep?'their Drive folder is KEPT (footage or signed release inside)':'their Drive folder goes to trash'):'',g.eventId?'calendar events deleted':''].filter(Boolean).join(', ');
   if(!confirm(`Remove ${g.handle}?${what?'\n\n'+what+'.':''}`))return;
   closeModal();toast('removing…');
   try{
@@ -372,15 +379,13 @@ async function del(){
     guests=guests.filter(x=>x.id!==g.id);renderBoard();renderNudge();toast((d.done||['removed']).join(' · '));
   }catch(e){toast('remove failed: '+String(e.message||e).slice(0,120));console.error(e)}
 }
-async function syncShoot(g){
+async function resync(g){
   try{
-    const r=await fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json','x-show-key':showKey,'apikey':SB_KEY},body:JSON.stringify({action:'shoot',handle:g.handle,date:g.date,eventId:g.eventId||null,notes:g.seg,call:g.call,part2:g.p2,email:g.email||'',loc:g.loc||'',loc2:g.loc2||''})});
-    const d=await r.json();
-    if(g.date&&!d.eventId){toast('calendar refused: '+String(d.error||JSON.stringify(d)).slice(0,140));return}
-    await sb('show_guests?id=eq.'+g.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({calendar_event_id:d.eventId||null})});
-    const live=guests.find(x=>x.id===g.id);if(live)live.eventId=d.eventId||'';
-    toast(g.date?'calendar updated':'calendar cleared');
-  }catch(e){toast('calendar did not update: '+String(e.message||e).slice(0,120));console.error(e)}
+    const d=await fn({action:'book',id:g.id});
+    if(!d.ok){toast('sync failed: '+(d.error||''));return}
+    await refreshOne(g.id);
+    toast(g.date?'calendar + folder synced':'calendar cleared');
+  }catch(e){toast('sync failed: '+String(e.message||e).slice(0,120));console.error(e)}
 }
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',6000)}
 function renderNudge(){
