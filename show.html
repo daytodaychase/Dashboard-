@@ -247,7 +247,7 @@ async function sb(path,opt){
   const t=await r.text();return t?JSON.parse(t):null;
 }
 const toRow=g=>({handle:g.handle,followers:g.fol||null,guest_type:g.type,stage:g.stage,ending:g.seg||null,episode:g.ep||null,shoot_date:g.date||null,call_time:g.call||null,location:g.loc||null,location2:g.loc2||null,part2:g.p2||'studio',notes:g.notes||null,known:!!g.known,footage_delivered:!!g.foot,reached_at:g.reachedAt||null,guest_email:g.email||null});
-const fromRow=r=>({id:r.id,handle:r.handle,fol:r.followers||'',type:r.guest_type,stage:r.stage,seg:r.ending||'',ep:r.episode||'',date:r.shoot_date||'',call:r.call_time||'',loc:r.location||'',loc2:r.location2||'',p2:r.part2||'studio',drive:r.drive_link||'',folder:r.folder_link||'',raw:r.raw_link||'',notes:r.notes||'',known:r.known,rel:r.release_signed,foot:r.footage_delivered,reachedAt:r.reached_at||'',eventId:r.calendar_event_id||'',email:r.guest_email||'',token:r.sign_token||'',signedName:r.signed_name||'',pdf:r.release_pdf_link||''});
+const fromRow=r=>({id:r.id,handle:r.handle,fol:r.followers||'',type:r.guest_type,stage:r.stage,seg:r.ending||'',ep:r.episode||'',date:r.shoot_date||'',call:r.call_time||'',loc:r.location||'',loc2:r.location2||'',p2:r.part2||'studio',drive:r.drive_link||'',folder:r.folder_link||'',raw:r.raw_link||'',notes:r.notes||'',known:r.known,rel:r.release_signed,foot:r.footage_delivered,reachedAt:r.reached_at||'',eventId:r.calendar_event_id||'',email:r.guest_email||'',token:r.sign_token||'',signedName:r.signed_name||'',pdf:r.release_pdf_link||'',exp:r.export_link||'',opus:r.opus_project_id||''});
 const SIGN_URL='https://daytodaychase.github.io/Dashboard-/sign.html?t=';
 const fn=(payload)=>fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json','x-show-key':showKey,'apikey':SB_KEY},body:JSON.stringify(payload)}).then(r=>r.json());
 
@@ -323,7 +323,7 @@ function fill(g){
   f_handle.value=g.handle||'';f_fol.value=g.fol||'';f_type.value=g.type||'Creator';f_stage.value=g.stage||'Candidate';
   f_seg.value=g.seg||'';f_date.value=g.date||'';f_date_show.value=g.date?longDate(g.date):'';f_notes.value=g.notes||'';f_foot.checked=!!g.foot;f_ep.value=g.ep||'';
   f_drive.value=g.drive||'';f_known.checked=!!g.known;f_call.value=g.call||'';f_loc.value=g.loc||STUDIO;f_loc2.value=g.loc2||(g.p2==='allday'?'':STUDIO);f_rel.checked=!!g.rel;f_rel_lbl.textContent=g.rel?('Release signed'+(g.signedName?' by '+g.signedName:'')):'Release not signed yet';f_p2.value=g.p2||'studio';f_email.value=g.email||'';
-  f_links.innerHTML=[g.folder?`<a class="on" href="${esc(g.folder)}" target="_blank">📁 episode folder</a>`:'',g.raw?`<a href="${esc(g.raw)}" target="_blank">raw</a>`:'',g.drive?`<a href="${esc(g.drive)}" target="_blank">guest clips</a>`:'',g.token&&g.id?`<a href="#" onclick="copyText('${SIGN_URL+g.token}','release link copied');return false">🔗 copy release link</a>`:'',g.pdf?`<a class="on" href="${esc(g.pdf)}" target="_blank">signed release</a>`:''].join('');
+  f_links.innerHTML=[g.folder?`<a class="on" href="${esc(g.folder)}" target="_blank">📁 episode folder</a>`:'',g.raw?`<a href="${esc(g.raw)}" target="_blank">raw</a>`:'',g.exp?`<a href="${esc(g.exp)}" target="_blank">final export</a>`:'',(g.exp&&STAGES.indexOf(g.stage)>=4)?`<a href="#" class="on" onclick="sendOpus('${g.id}');return false">${g.opus?'✓ in Opus · resend':'✂️ send to Opus'}</a>`:'',g.drive?`<a href="${esc(g.drive)}" target="_blank">guest clips</a>`:'',g.token&&g.id?`<a href="#" onclick="copyText('${SIGN_URL+g.token}','release link copied');return false">🔗 copy release link</a>`:'',g.pdf?`<a class="on" href="${esc(g.pdf)}" target="_blank">signed release</a>`:''].join('');
 }
 function loc2Default(){if(f_p2.value==='allday'&&f_loc2.value===STUDIO)f_loc2.value='';if(f_p2.value==='studio'&&!f_loc2.value)f_loc2.value=STUDIO}
 function unfold(){
@@ -344,6 +344,7 @@ async function save(){
   if(dup){toast(dup.handle+' is already on the board ('+dup.stage+')');return}
   const g={handle:h,fol:f_fol.value.trim(),type:f_type.value,stage:f_stage.value,seg:f_seg.value.trim(),date:f_date.value,notes:f_notes.value.trim(),foot:f_foot.checked,ep:f_ep.value.trim(),known:f_known.checked,call:f_call.value.trim(),loc:f_loc.value.trim(),loc2:f_loc2.value.trim(),p2:f_p2.value,email:f_email.value.trim()};
   const wasStage=editing?editing.stage:'';
+  if(g.stage==='Shot'&&wasStage!=='Shot'&&g.date&&new Date(g.date+'T00:00')>new Date()){if(!confirm(`Shoot date is ${longDate(g.date)}, that's in the future. Mark as shot anyway?`))return}
   if(g.stage==='Reached Out'&&!(editing&&editing.stage==='Reached Out'))g.reachedAt=new Date().toISOString().slice(0,10);
   else g.reachedAt=editing?editing.reachedAt:'';
   g.eventId=editing?editing.eventId:'';
@@ -362,9 +363,11 @@ async function save(){
     const idx=STAGES.indexOf(rec.stage);
     const enteredBooked=rec.stage==='Booked'&&wasStage!=='Booked';
     const enteredShot=rec.stage==='Shot'&&wasStage!=='Shot';
+    const enteredPosted=rec.stage==='Posted'&&wasStage!=='Posted';
     if(enteredBooked||(rec.stage==='Booked'&&!rec.folder))await onBooked(rec);
     else if(idx>=3&&editing)await resync(rec);
-    if(enteredShot||(rec.stage==='Shot'&&!rec.foot&&rec.email&&before.email!==rec.email))await onShot(rec);
+    if(enteredShot)toast('shot ✓ footage goes in Raw. move to Posted when clips are in Guest Clips');
+    if(enteredPosted||(rec.stage==='Posted'&&!rec.foot&&rec.email&&before.email!==rec.email))await onShot(rec);
   }catch(e){toast('save failed: '+String(e.message||e).slice(0,120));console.error(e)}
 }
 async function del(){
@@ -394,11 +397,25 @@ function renderNudge(){
   if(stale.length)lines.push(`${stale.length} guest${stale.length>1?'s':''} reached out over a week ago with no reply.`);
   const next=guests.filter(g=>g.date&&new Date(g.date+'T00:00')>=now).sort((a,b)=>a.date.localeCompare(b.date))[0];
   if(next){const days=Math.round((new Date(next.date+'T00:00')-now)/864e5);lines.push(`${next.handle} shoots ${days===0?'today':days===1?'tomorrow':'in '+days+' days'}.`)}
+  const shotYesterday=guests.filter(g=>g.stage==='Booked'&&g.date&&new Date(g.date+'T00:00')<now);
+  if(shotYesterday.length){const g=shotYesterday[0];lines.push(`${g.handle} shot ${longDate(g.date)}. <a href="#" onclick="markShot('${g.id}');return false" style="color:var(--orange2)">mark as shot →</a>`)}
   const unsigned=guests.filter(g=>g.stage==='Booked'&&g.date&&!g.rel);
   if(unsigned.length)lines.push(`${unsigned.length} booked guest${unsigned.length>1?'s':''} still need${unsigned.length>1?'':'s'} to sign the release.`);
   const waiting=guests.filter(g=>g.stage==='Shot'&&!g.foot);
   if(waiting.length)lines.push(`${waiting.length} guest${waiting.length>1?'s':''} still waiting on footage.`);
-  document.getElementById('nudge').textContent=lines.join(' ');
+  document.getElementById('nudge').innerHTML=lines.map(l=>l.includes('<a ')?l:esc(l)).join(' ');
+}
+async function markShot(id){
+  const g=guests.find(x=>x.id===id);if(!g)return;
+  try{await sb('show_guests?id=eq.'+id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({stage:'Shot',shot_confirmed_at:new Date().toISOString()})});g.stage='Shot';renderBoard();renderNudge();toast(g.handle+' marked shot ✓')}catch(e){toast('could not mark shot: '+e.message)}
+}
+async function sendOpus(id){
+  toast('sending to Opus…');
+  try{const d=await fn({action:'opus',id});
+    if(!d.ok){toast(d.error||'failed');return}
+    if(d.sent){await refreshOne(id);toast('sent to Opus ✓ '+d.file)}
+    else{await copyText(d.link,(d.error||d.note||'link copied')+' · paste into Opus')}
+  }catch(e){toast('Opus failed: '+e.message)}
 }
 async function refreshOne(id){
   const r=await sb('show_guests?id=eq.'+id+'&select=*');if(!r[0])return null;
@@ -421,7 +438,7 @@ async function onShot(g){
     const d=await fn({action:'deliver',id:g.id});
     if(!d.ok){toast('share failed: '+(d.error||''));return}
     const rec=await refreshOne(g.id);
-    await copyText(`yo! all your clips from the shoot are in here:\n${rec.drive}\n\nthe full episode drops soon. thank you for doing this 🙏`,'clips shared ✓ DM copied');
+    await copyText(`yo! the episode is out and all your clips are in here:\n${rec.drive}\n\ndon't forget the collab post on IG, I'll send the invite. thank you for doing this 🙏`,'clips shared ✓ DM copied');
   }catch(e){toast('share failed: '+e.message)}
 }
 function confirmDM(g,address){
