@@ -523,6 +523,7 @@ function schedule(call,p2){
   const s0=h*60+min;return {a:t(s0),b:t(s0+30),c:t(s0+150),d:t(s0+(p2==='allday'?720:330))};
 }
 function runSheet(){
+  const crewNow=(typeof collectCrew==='function'&&modal.classList.contains('open'))?collectCrew():'';
   const g={handle:f_handle.value.trim(),ep:f_ep.value.trim(),type:f_type.value,seg:f_seg.value.trim(),date:f_date.value,call:f_call.value.trim(),loc:f_loc.value.trim(),notes:f_notes.value.trim(),drive:f_drive.value.trim(),rel:f_rel.checked,foot:f_foot.checked,p2:f_p2.value};
   const end=g.seg||(ENDINGS[g.type]||ENDINGS.Other);const sched=schedule(g.call,g.p2);
   const dateStr=g.date?new Date(g.date+'T00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'<span class="blank"></span>';
@@ -563,7 +564,7 @@ function runSheet(){
       <li>Batteries charged, audio checked</li>
     </ul>
     <h2>Crew</h2>
-    ${g.crew?`<ul>${g.crew.split('\n').filter(Boolean).map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:'<div class="lines"><div></div><div></div></div>'}
+    ${(crewNow||g.crew)?`<ul>${(crewNow||g.crew).split('\n').filter(Boolean).map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:'<div class="lines"><div></div><div></div></div>'}
     <h2>After</h2>
     <ul><li>Raw dumped to Drive / Raw</li><li>Thank you DM sent same day</li><li class="${g.foot?'done':''}">Guest Clips folder shared with guest</li></ul>
     ${g.notes?`<h2>Notes</h2><p>${esc(g.notes).replace(/\n/g,'<br>')}</p>`:''}`;
