@@ -71,6 +71,11 @@
   .links{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
   .links a{font-size:11px;color:var(--cream2);text-decoration:none;border:1px solid var(--line);padding:5px 8px}
   .links a.on{color:var(--orange2);border-color:var(--orange)}
+  .roster{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+  .roster label{display:flex;align-items:flex-start;gap:8px;background:var(--panel2);border:1px solid var(--line);padding:8px;margin:0;text-transform:none;letter-spacing:0;font-size:12px;color:var(--cream);cursor:pointer;line-height:1.3}
+  .roster label input{width:auto;margin-top:2px}
+  .roster label.on{border-color:var(--orange)}
+  .roster small{display:block;color:var(--cream2);font-size:10px}
   .cal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:12}
   .cal.open{display:flex}
   .calbox{background:var(--panel);border-top:5px solid var(--orange);padding:14px;width:min(360px,94vw)}
@@ -208,8 +213,9 @@
         <div><label>Episode #</label><input id="f_ep" placeholder="auto" inputmode="numeric"></div>
         <div></div>
       </div>
-      <label>Crew (one per line, prints on the run sheet)</label>
-      <textarea id="f_crew" placeholder="Sam, B cam\nVi, audio"></textarea>
+      <label>Crew this shoot (tap who's coming)</label>
+      <div id="f_roster" class="roster"></div>
+      <input id="f_crew_extra" placeholder="anyone else · name, role">
     </div>
 
     <div id="f_links" class="links"></div>
@@ -236,6 +242,9 @@ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const WORKER=SB_URL+'/functions/v1/show-shoot';
 const PROOF_LINK='';  // paste a link to your best episode or one take video here
 const STUDIO='3401 Grays Ferry Ave, Philadelphia, PA 19146';
+const ROSTER=[['Sam','audio / video'],['Vi','short form + BTS on iPhone, BTS photos'],['Dylan','BTS photos, setup'],['Gabe','BTS photos, setup'],['Jacob','BTS photos, setup'],['Dante','BTS photos, setup']];
+function renderRoster(crewText){const picked=new Set((crewText||'').split('\n').map(l=>l.split(' · ')[0].trim()));f_roster.innerHTML=ROSTER.map(([n,r])=>`<label class="${picked.has(n)?'on':''}"><input type="checkbox" value="${n}" ${picked.has(n)?'checked':''} onchange="this.parentElement.classList.toggle('on',this.checked)"><span>${n}<small>${r}</small></span></label>`).join('');const extra=(crewText||'').split('\n').filter(l=>l&&!ROSTER.some(([n])=>l.startsWith(n+' · ')));f_crew_extra.value=extra.join('; ')}
+function collectCrew(){const lines=[...f_roster.querySelectorAll('input:checked')].map(i=>{const r=ROSTER.find(([n])=>n===i.value);return r?r[0]+' · '+r[1]:i.value});const extra=f_crew_extra.value.trim();if(extra)extra.split(';').map(x=>x.trim()).filter(Boolean).forEach(x=>lines.push(x));return lines.join('\n')}
 const STAGES=['Candidate','Reached Out','Replied','Booked','Shot','Posted'];
 const PLATFORMS=[{p:'YouTube',k:'youtube'},{p:'TikTok',k:'tiktok'},{p:'Instagram',k:'instagram'},{p:'Facebook',k:'facebook'}];
 let showKey='';
@@ -324,7 +333,7 @@ function renderBoard(){
 function fill(g){
   f_handle.value=g.handle||'';f_fol.value=g.fol||'';f_type.value=g.type||'Creator';f_stage.value=g.stage||'Candidate';
   f_seg.value=g.seg||'';f_date.value=g.date||'';f_date_show.value=g.date?longDate(g.date):'';f_notes.value=g.notes||'';f_foot.checked=!!g.foot;f_ep.value=g.ep||'';
-  f_drive.value=g.drive||'';f_known.checked=!!g.known;f_call.value=g.call||'';f_loc.value=g.loc||STUDIO;f_loc2.value=g.loc2||(g.p2==='allday'?'':STUDIO);f_rel.checked=!!g.rel;f_rel_lbl.textContent=g.rel?('Release signed'+(g.signedName?' by '+g.signedName:'')):'Release not signed yet';f_p2.value=g.p2||'studio';f_email.value=g.email||'';f_crew.value=g.crew||'';
+  f_drive.value=g.drive||'';f_known.checked=!!g.known;f_call.value=g.call||'';f_loc.value=g.loc||STUDIO;f_loc2.value=g.loc2||(g.p2==='allday'?'':STUDIO);f_rel.checked=!!g.rel;f_rel_lbl.textContent=g.rel?('Release signed'+(g.signedName?' by '+g.signedName:'')):'Release not signed yet';f_p2.value=g.p2||'studio';f_email.value=g.email||'';renderRoster(g.crew||'');
   f_links.innerHTML=[g.folder?`<a class="on" href="${esc(g.folder)}" target="_blank">📁 episode folder</a>`:'',g.raw?`<a href="${esc(g.raw)}" target="_blank">raw</a>`:'',g.exp?`<a href="${esc(g.exp)}" target="_blank">final export</a>`:'',(g.exp&&STAGES.indexOf(g.stage)>=4)?`<a href="#" class="on" onclick="sendOpus('${g.id}');return false">${g.opus?'✓ in Opus · resend':'✂️ send to Opus'}</a>`:'',g.drive?`<a href="${esc(g.drive)}" target="_blank">guest clips</a>`:'',g.token&&g.id?`<a href="#" onclick="copyText('${SIGN_URL+g.token}','release link copied');return false">🔗 copy release link</a>`:'',g.pdf?`<a class="on" href="${esc(g.pdf)}" target="_blank">signed release</a>`:''].join('');
 }
 function loc2Default(){if(f_p2.value==='allday'&&f_loc2.value===STUDIO)f_loc2.value='';if(f_p2.value==='studio'&&!f_loc2.value)f_loc2.value=STUDIO}
@@ -344,7 +353,7 @@ async function save(){
   h='@'+h.toLowerCase();
   const dup=guests.find(x=>x.handle.toLowerCase()===h&&(!editing||x.id!==editing.id));
   if(dup){toast(dup.handle+' is already on the board ('+dup.stage+')');return}
-  const g={handle:h,fol:f_fol.value.trim(),type:f_type.value,stage:f_stage.value,seg:f_seg.value.trim(),date:f_date.value,notes:f_notes.value.trim(),foot:f_foot.checked,ep:f_ep.value.trim(),known:f_known.checked,call:f_call.value.trim(),loc:f_loc.value.trim(),loc2:f_loc2.value.trim(),p2:f_p2.value,email:f_email.value.trim(),crew:f_crew.value.trim()};
+  const g={handle:h,fol:f_fol.value.trim(),type:f_type.value,stage:f_stage.value,seg:f_seg.value.trim(),date:f_date.value,notes:f_notes.value.trim(),foot:f_foot.checked,ep:f_ep.value.trim(),known:f_known.checked,call:f_call.value.trim(),loc:f_loc.value.trim(),loc2:f_loc2.value.trim(),p2:f_p2.value,email:f_email.value.trim(),crew:collectCrew()};
   const wasStage=editing?editing.stage:'';
   if(g.stage==='Shot'&&wasStage!=='Shot'&&g.date&&new Date(g.date+'T00:00')>new Date()){if(!confirm(`Shoot date is ${longDate(g.date)}, that's in the future. Mark as shot anyway?`))return}
   if(g.stage==='Reached Out'&&!(editing&&editing.stage==='Reached Out'))g.reachedAt=new Date().toISOString().slice(0,10);
