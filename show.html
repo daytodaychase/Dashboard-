@@ -334,7 +334,7 @@ function fill(g){
   f_handle.value=g.handle||'';f_fol.value=g.fol||'';f_type.value=g.type||'Creator';f_stage.value=g.stage||'Candidate';
   f_seg.value=g.seg||'';f_date.value=g.date||'';f_date_show.value=g.date?longDate(g.date):'';f_notes.value=g.notes||'';f_foot.checked=!!g.foot;f_ep.value=g.ep||'';
   f_drive.value=g.drive||'';f_known.checked=!!g.known;f_call.value=g.call||'';f_loc.value=g.loc||STUDIO;f_loc2.value=g.loc2||(g.p2==='allday'?'':STUDIO);f_rel.checked=!!g.rel;f_rel_lbl.textContent=g.rel?('Release signed'+(g.signedName?' by '+g.signedName:'')):'Release not signed yet';f_p2.value=g.p2||'studio';f_email.value=g.email||'';renderRoster(g.crew||'');
-  f_links.innerHTML=[g.folder?`<a class="on" href="${esc(g.folder)}" target="_blank">📁 episode folder</a>`:'',g.raw?`<a href="${esc(g.raw)}" target="_blank">raw</a>`:'',g.exp?`<a href="${esc(g.exp)}" target="_blank">final export</a>`:'',(g.exp&&STAGES.indexOf(g.stage)>=4)?`<a href="#" class="on" onclick="sendOpus('${g.id}');return false">${g.opus?'✓ in Opus · resend':'✂️ send to Opus'}</a>`:'',g.drive?`<a href="${esc(g.drive)}" target="_blank">guest clips</a>`:'',g.token&&g.id?`<a href="#" onclick="copyText('${SIGN_URL+g.token}','release link copied');return false">🔗 copy release link</a>`:'',g.pdf?`<a class="on" href="${esc(g.pdf)}" target="_blank">signed release</a>`:''].join('');
+  f_links.innerHTML=[g.folder?`<a class="on" href="${esc(g.folder)}" target="_blank">📁 episode folder</a>`:'',g.raw?`<a href="${esc(g.raw)}" target="_blank">raw</a>`:'',g.exp?`<a href="${esc(g.exp)}" target="_blank">final export</a>`:'',(g.exp&&STAGES.indexOf(g.stage)>=4)?`<a href="#" class="on" onclick="findClips('${g.id}');return false">🎯 find clips</a>`:'',(g.exp&&STAGES.indexOf(g.stage)>=4)?`<a href="#" onclick="showClips('${g.id}');return false">clip list</a>`:'',g.drive?`<a href="${esc(g.drive)}" target="_blank">guest clips</a>`:'',g.token&&g.id?`<a href="#" onclick="copyText('${SIGN_URL+g.token}','release link copied');return false">🔗 copy release link</a>`:'',g.pdf?`<a class="on" href="${esc(g.pdf)}" target="_blank">signed release</a>`:''].join('');
 }
 function loc2Default(){if(f_p2.value==='allday'&&f_loc2.value===STUDIO)f_loc2.value='';if(f_p2.value==='studio'&&!f_loc2.value)f_loc2.value=STUDIO}
 function unfold(){
@@ -419,6 +419,21 @@ function renderNudge(){
 async function markShot(id){
   const g=guests.find(x=>x.id===id);if(!g)return;
   try{await sb('show_guests?id=eq.'+id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({stage:'Shot',shot_confirmed_at:new Date().toISOString()})});g.stage='Shot';renderBoard();renderNudge();toast(g.handle+' marked shot ✓')}catch(e){toast('could not mark shot: '+e.message)}
+}
+async function findClips(id){
+  if(!confirm('Transcribe the newest video in Final Export, pick 8 to 12 clips, and send them to Opus? Uses Opus credits (about 10 per clip).'))return;
+  toast('starting: transcribing…');
+  try{const d=await fn({action:'clips_start',id});if(!d.ok){toast(d.error||'failed');return}toast('transcribing '+d.file+' · check back in ~10 min')}catch(e){toast('failed: '+e.message)}
+}
+async function showClips(id){
+  try{const d=await fn({action:'clips_list',id});
+    if(!d.clips.length){toast(d.status?('status: '+d.status+(d.error?' · '+d.error:'')):'no clips yet');return}
+    const fmt=s=>{const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':':'')+(h?String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')};
+    const lines=d.clips.map(c=>`${c.n}. ${fmt(c.start_sec)} to ${fmt(c.end_sec)} — ${c.name} [${c.status}]`).join('\n');
+    document.getElementById('runsheet').innerHTML=`<h1>Clips · ${d.status||''}</h1>${d.error?`<p style="color:#b00">${esc(d.error)}</p>`:''}<ul>${d.clips.map(c=>`<li>${c.n}. ${fmt(c.start_sec)} to ${fmt(c.end_sec)} — ${esc(c.name)} <span style="opacity:.6">[${c.status}]</span>${c.clip_url?` <a href="${esc(c.clip_url)}" target="_blank">open</a>`:''}</li>`).join('')}</ul>`;
+    sheetview.classList.add('open');
+    copyText(lines,'clip list copied');
+  }catch(e){toast('failed: '+e.message)}
 }
 async function sendOpus(id){
   toast('sending to Opus…');
