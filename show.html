@@ -113,6 +113,32 @@
   .lock{position:fixed;inset:0;background:var(--bg);z-index:20;display:flex;align-items:center;justify-content:center;padding:20px}
   .lock .box{max-width:360px;width:100%}
   .lock h1{font-size:40px;margin-bottom:14px}
+
+  /* ── TODAY LIST ── */
+  .today{margin:18px 0 26px}
+  .week{border-top:5px solid var(--orange);padding:10px 0 4px;color:var(--cream2);font-size:14px}
+  .week b{display:block;font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.5px;text-transform:uppercase;color:var(--cream)}
+  .today h2.count{font-family:'Anton',sans-serif;font-size:clamp(30px,8vw,46px);line-height:1;margin:10px 0 14px;text-transform:uppercase;color:var(--cream)}
+  .task{background:var(--panel);border:1px solid var(--line);padding:14px;margin-bottom:10px;display:grid;grid-template-columns:40px 1fr;gap:10px}
+  .task .n{font-family:'Anton',sans-serif;font-size:30px;line-height:1;color:var(--orange2)}
+  .task b{display:block;font-size:16px;margin-bottom:4px}
+  .task p{margin:0 0 10px;color:var(--cream2);font-size:14px;line-height:1.45}
+  .task .btn{width:100%;text-align:center;padding:12px}
+  .task .btn.second{background:transparent;color:var(--cream);border:2px solid var(--line);margin-top:8px}
+  .task .link{display:inline-block;margin-top:8px;color:var(--orange2);font-size:14px}
+  .task .pick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+  .task .pick input{width:100%;font-family:'Courier Prime',monospace;font-size:15px;padding:9px;background:var(--bg);color:var(--cream);border:1px solid var(--line)}
+  .task .confirm{border:2px solid var(--orange);padding:10px;margin-top:6px}
+  .task .confirm p{margin:0 0 8px;color:var(--cream)}
+  .free{border:1px dashed var(--line);padding:20px;text-align:center;color:var(--cream2)}
+  .free b{display:block;font-family:'Anton',sans-serif;font-size:26px;text-transform:uppercase;color:var(--cream)}
+  .later h3{font-family:'Anton',sans-serif;font-size:16px;text-transform:uppercase;letter-spacing:.5px;margin:18px 0 6px;color:var(--cream2)}
+  .later div{padding:6px 0;border-top:1px solid var(--line);font-size:14px}
+  .later div small{display:block;color:var(--cream2)}
+  .stamp{font-size:12px;color:var(--cream2);margin-top:10px}
+  .rules{font-size:12px;color:var(--cream2);margin-top:6px}
+  .rules summary{cursor:pointer}
+  .rules ol{margin:6px 0 0 18px}
 </style>
 </head>
 <body>
@@ -134,12 +160,26 @@
   <div class="nudge" id="caltest" style="cursor:pointer" onclick="calCheck()">calendar link: tap to test</div>
 </header>
 
+<section class="today" id="today">
+  <div class="week" id="week"></div>
+  <h2 class="count" id="tcount"></h2>
+  <div id="tlist"></div>
+  <div class="later" id="tlater"></div>
+  <div class="stamp" id="tstamp"></div>
+  <details class="rules"><summary>How this list is ordered (never changes)</summary>
+    <ol><li>Something is stuck and only you can unstick it.</li><li>A post needs you.</li><li>An episode is waiting for your edit.</li><li>Clips or a vlog are waiting for you to watch.</li><li>A guest is waiting on you: book, nudge, or message someone new. Outreach hides when two edits are waiting and jumps to the top when nobody is booked and nobody has said yes.</li></ol>
+    <p>Never more than five. Nothing here is ever sorted by a computer's opinion.</p>
+  </details>
+</section>
+
+
 <div class="grid" id="stats"></div>
 
 <div class="apps">
   <a class="app" href="https://www.opus.pro" target="_blank"><span class="ico">✂️</span><div><div class="name">Open Opus</div><div class="what">cut + schedule clips</div></div></a>
   <a class="app" href="https://www.bootstrapmediagroup.com/robin-login" target="_blank"><span class="ico">🤖</span><div><div class="name">Open Robin</div><div class="what">replies + posts</div></div></a>
   <a class="app" href="https://drive.google.com/drive/folders/168PTbbSwxkomJgj7kd6FcVu-7EfNPfac" target="_blank"><span class="ico">📁</span><div><div class="name">Show Drive</div><div class="what">assets + guest folders</div></div></a>
+  <a class="app" href="https://studio.youtube.com/channel/UCOTv0xZK7uVI5ZuY1IJDKIg/videos/upload?d=ud" target="_blank"><span class="ico">▶️</span><div><div class="name">Upload to YouTube</div><div class="what">full episodes, show channel</div></div></a>
 </div>
 
 <div class="boardhead">
@@ -277,6 +317,7 @@ async function loadAll(){
   ]);
   guests=g.map(fromRow);statRows=s;
   renderStats();renderBoard();renderNudge();
+  loadTasks();
 }
 
 // ───────── STATS ─────────
@@ -502,6 +543,66 @@ async function calCheck(){
   }catch(e){el.textContent='calendar link: unreachable ('+e.message+')'}
 }
 function openIG(h){const u='https://instagram.com/'+h.replace('@','');const w=window.open(u,'_blank');if(!w)location.href=u}
+
+
+// ───────── TODAY LIST ─────────
+let T=null,tConfirm=null;
+async function loadTasks(){
+  try{const d=await fn({action:'tasks'});if(!d.ok){document.getElementById('tcount').textContent='List did not load: '+(d.error||'');return}T=d;renderTasks()}
+  catch(e){document.getElementById('tcount').textContent='List did not load: '+String(e.message||e).slice(0,80)}
+}
+function pl(n,w){return n+' '+w+(n===1?'':'s')}
+async function copyText2(t){try{await navigator.clipboard.writeText(t)}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}}
+function renderTasks(){
+  if(!T)return;
+  const w=document.getElementById('week');w.innerHTML='<b>This week</b>';w.appendChild(document.createTextNode(T.week||''));
+  const n=T.tasks.length;
+  document.getElementById('tcount').textContent=n===0?'You\u2019re free.':n===1?'One thing today.':n+' things today.';
+  const list=document.getElementById('tlist');list.innerHTML='';
+  if(!n){const f=document.createElement('div');f.className='free';f.innerHTML='<b>Go film something.</b>This list fills up on its own when the show needs you.';list.appendChild(f)}
+  T.tasks.forEach((t,i)=>{
+    const d=document.createElement('div');d.className='task';
+    d.innerHTML='<div class="n">'+(i+1)+'</div><div><b></b><p></p></div>';
+    d.querySelector('b').textContent=t.what.replace(/'s 1 clips/,"'s 1 clip");d.querySelector('p').textContent=t.why;
+    const box=d.children[1];
+    let inputs=null;
+    if(t.inputs){inputs=document.createElement('div');inputs.className='pick';
+      const nd=new Date();nd.setDate(nd.getDate()+((9-nd.getDay())%7||7));
+      inputs.innerHTML='<input type="date" value="'+nd.toISOString().slice(0,10)+'" aria-label="Shoot date"><input type="time" value="10:00" aria-label="Call time">';box.appendChild(inputs)}
+    if(t.link){const a=document.createElement('a');a.className='link';a.href=t.link;a.target='_blank';a.rel='noopener';a.textContent=t.act==='schedule_episode'?'Open Guest Clips in Drive':t.act?'Open the folder':t.button||'Open';box.appendChild(a);if(!t.act){return list.appendChild(d)}}
+    if(t.button&&t.act){
+      if(t.confirm&&tConfirm===t.key){
+        const c=document.createElement('div');c.className='confirm';c.innerHTML='<p></p>';c.querySelector('p').textContent=t.confirm;
+        const y=document.createElement('button');y.className='btn';y.textContent='Yes, do it';y.onclick=()=>{tConfirm=null;runTask(t,inputs)};
+        const no=document.createElement('button');no.className='btn second';no.textContent='Wait, no';no.onclick=()=>{tConfirm=null;renderTasks()};
+        c.appendChild(y);c.appendChild(no);box.appendChild(c);
+      }else{
+        const b=document.createElement('button');b.className='btn';b.textContent=t.button;
+        b.onclick=()=>{if(t.copy)copyText2(t.copy);if(t.confirm){tConfirm=t.key;renderTasks()}else runTask(t,inputs)};
+        box.appendChild(b);
+      }
+    }
+    list.appendChild(d);
+  });
+  const L=document.getElementById('tlater');L.innerHTML='';
+  if(T.later&&T.later.length){const h=document.createElement('h3');h.textContent='Later this week';L.appendChild(h);T.later.forEach(x=>{const r=document.createElement('div');r.innerHTML='<small></small>';r.querySelector('small').textContent=x.when;r.appendChild(document.createTextNode(x.what));L.appendChild(r)})}
+  const up=T.updated?new Date(T.updated):new Date();
+  document.getElementById('tstamp').textContent='Updated '+up.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+'. Pull down or reopen to refresh.';
+}
+async function runTask(t,inputs){
+  const args=Object.assign({},t.args||{});
+  if(inputs){args.date=inputs.querySelector('input[type=date]').value;args.call=inputs.querySelector('input[type=time]').value;if(!args.date){toast('pick a day first');return}}
+  toast(t.copy?'copied. working\u2026':'working\u2026');
+  try{
+    const d=await fn(Object.assign({action:t.act},args));
+    if(d&&d.ok===false){toast(d.error||'that did not work');return}
+    if(t.act==='book_quick')toast('booked'+(d.episode?' as EP'+String(d.episode).padStart(2,'0'):'')+(d.releaseEmailed?' \u00b7 release email sent':''));
+    else if(t.act==='schedule_episode')toast(pl((d.scheduled||[]).length,'clip')+' booked'+(d.rejected?' \u00b7 '+d.rejected+' skipped':''));
+    else if(t.act==='clips_start')toast('making clips from '+(d.file||'the export')+'. check back in ~20 min');
+    else toast('done');
+    await loadAll();
+  }catch(e){toast('failed: '+String(e.message||e).slice(0,100))}
+}
 
 // ───────── PITCH ─────────
 const GIFTS={
