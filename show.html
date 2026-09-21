@@ -57,7 +57,16 @@
   .card .seg{font-size:12px;margin-top:6px}
   .card .dl{display:inline-block;font-size:11px;color:var(--cream2);margin-top:6px;text-decoration:none;border-bottom:1px dotted var(--cream2)}
   .card .chk{font-size:11px;color:var(--orange2);margin-top:6px}
-  .card .post{font-size:12px;color:var(--orange2);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);line-height:1.4}
+  .card .post{margin:-10px -10px 10px;padding:10px 12px;border-left:5px solid;font-family:'Anton',sans-serif;letter-spacing:.06em}
+  .card .post-big{font-size:16px;line-height:1;text-transform:uppercase}
+  .card .post-sub{font-family:'Courier Prime',monospace;font-size:11px;letter-spacing:0;margin-top:4px;opacity:.85;text-transform:none}
+  .card .post-action{display:inline-block;margin-top:8px;background:#1a1410;color:var(--cream);text-decoration:none;font-family:'Anton',sans-serif;font-size:11px;letter-spacing:.08em;padding:6px 10px;border:1px solid rgba(0,0,0,.3)}
+  .card .post.done{background:#d9622b;color:#1a1410;border-left-color:#f08a4b}
+  .card .post.running{background:#f2c94c;color:#1a1410;border-left-color:#d9a020}
+  .card .post.next{background:#3b2f25;color:var(--cream);border-left-color:var(--orange2)}
+  .card .post.error{background:#7a2a1e;color:#f2c8bd;border-left-color:#b94a3d}
+  .card .post.loading{background:var(--panel2);color:var(--cream2);border-left-color:var(--line);font-family:'Courier Prime',monospace;font-size:11px;letter-spacing:0;text-transform:none;padding:8px 12px}
+  .card .post.loading .post-big,.card .post.loading .post-sub{display:none}
   .empty{font-size:12px;color:var(--cream2);padding:14px 8px;text-align:center}
   @media(max-width:900px){.chips{display:flex}.board{display:block}.col{display:none}.col.show{display:flex}.col h3{display:none}.cards{padding:0}}
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:flex-end;justify-content:center;z-index:9}
@@ -422,6 +431,10 @@ async function loadAll(){
     sb('show_stats?select=*&order=date.desc&limit=2')
   ]);
   guests=g.map(fromRow);statRows=s;
+  try{
+    const r=await fetch(`${window.SHOW_SHOOT_URL}?action=tasks&only=post`,{headers:{authorization:`Bearer ${window.CALLBACK_TOKEN}`}});
+    window.__postJobs=await r.json();
+  }catch(e){window.__postJobs=[]}
   renderStats();renderBoard();renderNudge();
   loadTasks();
 }
@@ -461,20 +474,19 @@ function fmt(d){if(!d)return'';const x=new Date(d+'T00:00');return x.toLocaleDat
 function setStage(st){activeStage=st;renderBoard()}
 function postLineFor(g){
   const jobs=(window.__postJobs||[]).filter(j=>j.guest_handle===g.handle);
-  if(!jobs.length)return '';
+  if(!jobs.length)return '<div class="post loading">waiting for first stage…</div>';
   jobs.sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')));
   const j=jobs[0];
-  const stageU=String(j.stage||'').toUpperCase();
-  const nextStage={sync:'trim',trim:'intro',intro:'final cut'};
-  let msg='';
-  if(j.status==='in_progress')msg=`${stageU} running…`;
-  else if(j.status==='error')msg=`${stageU} failed, check the app`;
-  else if(j.stage==='intro')msg='intro done, ready for Final Cut';
-  else msg=`${stageU} done, ${nextStage[j.stage]||'next'} next`;
-  const open=(j.status==='review'&&j.stage==='intro'&&j.fcpxml_path)
-    ?`<a class="dl" href="#" onclick="event.stopPropagation();copyText('${esc(j.fcpxml_path)}','path copied — paste in Final Cut');return false">📋 copy Final Cut path</a>`
+  let cls='ready',big='',sub='';
+  if(j.status==='in_progress'){cls='running';big=`${String(j.stage).toUpperCase()} RUNNING`;sub='mac app is working…';}
+  else if(j.status==='error'){cls='error';big=`${String(j.stage).toUpperCase()} FAILED`;sub='open the app on your mac';}
+  else if(j.stage==='intro'){cls='done';big='READY FOR FINAL CUT';sub='open the fcpxml, finish the edit, export';}
+  else if(j.stage==='sync'){cls='next';big='SYNC DONE → RUN TRIM';sub='open TRIM app, drop the synced fcpxml';}
+  else if(j.stage==='trim'){cls='next';big='TRIM DONE → RUN INTRO';sub='open INTRO app, drop the trimmed fcpxml';}
+  const path=(j.status==='review'&&j.stage==='intro'&&j.fcpxml_path)
+    ?`<a class="post-action" href="#" onclick="event.stopPropagation();copyText('${esc(j.fcpxml_path)}','path copied — paste in Final Cut');return false">📋 copy path</a>`
     :'';
-  return `<div class="post">↳ ${msg}</div>${open}`;
+  return `<div class="post ${cls}"><div class="post-big">${big}</div><div class="post-sub">${sub}</div>${path}</div>`;
 }
 function renderBoard(){
   document.getElementById('chips').innerHTML=STAGES.map(st=>`<button class="chip ${st===activeStage?'on':''}" onclick="setStage('${st}')">${st}<span>${guests.filter(g=>g.stage===st).length}</span></button>`).join('');
@@ -483,6 +495,7 @@ function renderBoard(){
     return `<div class="col ${st===activeStage?'show':''}"><h3>${st}<span>${list.length}</span></h3><div class="cards">${
       list.length?list.map(g=>`
         <div class="card" onclick="openEdit('${g.id}')">
+          ${st==='Editing'?postLineFor(g):''}
           ${g.ep?`<div class="ep">EP ${String(g.ep).padStart(2,'0')}</div>`:''}
           <div class="h"><a href="https://instagram.com/${esc(g.handle.replace('@',''))}" target="_blank" rel="noopener" onclick="event.stopPropagation();openIG('${esc(g.handle)}');return false">${esc(g.handle)} ↗</a></div>
           <div class="m">${esc(g.fol||'—')} · ${esc(g.type)}${g.date?' · '+fmt(g.date):''}</div>
@@ -490,7 +503,6 @@ function renderBoard(){
           ${g.folder?`<a class="dl" href="${esc(g.folder)}" target="_blank" onclick="event.stopPropagation()">📁 folder</a>`:''}
           ${g.rel?`<div class="chk">✓ release signed</div>`:''}
           ${g.foot?`<div class="chk">✓ footage sent</div>`:''}
-          ${st==='Editing'?postLineFor(g):''}
         </div>`).join(''):`<div class="empty">nobody here yet</div>`
     }</div></div>`;
   }).join('');
