@@ -28,6 +28,20 @@
   .stat .top{font-size:11px;color:var(--cream2);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .stat .upd{font-size:10px;color:var(--cream2);margin-top:4px;opacity:.7}
   .apps{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:36px}
+  .macbar{background:#1f1712;border:1px solid #3a2a20;border-radius:8px;padding:14px 16px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px}
+  .macstatus{display:flex;align-items:center;gap:8px;font-size:13px;color:#c9b8a8}
+  .macstatus .dot{width:10px;height:10px;border-radius:50%;background:#666}
+  .macstatus .dot.on{background:#4ade80;box-shadow:0 0 8px #4ade80}
+  .macstatus .dot.off{background:#ef4444}
+  .macapps{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
+  .macapp{background:#2a1e17;border:1px solid #4a3629;color:#f0e5d8;border-radius:6px;padding:12px 8px;font-family:inherit;font-size:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:background 0.15s}
+  .macapp:hover{background:#3a2a20}
+  .macapp:active{background:#4a3629}
+  .macapp .ico{font-size:22px}
+  .macapp .lbl{font-size:12px;color:#c9b8a8}
+  .maclast{font-size:12px;color:#8a7a68;min-height:16px}
+  .maclast .ok{color:#4ade80}
+  .maclast .err{color:#ef4444}
   .app{background:var(--panel);padding:16px 14px;display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--cream);border:1px solid var(--line);cursor:pointer}
   .app:active{background:var(--panel2)}
   .app .ico{font-size:28px}
@@ -292,6 +306,17 @@
 
 <div class="grid" id="stats"></div>
 
+<div class="macbar" id="macbar">
+  <div class="macstatus" id="macstatus"><span class="dot" id="macdot"></span><span id="mactext">checking Mac…</span></div>
+  <div class="macapps">
+    <button class="macapp" onclick="runApp('card_copy','Cards In')" title="Copy cards from readers to episode folder"><span class="ico">💾</span><span class="lbl">Cards In</span></button>
+    <button class="macapp" onclick="runApp('sync','Sync')" title="Waveform sync host + guest cameras"><span class="ico">🎚️</span><span class="lbl">Sync</span></button>
+    <button class="macapp" onclick="runApp('trim','Trim')" title="Trim silences and pick the takes"><span class="ico">✂️</span><span class="lbl">Trim</span></button>
+    <button class="macapp" onclick="runApp('intro','Intro')" title="Build the cold open + title"><span class="ico">🎬</span><span class="lbl">Intro</span></button>
+  </div>
+  <div class="maclast" id="maclast"></div>
+</div>
+
 <div class="apps">
   <a class="app" href="https://www.opus.pro" target="_blank"><span class="ico">✂️</span><div><div class="name">Open Opus</div><div class="what">cut + schedule clips</div></div></a>
   <a class="app" href="https://www.bootstrapmediagroup.com/robin-login" target="_blank"><span class="ico">🤖</span><div><div class="name">Open Robin</div><div class="what">replies + posts</div></div></a>
@@ -437,7 +462,40 @@ async function loadAll(){
   }catch(e){window.__postJobs=[]}
   renderStats();renderBoard();renderNudge();
   loadTasks();
+  loadMacStatus();
 }
+
+async function runApp(kind,label){
+  try{
+    const r=await fn({action:'run_app',kind});
+    if(!r||!r.ok){toast((r&&r.error)||'run failed');return}
+    toast(`${label} queued${r.guest_handle?' for '+r.guest_handle:''}`);
+    setTimeout(loadMacStatus,600);
+  }catch(e){toast('run failed: '+(e.message||e))}
+}
+async function loadMacStatus(){
+  try{
+    const r=await fn({action:'mac_status'});
+    if(!r||!r.ok)return;
+    const dot=document.getElementById('macdot'),txt=document.getElementById('mactext'),last=document.getElementById('maclast');
+    if(!dot)return;
+    if(r.alive){
+      dot.className='dot on';
+      txt.textContent=`Mac listening${r.hostname?' ('+r.hostname+')':''}`;
+    }else{
+      dot.className='dot off';
+      txt.textContent=r.last_seen?`Mac asleep — last ping ${new Date(r.last_seen).toLocaleTimeString()}`:'Mac never pinged — runner not installed';
+    }
+    const cmd=(r.commands||[])[0];
+    if(cmd){
+      const state=cmd.status==='done'?'ok':cmd.status==='failed'?'err':'';
+      const when=cmd.completed_at||cmd.created_at;
+      const rel=when?' · '+new Date(when).toLocaleTimeString():'';
+      last.innerHTML=`<span class="${state}">${cmd.kind} ${cmd.status}${cmd.guest_handle?' · '+cmd.guest_handle:''}${cmd.error?' · '+cmd.error.slice(0,60):''}</span>${rel}`;
+    }else{last.textContent=''}
+  }catch(e){}
+}
+setInterval(()=>{if(!lock||lock.style.display==='none')loadMacStatus()},15000);
 
 function short(n){n=Number(n)||0;return n>=1e6?(n/1e6).toFixed(1).replace('.0','')+'M':n>=1e3?(n/1e3).toFixed(1).replace('.0','')+'K':String(n)}
 function num(x){const s=String(x).trim().toUpperCase();const m=s.match(/^([\d.]+)\s*([KM])?$/);if(!m)return parseInt(s.replace(/[^0-9]/g,''))||0;let v=parseFloat(m[1]);if(m[2]==='K')v*=1e3;if(m[2]==='M')v*=1e6;return Math.round(v)}
