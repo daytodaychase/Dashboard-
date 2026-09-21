@@ -388,7 +388,7 @@ const STUDIO='3401 Grays Ferry Ave, Philadelphia, PA 19146';
 const ROSTER=[['Sam','audio / video'],['Vi','short form + BTS on iPhone, BTS photos'],['Dylan','BTS photos, setup'],['Gabe','BTS photos, setup'],['Jacob','BTS photos, setup'],['Dante','BTS photos, setup']];
 function renderRoster(crewText){const picked=new Set((crewText||'').split('\n').map(l=>l.split(' · ')[0].trim()));f_roster.innerHTML=ROSTER.map(([n,r])=>`<label class="${picked.has(n)?'on':''}"><input type="checkbox" value="${n}" ${picked.has(n)?'checked':''} onchange="this.parentElement.classList.toggle('on',this.checked)"><span>${n}<small>${r}</small></span></label>`).join('');const extra=(crewText||'').split('\n').filter(l=>l&&!ROSTER.some(([n])=>l.startsWith(n+' · ')));f_crew_extra.value=extra.join('; ')}
 function collectCrew(){const lines=[...f_roster.querySelectorAll('input:checked')].map(i=>{const r=ROSTER.find(([n])=>n===i.value);return r?r[0]+' · '+r[1]:i.value});const extra=f_crew_extra.value.trim();if(extra)extra.split(';').map(x=>x.trim()).filter(Boolean).forEach(x=>lines.push(x));return lines.join('\n')}
-const STAGES=['Candidate','Reached Out','Replied','Booked','Shot','Posted'];
+const STAGES=['Candidate','Reached Out','Replied','Booked','Shot','Editing','Posted'];
 const PLATFORMS=[{p:'YouTube',k:'youtube'},{p:'TikTok',k:'tiktok'},{p:'Instagram',k:'instagram'},{p:'Facebook',k:'facebook'}];
 let showKey='';
 
@@ -527,7 +527,7 @@ async function save(){
 }
 async function del(){
   const g=editing;
-  const keep=g.stage==='Shot'||g.stage==='Posted'||g.rel;
+  const keep=g.stage==='Shot'||g.stage==='Editing'||g.stage==='Posted'||g.rel;
   const what=[g.folder?(keep?'their Drive folder is KEPT (footage or signed release inside)':'their Drive folder goes to trash'):'',g.eventId?'calendar events deleted':''].filter(Boolean).join(', ');
   if(!confirm(`Remove ${g.handle}?${what?'\n\n'+what+'.':''}`))return;
   closeModal();toast('removing…');
