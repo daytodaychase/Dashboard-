@@ -57,6 +57,7 @@
   .card .seg{font-size:12px;margin-top:6px}
   .card .dl{display:inline-block;font-size:11px;color:var(--cream2);margin-top:6px;text-decoration:none;border-bottom:1px dotted var(--cream2)}
   .card .chk{font-size:11px;color:var(--orange2);margin-top:6px}
+  .card .post{font-size:12px;color:var(--orange2);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);line-height:1.4}
   .empty{font-size:12px;color:var(--cream2);padding:14px 8px;text-align:center}
   @media(max-width:900px){.chips{display:flex}.board{display:block}.col{display:none}.col.show{display:flex}.col h3{display:none}.cards{padding:0}}
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:flex-end;justify-content:center;z-index:9}
@@ -232,6 +233,8 @@
         document.getElementById("dt-current-guest").textContent = guest || "none";
         document.getElementById("dt-cards-in").hidden = !guest;
         const jobs = await loadJobs();
+        window.__postJobs = jobs;
+        if (typeof window.renderBoard === "function") window.renderBoard();
         const ul = document.getElementById("dt-stage-lines");
         ul.innerHTML = "";
         for (const job of jobs) {
@@ -456,6 +459,23 @@ async function saveStat(){
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function fmt(d){if(!d)return'';const x=new Date(d+'T00:00');return x.toLocaleDateString('en-US',{month:'short',day:'numeric'})}
 function setStage(st){activeStage=st;renderBoard()}
+function postLineFor(g){
+  const jobs=(window.__postJobs||[]).filter(j=>j.guest_handle===g.handle);
+  if(!jobs.length)return '';
+  jobs.sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')));
+  const j=jobs[0];
+  const stageU=String(j.stage||'').toUpperCase();
+  const nextStage={sync:'trim',trim:'intro',intro:'final cut'};
+  let msg='';
+  if(j.status==='in_progress')msg=`${stageU} running…`;
+  else if(j.status==='error')msg=`${stageU} failed, check the app`;
+  else if(j.stage==='intro')msg='intro done, ready for Final Cut';
+  else msg=`${stageU} done, ${nextStage[j.stage]||'next'} next`;
+  const open=(j.status==='review'&&j.stage==='intro'&&j.fcpxml_path)
+    ?`<a class="dl" href="#" onclick="event.stopPropagation();copyText('${esc(j.fcpxml_path)}','path copied — paste in Final Cut');return false">📋 copy Final Cut path</a>`
+    :'';
+  return `<div class="post">↳ ${msg}</div>${open}`;
+}
 function renderBoard(){
   document.getElementById('chips').innerHTML=STAGES.map(st=>`<button class="chip ${st===activeStage?'on':''}" onclick="setStage('${st}')">${st}<span>${guests.filter(g=>g.stage===st).length}</span></button>`).join('');
   document.getElementById('board').innerHTML=STAGES.map(st=>{
@@ -470,6 +490,7 @@ function renderBoard(){
           ${g.folder?`<a class="dl" href="${esc(g.folder)}" target="_blank" onclick="event.stopPropagation()">📁 folder</a>`:''}
           ${g.rel?`<div class="chk">✓ release signed</div>`:''}
           ${g.foot?`<div class="chk">✓ footage sent</div>`:''}
+          ${st==='Editing'?postLineFor(g):''}
         </div>`).join(''):`<div class="empty">nobody here yet</div>`
     }</div></div>`;
   }).join('');
