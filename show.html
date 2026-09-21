@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DAYTODAY SHOW</title>
+<script>
+  window.SHOW_SHOOT_URL = "https://gzupnelfmehgdxfhntar.supabase.co/functions/v1/show-shoot";
+  window.CALLBACK_TOKEN = "2c5d6c95caaad1c726e612c6e59485d2e8e2afbc3419bd5c6a5aea35248f13c1";
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Courier+Prime:wght@400;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#1a1410;--panel:#241c16;--panel2:#2e241c;--line:#3b2f25;--cream:#f2e8d5;--cream2:#b9ab94;--orange:#d9622b;--orange2:#f08a4b}
@@ -139,6 +143,20 @@
   .rules{font-size:12px;color:var(--cream2);margin-top:6px}
   .rules summary{cursor:pointer}
   .rules ol{margin:6px 0 0 18px}
+
+  /* ── CURRENT EPISODE PICKER + STAGE LINES (POST) ── */
+  .dt-current-episode{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--orange);padding:12px 14px;margin:10px 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .dt-current-episode .label{font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:13px;color:var(--cream2)}
+  .dt-current-episode #dt-current-guest{font-family:'Anton',sans-serif;font-size:20px;color:var(--cream);letter-spacing:.02em}
+  .dt-current-episode button{background:transparent;color:var(--cream2);border:1px solid var(--line);font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.06em;font-size:12px;padding:7px 12px;cursor:pointer}
+  .dt-current-episode button#dt-cards-in{background:var(--orange);color:#1a1410;border-color:var(--orange)}
+  #dt-stage-lines{list-style:none;margin:0 0 14px}
+  #dt-stage-lines:empty{display:none}
+  .dt-stage-line{background:var(--panel2);border-left:3px solid var(--cream2);padding:10px 12px;margin-bottom:6px;font-size:14px;color:var(--cream);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .dt-stage-line.in_progress{border-left-color:var(--orange2)}
+  .dt-stage-line.review{border-left-color:var(--orange)}
+  .dt-stage-line.error{border-left-color:#b94a3d;color:#f2c8bd}
+  .dt-stage-line button{background:var(--orange);color:#1a1410;border:0;font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.06em;font-size:11px;padding:6px 10px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -162,6 +180,91 @@
 
 <section class="today" id="today">
   <div class="week" id="week"></div>
+
+  <div class="dt-current-episode">
+    <span class="label">Current Episode:</span>
+    <span id="dt-current-guest">none</span>
+    <button id="dt-change-guest">Change</button>
+    <button id="dt-cards-in" hidden>Cards In</button>
+  </div>
+  <ul id="dt-stage-lines"></ul>
+  <script>
+  (() => {
+    const CRM_URL = window.SHOW_SHOOT_URL;
+    const TOKEN   = window.CALLBACK_TOKEN;
+    const authHeaders = { "authorization": `Bearer ${TOKEN}` };
+
+    async function getCurrentEpisode() {
+      const r = await fetch(`${CRM_URL}?action=current_episode`, { headers: authHeaders });
+      return (await r.json()).guest_handle;
+    }
+    async function setCurrentEpisode(handle) {
+      await fetch(`${CRM_URL}?action=current_episode`, {
+        method: "POST",
+        headers: { ...authHeaders, "content-type": "application/json" },
+        body: JSON.stringify({ guest_handle: handle })
+      });
+    }
+    async function loadJobs() {
+      const r = await fetch(`${CRM_URL}?action=tasks&only=post`, { headers: authHeaders });
+      return await r.json();
+    }
+    const stageLabel = { sync: "SYNC", trim: "TRIM", intro: "INTRO" };
+    const nextStage  = { sync: "trim", trim: "intro", intro: "final cut" };
+    function lineFor(job) {
+      const s = job.stage, g = job.guest_handle || "@unknown";
+      if (job.status === "in_progress") return `${g} ${stageLabel[s]} is running`;
+      if (job.status === "error")       return `${g} ${stageLabel[s]} failed, check the app`;
+      if (s === "intro") return `${g} intro done, ready to finish in Final Cut`;
+      return `${g} ${stageLabel[s]} done, ready for ${nextStage[s]}`;
+    }
+    function openXml(path) {
+      if (navigator.clipboard && !window.matchMedia("(hover: hover)").matches) {
+        navigator.clipboard.writeText(path);
+        alert("Path copied. Paste it in Final Cut on your Mac.");
+        return;
+      }
+      window.open(`file://${path}`, "_blank");
+    }
+    async function render() {
+      try {
+        const guest = await getCurrentEpisode();
+        document.getElementById("dt-current-guest").textContent = guest || "none";
+        document.getElementById("dt-cards-in").hidden = !guest;
+        const jobs = await loadJobs();
+        const ul = document.getElementById("dt-stage-lines");
+        ul.innerHTML = "";
+        for (const job of jobs) {
+          const li = document.createElement("li");
+          li.className = "dt-stage-line " + job.status;
+          const span = document.createElement("span");
+          span.textContent = lineFor(job);
+          li.appendChild(span);
+          if (job.status === "review" && job.fcpxml_path) {
+            const btn = document.createElement("button");
+            btn.textContent = "Open";
+            btn.onclick = () => openXml(job.fcpxml_path);
+            li.appendChild(btn);
+          }
+          ul.appendChild(li);
+        }
+      } catch (e) { /* silent, retries on interval */ }
+    }
+    document.getElementById("dt-change-guest").onclick = async () => {
+      const handle = prompt("Guest handle (with the @):", "@");
+      if (!handle) return;
+      await setCurrentEpisode(handle.startsWith("@") ? handle : "@" + handle);
+      render();
+    };
+    document.getElementById("dt-cards-in").onclick = async () => {
+      await setCurrentEpisode(null);
+      render();
+    };
+    render();
+    setInterval(render, 15000);
+  })();
+  </script>
+
   <h2 class="count" id="tcount"></h2>
   <div id="tlist"></div>
   <div class="later" id="tlater"></div>
