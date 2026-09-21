@@ -205,7 +205,7 @@
     const authHeaders = { "authorization": `Bearer ${TOKEN}` };
 
     async function getCurrentEpisode() {
-      const r = await fetch(`${CRM_URL}?action=current_episode`, { headers: authHeaders });
+      const r = await fetch(`${CRM_URL}`, { method: "POST", headers: { ...authHeaders, "content-type": "application/json" }, body: JSON.stringify({ action: "current_episode" }) });
       return (await r.json()).guest_handle;
     }
     async function setCurrentEpisode(handle) {
@@ -216,7 +216,7 @@
       });
     }
     async function loadJobs() {
-      const r = await fetch(`${CRM_URL}?action=tasks&only=post`, { headers: authHeaders });
+      const r = await fetch(`${CRM_URL}?only=post`, { method: "POST", headers: { ...authHeaders, "content-type": "application/json" }, body: JSON.stringify({ action: "tasks" }) });
       return await r.json();
     }
     const stageLabel = { sync: "SYNC", trim: "TRIM", intro: "INTRO" };
@@ -432,7 +432,7 @@ async function loadAll(){
   ]);
   guests=g.map(fromRow);statRows=s;
   try{
-    const r=await fetch(`${window.SHOW_SHOOT_URL}?action=tasks&only=post`,{headers:{authorization:`Bearer ${window.CALLBACK_TOKEN}`}});
+    const r=await fetch(`${window.SHOW_SHOOT_URL}?only=post`,{method:'POST',headers:{authorization:`Bearer ${window.CALLBACK_TOKEN}`,'content-type':'application/json'},body:JSON.stringify({action:'tasks'})});
     window.__postJobs=await r.json();
   }catch(e){window.__postJobs=[]}
   renderStats();renderBoard();renderNudge();
