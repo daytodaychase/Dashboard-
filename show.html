@@ -42,6 +42,13 @@
   .maclast{font-size:12px;color:#8a7a68;min-height:16px}
   .maclast .ok{color:#4ade80}
   .maclast .err{color:#ef4444}
+  .brandbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+  .brandbar .lbl{font-size:11px;color:var(--cream2);text-transform:uppercase;letter-spacing:.08em;margin-right:4px}
+  .brandchip{background:var(--panel);border:1px solid var(--line);color:var(--cream);border-radius:14px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit}
+  .brandchip.on{background:var(--orange);color:#1a1410;border-color:var(--orange)}
+  .brandchip .n{font-family:'Anton',sans-serif;margin-left:6px;opacity:.7}
+  .brandchip.on .n{opacity:1}
+  .brandchip .stale{color:#a99a88;font-size:10px;margin-left:6px}
   .app{background:var(--panel);padding:16px 14px;display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--cream);border:1px solid var(--line);cursor:pointer}
   .app:active{background:var(--panel2)}
   .app .ico{font-size:28px}
@@ -304,6 +311,7 @@
 </section>
 
 
+<div class="brandbar" id="brandbar"></div>
 <div class="grid" id="stats"></div>
 
 <div class="macbar" id="macbar">
@@ -453,14 +461,14 @@ async function unlock(){
 async function loadAll(){
   const [g,s]=await Promise.all([
     sb('show_guests?select=*&order=created_at.asc'),
-    sb('show_stats?select=*&order=date.desc&limit=2')
+    sb('show_stats?select=*&order=date.desc&limit=200')
   ]);
   guests=g.map(fromRow);statRows=s;
   try{
     const r=await fetch(`${window.SHOW_SHOOT_URL}?only=post`,{method:'POST',headers:{authorization:`Bearer ${window.CALLBACK_TOKEN}`,'content-type':'application/json'},body:JSON.stringify({action:'tasks'})});
     window.__postJobs=await r.json();
   }catch(e){window.__postJobs=[]}
-  renderStats();renderBoard();renderNudge();
+  renderBrandBar();renderStats();renderBoard();renderNudge();
   loadTasks();
   loadMacStatus();
 }
@@ -499,8 +507,24 @@ setInterval(()=>{if(!lock||lock.style.display==='none')loadMacStatus()},15000);
 
 function short(n){n=Number(n)||0;return n>=1e6?(n/1e6).toFixed(1).replace('.0','')+'M':n>=1e3?(n/1e3).toFixed(1).replace('.0','')+'K':String(n)}
 function num(x){const s=String(x).trim().toUpperCase();const m=s.match(/^([\d.]+)\s*([KM])?$/);if(!m)return parseInt(s.replace(/[^0-9]/g,''))||0;let v=parseFloat(m[1]);if(m[2]==='K')v*=1e3;if(m[2]==='M')v*=1e6;return Math.round(v)}
+const BRAND_LABELS={daytodayshow:'Show',daytodaychase:'Chase',daytodayportraits:'Portraits',daytodayconcerts:'Concerts'};
+let currentBrand=localStorage.getItem('dtd_stat_brand')||'daytodayshow';
+function brandRows(b){return statRows.filter(r=>(r.brand||'daytodaychase')===b)}
+function brandsInStats(){const s=new Set(statRows.map(r=>r.brand||'daytodaychase'));if(!s.has('daytodayshow'))s.add('daytodayshow');return Array.from(s)}
+function renderBrandBar(){
+  const bar=document.getElementById('brandbar');if(!bar)return;
+  const brands=brandsInStats();
+  if(brands.length<=1&&brands[0]==='daytodayshow'&&!brandRows('daytodayshow').length){bar.innerHTML='';return}
+  bar.innerHTML='<span class="lbl">Stats for</span>'+brands.map(b=>{
+    const rows=brandRows(b);const cur=rows[0];
+    const total=cur?(['instagram','tiktok','youtube','facebook'].reduce((s,k)=>s+(Number(cur[k+'_followers'])||0),0)):0;
+    return `<button class="brandchip ${b===currentBrand?'on':''}" onclick="switchBrand('${b}')">@${b}${total?`<span class="n">${short(total)}</span>`:''}</button>`;
+  }).join('');
+}
+function switchBrand(b){currentBrand=b;try{localStorage.setItem('dtd_stat_brand',b)}catch(e){}renderBrandBar();renderStats()}
 function renderStats(){
-  const cur=statRows[0]||{},prev=statRows[1]||{};
+  const rows=brandRows(currentBrand);
+  const cur=rows[0]||{},prev=rows[1]||{};
   document.getElementById('stats').innerHTML=PLATFORMS.map((pl,i)=>{
     const n=cur[pl.k+'_followers'],p=prev[pl.k+'_followers'],top=cur[pl.k+'_top_post'];
     const has=n!=null,diff=(has&&p!=null)?n-p:null;
@@ -513,15 +537,15 @@ function renderStats(){
       ${has&&cur.date?`<div class="upd">as of ${fmt(cur.date)}</div>`:''}
     </div>`}).join('');
 }
-function openStat(i){editStat=PLATFORMS[i];const cur=statRows[0]||{};smtitle.textContent=editStat.p;s_n.value=cur[editStat.k+'_followers']??'';s_top.value=cur[editStat.k+'_top_post']||'';smodal.classList.add('open');s_n.focus()}
+function openStat(i){editStat=PLATFORMS[i];const cur=brandRows(currentBrand)[0]||{};smtitle.textContent=editStat.p+' · @'+currentBrand;s_n.value=cur[editStat.k+'_followers']??'';s_top.value=cur[editStat.k+'_top_post']||'';smodal.classList.add('open');s_n.focus()}
 function closeStat(){smodal.classList.remove('open')}
 async function saveStat(){
   const today=new Date().toISOString().slice(0,10);
-  const row={date:today};row[editStat.k+'_followers']=s_n.value.trim()?num(s_n.value):null;row[editStat.k+'_top_post']=s_top.value.trim()||null;
+  const row={brand:currentBrand,date:today};row[editStat.k+'_followers']=s_n.value.trim()?num(s_n.value):null;row[editStat.k+'_top_post']=s_top.value.trim()||null;
   closeStat();
   try{
-    await sb('show_stats?on_conflict=date',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(row)});
-    statRows=await sb('show_stats?select=*&order=date.desc&limit=2');renderStats();toast('saved');
+    await sb('show_stats?on_conflict=brand,date',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(row)});
+    statRows=await sb('show_stats?select=*&order=date.desc&limit=200');renderBrandBar();renderStats();toast('saved');
   }catch(e){toast('save failed: '+String(e.message||e).slice(0,120));console.error(e)}
 }
 
