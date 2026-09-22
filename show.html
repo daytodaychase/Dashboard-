@@ -49,6 +49,11 @@
   .brandchip .n{font-family:'Anton',sans-serif;margin-left:6px;opacity:.7}
   .brandchip.on .n{opacity:1}
   .brandchip .stale{color:#a99a88;font-size:10px;margin-left:6px}
+  .postsline{font-size:11px;color:var(--cream2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em}
+  .stat .views30{font-size:12px;color:var(--cream);margin-top:6px;font-weight:600}
+  .stat .toppost{font-size:11px;margin-top:4px}
+  .stat .toppost a{color:var(--orange2);text-decoration:none}
+  .stat .toppost a:hover{color:var(--orange);text-decoration:underline}
   .app{background:var(--panel);padding:16px 14px;display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--cream);border:1px solid var(--line);cursor:pointer}
   .app:active{background:var(--panel2)}
   .app .ico{font-size:28px}
@@ -525,17 +530,23 @@ function switchBrand(b){currentBrand=b;try{localStorage.setItem('dtd_stat_brand'
 function renderStats(){
   const rows=brandRows(currentBrand);
   const cur=rows[0]||{},prev=rows[1]||{};
-  document.getElementById('stats').innerHTML=PLATFORMS.map((pl,i)=>{
-    const n=cur[pl.k+'_followers'],p=prev[pl.k+'_followers'],top=cur[pl.k+'_top_post'];
+  const postsLine=cur.posts_30d!=null?`<div class="postsline">${cur.posts_30d} post${cur.posts_30d===1?'':'s'} last 30 days</div>`:'';
+  document.getElementById('stats').innerHTML=postsLine+'<div class="grid" style="margin:0">'+PLATFORMS.map((pl,i)=>{
+    const n=cur[pl.k+'_followers'],p=prev[pl.k+'_followers'];
+    const v30=cur[pl.k+'_views_30d'];
+    const topUrl=cur[pl.k+'_top_post_url'],topViews=cur[pl.k+'_top_post_views'],topText=cur[pl.k+'_top_post'];
     const has=n!=null,diff=(has&&p!=null)?n-p:null;
     const delta=!has?'tap to enter':diff==null?'first entry':diff===0?'no change':(diff>0?'+':'−')+short(Math.abs(diff))+' since '+fmt(prev.date);
+    const v30Line=v30!=null?`<div class="views30">${short(v30)} views · 30d</div>`:'';
+    const topLine=(topUrl||topText)?`<div class="toppost"><a href="${topUrl||'#'}" target="_blank" onclick="event.stopPropagation()">🔥 Top: ${short(topViews||0)}${topText?' · '+esc(topText.slice(0,32))+(topText.length>32?'…':''):''}</a></div>`:'';
     return `<div class="stat" onclick="openStat(${i})">
       <div class="plat">${pl.p}</div>
       <div class="big">${has?short(n):'—'}</div>
       <div class="delta ${diff<0?'down':''}">${delta}</div>
-      ${top?`<div class="top">${esc(top)}</div>`:''}
+      ${v30Line}
+      ${topLine}
       ${has&&cur.date?`<div class="upd">as of ${fmt(cur.date)}</div>`:''}
-    </div>`}).join('');
+    </div>`}).join('')+'</div>';
 }
 function openStat(i){editStat=PLATFORMS[i];const cur=brandRows(currentBrand)[0]||{};smtitle.textContent=editStat.p+' · @'+currentBrand;s_n.value=cur[editStat.k+'_followers']??'';s_top.value=cur[editStat.k+'_top_post']||'';smodal.classList.add('open');s_n.focus()}
 function closeStat(){smodal.classList.remove('open')}
