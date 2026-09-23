@@ -196,9 +196,20 @@
   .dt-stage-line.review{border-left-color:var(--orange)}
   .dt-stage-line.error{border-left-color:#b94a3d;color:#f2c8bd}
   .dt-stage-line button{background:var(--orange);color:#1a1410;border:0;font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.06em;font-size:11px;padding:6px 10px;cursor:pointer}
+
+body.viewonly #addbtn,
+body.viewonly .savebar,
+body.viewonly #f_save,
+body.viewonly #f_del,
+body.viewonly .task .go,
+body.viewonly .task .alt,
+body.viewonly .app[onclick*="showPosts"] { display:none !important }
+body.viewonly .card { cursor:default }
+#viewbanner{display:none;background:#8a6d1f;color:#fff;padding:6px 12px;font-size:13px;text-align:center}
 </style>
 </head>
 <body>
+<div id="viewbanner">Read only. You can look at everything and change nothing.</div>
 
 <div class="lock" id="lock">
   <div class="box">
@@ -449,6 +460,20 @@ function collectCrew(){const lines=[...f_roster.querySelectorAll('input:checked'
 const STAGES=['Candidate','Reached Out','Replied','Booked','Shot','Editing','Posted'];
 const PLATFORMS=[{p:'YouTube',k:'youtube'},{p:'TikTok',k:'tiktok'},{p:'Instagram',k:'instagram'},{p:'Facebook',k:'facebook'}];
 let showKey='';
+const VIEWER_KEY='DTD-VIEW-R4KP28';
+let viewerOnly=false;
+// A viewer can read everything and change nothing. Hide the controls that
+// would fail silently rather than letting someone tap them and wonder.
+function noWrite(){
+  if(viewerOnly){toast('read only key · you can look but not change');return true}
+  return false;
+}
+function applyViewerMode(){
+  viewerOnly = showKey === VIEWER_KEY;
+  document.body.classList.toggle('viewonly', viewerOnly);
+  const b=document.getElementById('viewbanner');
+  if(b)b.style.display=viewerOnly?'block':'none';
+}
 
 function hdr(extra){return Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'x-show-key':showKey,'Content-Type':'application/json'},extra||{})}
 async function sb(path,opt){
@@ -466,6 +491,7 @@ let guests=[],statRows=[],editing=null,editStat=null,activeStage='Candidate';
 
 async function unlock(){
   showKey=pin.value.trim();
+  applyViewerMode();
   try{await loadAll();lock.style.display='none';try{localStorage.setItem('dtd_show_key',showKey)}catch(e){}}
   catch(e){const m=String(e.message||e);toast(m.includes('42501')||m.includes('permission')?'wrong key':m.slice(0,80));console.error(e);try{localStorage.removeItem('dtd_show_key')}catch(x){}}
 }
@@ -779,6 +805,7 @@ async function prepLatest(id){
   return r.length?r[0]:null;
 }
 async function prepQuestions(id,force){
+  if(force&&noWrite())return;
   const g=guests.find(x=>x.id===id);
   if(!force){
     try{const have=await prepLatest(id);
@@ -895,6 +922,7 @@ function afterLinks(g){
        + t('guest_thanked',g.thanked,'thanked them');
 }
 async function afterFlag(id,field,val){
+  if(noWrite())return;
   try{
     await sb('show_guests?id=eq.'+id,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({[field]:val})});
     const g=guests.find(x=>x.id===id);
@@ -914,6 +942,7 @@ async function loadPrep(){
 }
 // Stamp post slots on a guest's finished clips.
 async function scheduleClips(id){
+  if(noWrite())return;
   const g=guests.find(x=>x.id===id);
   if(!g)return;
   let clips=[];
@@ -974,6 +1003,7 @@ async function showPosts(){
   sheetview.classList.add('open');
 }
 async function markPost(id,status){
+  if(noWrite())return;
   try{const d=await post({action:'mark',clip_id:id,status});
     if(d&&d.error){toast('failed: '+(d.error.message||d.error));return}
     toast(status==='posted'?'marked posted ✓':status==='scheduled'?'back in the queue':'done');
@@ -1048,6 +1078,7 @@ function renderAlts(box,t,primaryInputs){
 }
 
 async function runTask(t,inputs,altInputs){
+  if(noWrite())return;
   const args=Object.assign({},t.args||{});
   if(OPUS_ACTS.includes(t.act)){toast('clips are made in Clipper on the Mac now');return}
   if(inputs){args.date=inputs.querySelector('input[type=date]')?.value;args.call=inputs.querySelector('input[type=time]')?.value;if(!args.date){toast('pick a day first');return}}
@@ -1063,6 +1094,7 @@ async function runTask(t,inputs,altInputs){
   }catch(e){toast('failed: '+String(e.message||e).slice(0,100))}
 }
 async function runAlt(t,a,inputs){
+  if(noWrite())return;
   const args=Object.assign({},a.args||{});
   if(OPUS_ACTS.includes(a.act)){toast('clips are made in Clipper on the Mac now');return}
   if(a.inputs&&inputs){args.date=inputs.querySelector('input[type=date]')?.value;args.call=inputs.querySelector('input[type=time]')?.value;if(!args.date){toast('pick a day first');return}}
@@ -1176,6 +1208,7 @@ function runSheet(){
 f_stage.innerHTML=STAGES.map(s=>`<option>${s}</option>`).join('');
 (()=>{const o=['<option value="">—</option>'];for(let m=6*60;m<=22*60;m+=30){const h=Math.floor(m/60),mm=m%60;o.push(`<option>${h%12||12}:${String(mm).padStart(2,'0')} ${h>=12?'PM':'AM'}</option>`)}f_call.innerHTML=o.join('')})();
 (async()=>{let k='';try{k=localStorage.getItem('dtd_show_key')||''}catch(e){}
+  
   if(k){pin.value=k;await unlock()}else{pin.focus()}})();
 </script>
 </body>
