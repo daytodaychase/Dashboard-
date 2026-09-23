@@ -731,6 +731,7 @@ function showPrep(r,g){
     ${r.closing_question?`<p><b>Close with:</b> ${esc(prepText(r.closing_question))}</p>`:''}
     ${banned.length?`<h2 style="font-size:16px;opacity:.7">Do not ask</h2><ul style="opacity:.7">${banned.map(b=>`<li>${esc(prepText(b))}</li>`).join('')}</ul>`:''}
     ${r.dossier?`<details style="margin-top:14px"><summary>Background</summary><div style="white-space:pre-wrap;font-size:13px;opacity:.8">${esc(typeof r.dossier==='string'?r.dossier:JSON.stringify(r.dossier,null,2))}</div></details>`:''}
+    ${r.doc_link?`<p><a class="on" href="${esc(r.doc_link)}" target="_blank">📄 open in Drive</a></p>`:''}
     <p style="margin-top:16px"><a href="#" onclick="prepQuestions('${g?g.id:''}',true);return false">run it again</a></p>`;
   sheetview.classList.add('open');
 }
