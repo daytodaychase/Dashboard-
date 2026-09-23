@@ -722,17 +722,50 @@ function prepWhy(x){
   if(typeof x==='string')return '';
   return x.purpose||x.why||x.reason||x.goal||'';
 }
-function showPrep(r,g){
+function prepBadge(s){
+  const p=(s&&s.priority)||'';
+  if(p==='MUST_ASK')return '<span style="font-size:10px;border:1px solid #2f6f4f;color:#2f6f4f;border-radius:999px;padding:1px 6px;margin-left:6px">MUST ASK</span>';
+  if(p==='BACKUP')return '<span style="font-size:10px;opacity:.5;margin-left:6px">backup</span>';
+  if(p)return '<span style="font-size:10px;opacity:.6;margin-left:6px">follow the door</span>';
+  return '';
+}
+function prepBlock(title,items,fn){
+  if(!items||!items.length)return '';
+  return `<h2 style="font-size:16px;margin-top:18px">${title}</h2><ul>${items.map(fn).join('')}</ul>`;
+}
+async function showPrep(r,g){
   const seeds=prepList(r.seed_questions),banned=prepList(r.banned_questions);
+  const d=r.dossier||{},a=d.anchors||{};
+  const anchors=[['Cold open',a.cold_open],['Origin',a.origin],['Turn',a.turn],['Cost',a.cost],['Now',a.now]].filter(x=>x[1]);
+
+  let sources=[];
+  try{sources=await sb('interview_sources?research_id=eq.'+r.id+'&select=url,title,publisher,source_type,claim,claim_label&order=claim_label.asc')}catch(e){}
+
   document.getElementById('runsheet').innerHTML=`<h1>Questions · ${esc(g?g.handle:'')}</h1>
-    ${r.throughline?`<p><b>The thread:</b> ${esc(r.throughline)}</p>`:''}
+    ${d.audience_promise?`<p><b>The promise:</b> ${esc(d.audience_promise)}</p>`:(r.throughline?`<p><b>The thread:</b> ${esc(r.throughline)}</p>`:'')}
+    ${anchors.length?`<h2 style="font-size:16px">The five anchors</h2><ol>${anchors.map(x=>`<li><b>${x[0]}</b> ${esc(x[1])}</li>`).join('')}</ol>`:''}
     ${r.opening_question?`<p><b>Open with:</b> ${esc(prepText(r.opening_question))}</p>`:''}
-    <ol>${seeds.map(s=>`<li style="margin-bottom:8px">${esc(prepText(s))}${prepWhy(s)?`<div style="opacity:.6;font-size:12px">${esc(prepWhy(s))}</div>`:''}</li>`).join('')}</ol>
+    <h2 style="font-size:16px">The ${seeds.length}</h2>
+    <ol>${seeds.map(s=>`<li style="margin-bottom:10px"><b>${esc(prepText(s))}</b>${prepBadge(s)}${s&&s.breathe?'<span style="font-size:10px;opacity:.7;margin-left:6px">LET THIS BREATHE</span>':''}
+      ${prepWhy(s)?`<div style="opacity:.6;font-size:12px">${esc(prepWhy(s))}</div>`:''}
+      ${(s&&s.followups&&s.followups.length)?`<div style="opacity:.5;font-size:12px">then: ${s.followups.map(esc).join(' · ')}</div>`:''}</li>`).join('')}</ol>
     ${r.closing_question?`<p><b>Close with:</b> ${esc(prepText(r.closing_question))}</p>`:''}
-    ${banned.length?`<h2 style="font-size:16px;opacity:.7">Do not ask</h2><ul style="opacity:.7">${banned.map(b=>`<li>${esc(prepText(b))}</li>`).join('')}</ul>`:''}
-    ${r.dossier?`<details style="margin-top:14px"><summary>Background</summary><div style="white-space:pre-wrap;font-size:13px;opacity:.8">${esc(typeof r.dossier==='string'?r.dossier:JSON.stringify(r.dossier,null,2))}</div></details>`:''}
-    ${r.doc_link?`<p><a class="on" href="${esc(r.doc_link)}" target="_blank">📄 open in Drive</a></p>`:''}
-    <p style="margin-top:16px"><a href="#" onclick="prepQuestions('${g?g.id:''}',true);return false">run it again</a></p>`;
+    ${prepBlock('Part 2, out in their day',d.field_questions,x=>`<li style="margin-bottom:8px"><b>${esc(x.text||'')}</b><div style="opacity:.55;font-size:12px">${esc(x.moment||'')}${x.why?' · '+esc(x.why):''}</div></li>`)}
+    ${prepBlock('Put this in their hands',d.memory_triggers,x=>`<li><b>${esc(x.thing||'')}</b> <span style="opacity:.6;font-size:12px">${esc(x.why||'')}</span></li>`)}
+    ${prepBlock('Do not ask',banned,b=>`<li style="opacity:.7">${esc(prepText(b))}</li>`)}
+    ${prepBlock('Handle with care',d.sensitive,x=>`<li style="opacity:.7">${esc(x)}</li>`)}
+    ${prepBlock('Deep cuts',d.deep_cuts,x=>`<li><b>${esc(x.fact||'')}</b><div style="opacity:.6;font-size:12px">${esc(x.why||'')}</div></li>`)}
+    ${prepBlock('Contradictions',d.contradictions,x=>`<li>${esc(x.a||'')} vs ${esc(x.b||'')}<div style="opacity:.6;font-size:12px">${esc(x.question_opportunity||'')}</div></li>`)}
+    ${r.doc_link?`<p style="margin-top:16px"><a class="on" href="${esc(r.doc_link)}" target="_blank">📄 open in Drive</a></p>`:''}
+    <details style="margin-top:18px;border-top:1px solid rgba(128,128,128,.3);padding-top:10px">
+      <summary style="cursor:pointer">Sources (${sources.length})</summary>
+      ${sources.length?`<ul style="font-size:13px">${sources.map(s=>`<li style="margin-bottom:8px">
+        <a href="${esc(s.url||'#')}" target="_blank">${esc(s.title||s.url||'source')}</a>
+        <span style="opacity:.55">${esc(s.publisher||'')}${s.claim_label?' · '+esc(s.claim_label):''}</span>
+        ${s.claim?`<div style="opacity:.6">${esc(s.claim)}</div>`:''}</li>`).join('')}</ul>`
+        :'<p style="opacity:.6;font-size:13px">No sources saved for this run.</p>'}
+    </details>
+    <p style="margin-top:14px"><a href="#" onclick="prepQuestions('${g?g.id:''}',true);return false">run it again</a></p>`;
   sheetview.classList.add('open');
 }
 async function prepLatest(id){
@@ -743,7 +776,7 @@ async function prepQuestions(id,force){
   const g=guests.find(x=>x.id===id);
   if(!force){
     try{const have=await prepLatest(id);
-      if(have){showPrep(have,g);return}
+      if(have){await showPrep(have,g);return}
     }catch(e){}
   }
   if(!confirm('Research '+(g?g.handle:'this guest')+' and write the question list? Takes about a minute.'))return;
@@ -757,7 +790,7 @@ async function prepQuestions(id,force){
       await new Promise(s=>setTimeout(s,4000));
       let row=null;
       try{row=await prepLatest(id)}catch(e){continue}
-      if(row){showPrep(row,g);toast('questions ready ✓');return}
+      if(row){await showPrep(row,g);toast('questions ready ✓');return}
       if(i===7)toast('still reading about '+(g?g.handle:'them')+'…');
       if(i===20)toast('taking a while · hang on');
     }
