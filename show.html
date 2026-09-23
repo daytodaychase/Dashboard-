@@ -881,8 +881,11 @@ function buildInputs(need){
   }
   return wrap;
 }
+const OPUS_ACTS=['clips_start','clips_start_one','clips_sweep','opus'];
 function renderTasks(){
   if(!T)return;
+  // Opus is gone. The server still builds these tasks, so never draw them.
+  T.tasks=(T.tasks||[]).filter(t=>!OPUS_ACTS.includes(t.act));
   const w=document.getElementById('week');w.innerHTML='<b>This week</b>';w.appendChild(document.createTextNode(T.week||''));
   const n=T.tasks.length;
   document.getElementById('tcount').textContent=n===0?'You’re free.':n===1?'One thing today.':n+' things today.';
@@ -945,7 +948,7 @@ function renderAlts(box,t,primaryInputs){
   });
   box.appendChild(row);
 }
-const OPUS_ACTS=['clips_start','clips_start_one','clips_sweep','opus'];
+
 async function runTask(t,inputs,altInputs){
   const args=Object.assign({},t.args||{});
   if(OPUS_ACTS.includes(t.act)){toast('clips are made in Clipper on the Mac now');return}
