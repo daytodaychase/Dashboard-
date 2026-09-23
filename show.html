@@ -455,7 +455,7 @@ async function sb(path,opt){
   const t=await r.text();return t?JSON.parse(t):null;
 }
 const toRow=g=>({handle:g.handle,followers:g.fol||null,guest_type:g.type,stage:g.stage,ending:g.seg||null,episode:g.ep||null,shoot_date:g.date||null,call_time:g.call||null,location:g.loc||null,location2:g.loc2||null,part2:g.p2||'studio',notes:g.notes||null,known:!!g.known,footage_delivered:!!g.foot,reached_at:g.reachedAt||null,guest_email:g.email||null,crew:g.crew||null});
-const fromRow=r=>({id:r.id,handle:r.handle,fol:r.followers||'',type:r.guest_type,stage:r.stage,seg:r.ending||'',ep:r.episode||'',date:r.shoot_date||'',call:r.call_time||'',loc:r.location||'',loc2:r.location2||'',p2:r.part2||'studio',drive:r.drive_link||'',folder:r.folder_link||'',raw:r.raw_link||'',notes:r.notes||'',known:r.known,rel:r.release_signed,foot:r.footage_delivered,reachedAt:r.reached_at||'',eventId:r.calendar_event_id||'',email:r.guest_email||'',token:r.sign_token||'',signedName:r.signed_name||'',pdf:r.release_pdf_link||'',exp:r.export_link||'',opus:r.opus_project_id||'',crew:r.crew||''});
+const fromRow=r=>({id:r.id,handle:r.handle,fol:r.followers||'',type:r.guest_type,stage:r.stage,seg:r.ending||'',ep:r.episode||'',date:r.shoot_date||'',call:r.call_time||'',loc:r.location||'',loc2:r.location2||'',p2:r.part2||'studio',drive:r.drive_link||'',folder:r.folder_link||'',raw:r.raw_link||'',notes:r.notes||'',known:r.known,rel:r.release_signed,foot:r.footage_delivered,reachedAt:r.reached_at||'',eventId:r.calendar_event_id||'',email:r.guest_email||'',token:r.sign_token||'',signedName:r.signed_name||'',pdf:r.release_pdf_link||'',exp:r.export_link||'',collabOk:!!r.collab_accepted,theyPosted:!!r.guest_posted,thanked:!!r.guest_thanked,opus:r.opus_project_id||'',crew:r.crew||''});
 const SIGN_URL='https://daytodaychase.github.io/Dashboard-/sign.html?t=';
 const fn=(payload)=>fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json','x-show-key':showKey,'apikey':SB_KEY},body:JSON.stringify(payload)}).then(r=>r.json());
 
@@ -607,7 +607,7 @@ function fill(g){
   f_handle.value=g.handle||'';f_fol.value=g.fol||'';f_type.value=g.type||'Creator';f_stage.value=g.stage||'Candidate';
   f_seg.value=g.seg||'';f_date.value=g.date||'';f_date_show.value=g.date?longDate(g.date):'';f_notes.value=g.notes||'';f_foot.checked=!!g.foot;f_ep.value=g.ep||'';
   f_drive.value=g.drive||'';f_known.checked=!!g.known;f_call.value=g.call||'';f_loc.value=g.loc||STUDIO;f_loc2.value=g.loc2||(g.p2==='allday'?'':STUDIO);f_rel.checked=!!g.rel;f_rel_lbl.textContent=g.rel?('Release signed'+(g.signedName?' by '+g.signedName:'')):'Release not signed yet';f_p2.value=g.p2||'studio';f_email.value=g.email||'';renderRoster(g.crew||'');
-  f_links.innerHTML=[g.folder?`<a class="on" href="${esc(g.folder)}" target="_blank">📁 episode folder</a>`:'',g.raw?`<a href="${esc(g.raw)}" target="_blank">raw</a>`:'',g.exp?`<a href="${esc(g.exp)}" target="_blank">final export</a>`:'',`<a href="#" class="on" onclick="prepQuestions('${g.id}');return false">🧠 questions</a>`,(g.exp&&STAGES.indexOf(g.stage)>=4)?`<a href="#" onclick="showClips('${g.id}');return false">clip list</a>`:'',g.drive?`<a href="${esc(g.drive)}" target="_blank">guest clips</a>`:'',g.token&&g.id?`<a href="#" onclick="copyText('${SIGN_URL+g.token}','release link copied');return false">🔗 copy release link</a>`:'',g.pdf?`<a class="on" href="${esc(g.pdf)}" target="_blank">signed release</a>`:''].join('');
+  f_links.innerHTML=[g.folder?`<a class="on" href="${esc(g.folder)}" target="_blank">📁 episode folder</a>`:'',g.raw?`<a href="${esc(g.raw)}" target="_blank">raw</a>`:'',g.exp?`<a href="${esc(g.exp)}" target="_blank">final export</a>`:'',`<a href="#" class="on" onclick="prepQuestions('${g.id}');return false">🧠 questions</a>`,(g.exp&&STAGES.indexOf(g.stage)>=4)?`<a href="#" onclick="showClips('${g.id}');return false">clip list</a>`:'',g.drive?`<a href="${esc(g.drive)}" target="_blank">guest clips</a>`:'',g.token&&g.id?`<a href="#" onclick="copyText('${SIGN_URL+g.token}','release link copied');return false">🔗 copy release link</a>`:'',g.pdf?`<a class="on" href="${esc(g.pdf)}" target="_blank">signed release</a>`:'',STAGES.indexOf(g.stage)>=6?afterLinks(g):''].join('');
 }
 function loc2Default(){if(f_p2.value==='allday'&&f_loc2.value===STUDIO)f_loc2.value='';if(f_p2.value==='studio'&&!f_loc2.value)f_loc2.value=STUDIO}
 function unfold(){
@@ -882,6 +882,22 @@ function buildInputs(need){
     wrap.innerHTML=`<span></span><input type="time" value="12:00" aria-label="Time">`;
   }
   return wrap;
+}
+// After the episode is out, the part that used to live in Chase's head.
+function afterLinks(g){
+  const t=(field,on,label)=>`<a href="#" class="${on?'on':''}" onclick="afterFlag('${g.id}','${field}',${on?'false':'true'});return false">${on?'\u2713 ':''}${label}</a>`;
+  return t('collab_accepted',g.collabOk,'collab accepted')
+       + t('guest_posted',g.theyPosted,'they posted their clips')
+       + t('guest_thanked',g.thanked,'thanked them');
+}
+async function afterFlag(id,field,val){
+  try{
+    await sb('show_guests?id=eq.'+id,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({[field]:val})});
+    const g=guests.find(x=>x.id===id);
+    if(g){if(field==='collab_accepted')g.collabOk=val;if(field==='guest_posted')g.theyPosted=val;if(field==='guest_thanked')g.thanked=val}
+    renderBoard();openGuest(id);
+    toast(val?'marked done':'unmarked');
+  }catch(e){toast('failed: '+e.message)}
 }
 const OPUS_ACTS=['clips_start','clips_start_one','clips_sweep','opus'];
 const POSTFN=SB_URL+'/functions/v1/show-post';
