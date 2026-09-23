@@ -735,14 +735,14 @@ function showPrep(r,g){
   sheetview.classList.add('open');
 }
 async function prepLatest(id){
-  const r=await sb('interview_research?guest_id=eq.'+id+'&select=*&order=created_at.desc&limit=1');
+  const r=await sb('interview_research?guest_id=eq.'+id+'&status=eq.ready&select=*&order=created_at.desc&limit=1');
   return r.length?r[0]:null;
 }
 async function prepQuestions(id,force){
   const g=guests.find(x=>x.id===id);
   if(!force){
     try{const have=await prepLatest(id);
-      if(have&&have.status==='ready'&&have.throughline){showPrep(have,g);return}
+      if(have){showPrep(have,g);return}
     }catch(e){}
   }
   if(!confirm('Research '+(g?g.handle:'this guest')+' and write the question list? Takes about a minute.'))return;
@@ -756,9 +756,7 @@ async function prepQuestions(id,force){
       await new Promise(s=>setTimeout(s,4000));
       let row=null;
       try{row=await prepLatest(id)}catch(e){continue}
-      if(!row)continue;
-      if(row.status==='ready'&&row.throughline){showPrep(row,g);toast('questions ready ✓');return}
-      if(row.status==='failed'){toast('research failed: '+String(row.error||'').slice(0,80));return}
+      if(row){showPrep(row,g);toast('questions ready ✓');return}
       if(i===7)toast('still reading about '+(g?g.handle:'them')+'…');
       if(i===20)toast('taking a while · hang on');
     }
