@@ -734,22 +734,35 @@ function showPrep(r,g){
     <p style="margin-top:16px"><a href="#" onclick="prepQuestions('${g?g.id:''}',true);return false">run it again</a></p>`;
   sheetview.classList.add('open');
 }
+async function prepLatest(id){
+  const r=await sb('interview_research?guest_id=eq.'+id+'&select=*&order=created_at.desc&limit=1');
+  return r.length?r[0]:null;
+}
 async function prepQuestions(id,force){
   const g=guests.find(x=>x.id===id);
   if(!force){
-    try{const have=await sb('interview_research?guest_id=eq.'+id+'&select=*&order=created_at.desc&limit=1');
-      if(have.length&&have[0].throughline){showPrep(have[0],g);return}
+    try{const have=await prepLatest(id);
+      if(have&&have.status==='ready'&&have.throughline){showPrep(have,g);return}
     }catch(e){}
   }
   if(!confirm('Research '+(g?g.handle:'this guest')+' and write the question list? Takes about a minute.'))return;
-  toast('researching '+(g?g.handle:'')+'…');
+  toast('researching '+(g?g.handle:'')+' · about a minute');
   try{
     const r=await fetch(PREP,{method:'POST',headers:{'Content-Type':'application/json','x-show-key':showKey,'apikey':SB_KEY},body:JSON.stringify({action:'research',guest_id:id})});
     const d=await r.json().catch(()=>({}));
-    if(d&&d.error){toast(d.error);return}
-    const fresh=await sb('interview_research?guest_id=eq.'+id+'&select=*&order=created_at.desc&limit=1');
-    if(!fresh.length||!fresh[0].throughline){toast('still working · tap questions again in a minute');return}
-    showPrep(fresh[0],g);
+    if(d&&d.ok===false){toast(d.error||'could not start');return}
+    // Wait it out here so one tap is the whole job.
+    for(let i=0;i<40;i++){
+      await new Promise(s=>setTimeout(s,4000));
+      let row=null;
+      try{row=await prepLatest(id)}catch(e){continue}
+      if(!row)continue;
+      if(row.status==='ready'&&row.throughline){showPrep(row,g);toast('questions ready ✓');return}
+      if(row.status==='failed'){toast('research failed: '+String(row.error||'').slice(0,80));return}
+      if(i===7)toast('still reading about '+(g?g.handle:'them')+'…');
+      if(i===20)toast('taking a while · hang on');
+    }
+    toast('timed out · tap questions again to see if it landed');
   }catch(e){toast('prep failed: '+e.message)}
 }
 async function refreshOne(id){
