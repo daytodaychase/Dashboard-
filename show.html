@@ -335,6 +335,7 @@
 <div class="apps">
   <a class="app" href="http://127.0.0.1:8749" target="_blank"><span class="ico">✂️</span><div><div class="name">Open Clipper</div><div class="what">make clips on the Mac</div></div></a>
   <a class="app" href="https://www.bootstrapmediagroup.com/robin-login" target="_blank"><span class="ico">🤖</span><div><div class="name">Open Robin</div><div class="what">replies + posts</div></div></a>
+  <a class="app" href="#" onclick="showPosts();return false"><span class="ico">📤</span><div><div class="name">Posts</div><div class="what" id="postcount">the clip queue</div></div></a>
   <a class="app" href="https://drive.google.com/drive/folders/168PTbbSwxkomJgj7kd6FcVu-7EfNPfac" target="_blank"><span class="ico">📁</span><div><div class="name">Show Drive</div><div class="what">assets + guest folders</div></div></a>
   <a class="app" href="https://studio.youtube.com/channel/UCOTv0xZK7uVI5ZuY1IJDKIg/videos/upload?d=ud" target="_blank"><span class="ico">▶️</span><div><div class="name">Upload to YouTube</div><div class="what">full episodes, show channel</div></div></a>
 </div>
@@ -478,6 +479,7 @@ async function loadAll(){
   renderBrandBar();renderStats();renderBoard();renderNudge();
   loadTasks();
   loadMacStatus();
+  postCount();
 }
 
 async function runApp(kind,label){
@@ -882,6 +884,55 @@ function buildInputs(need){
   return wrap;
 }
 const OPUS_ACTS=['clips_start','clips_start_one','clips_sweep','opus'];
+const POSTFN=SB_URL+'/functions/v1/show-post';
+const post=(payload)=>fetch(POSTFN,{method:'POST',headers:{'Content-Type':'application/json','x-show-key':showKey,'apikey':SB_KEY},body:JSON.stringify(payload)}).then(r=>r.json());
+function postWhen(s){
+  if(!s)return '';
+  const d=new Date(s),now=new Date();
+  const sameDay=d.toDateString()===now.toDateString();
+  const tmr=new Date(now);tmr.setDate(now.getDate()+1);
+  const day=sameDay?'today':(d.toDateString()===tmr.toDateString()?'tomorrow':d.toLocaleDateString(undefined,{weekday:'short',month:'numeric',day:'numeric'}));
+  return day+' '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+}
+async function postCount(){
+  try{const d=await post({action:'queue'});if(!d||!d.counts)return;
+    const c=d.counts,bits=[];
+    if(c.due)bits.push(c.due+' due');
+    if(c.failed)bits.push(c.failed+' failed');
+    if(c.manual)bits.push(c.manual+' on you');
+    if(!bits.length&&c.upcoming)bits.push(c.upcoming+' lined up');
+    document.getElementById('postcount').textContent=bits.length?bits.join(' · '):'nothing queued';
+  }catch(e){}
+}
+async function showPosts(){
+  toast('loading the queue…');
+  let d;try{d=await post({action:'queue'})}catch(e){toast('could not load: '+e.message);return}
+  if(!d||d.error){toast(d&&d.error?d.error:'failed');return}
+  const row=(c,extra)=>`<li style="margin-bottom:10px">
+      <b>${esc(c.name||('Clip '+c.n))}</b>
+      <div style="opacity:.6;font-size:12px">${postWhen(c.post_at)}${c.post_brand?' · '+esc(c.post_brand):''}</div>
+      ${c.hook?`<div style="opacity:.6;font-size:12px">hook: ${esc(c.hook)}</div>`:''}
+      ${c.post_error?`<div style="color:#9a3b1f;font-size:12px">${esc(c.post_error)}</div>`:''}
+      ${extra||''}</li>`;
+  const mark=(c,s,label)=>`<a href="#" onclick="markPost('${c.id}','${s}');return false" style="font-size:12px;margin-right:10px">${label}</a>`;
+  const sec=(title,items,extra)=>items.length?`<h2 style="font-size:16px;margin-top:18px">${title} (${items.length})</h2><ul>${items.map(c=>row(c,extra?extra(c):'')).join('')}</ul>`:'';
+
+  document.getElementById('runsheet').innerHTML=`<h1>Posts</h1>
+    ${(!d.counts.due&&!d.counts.failed&&!d.counts.manual&&!d.counts.upcoming)?'<p>Nothing queued. Clips land here once an episode is scheduled.</p>':''}
+    ${sec('You post these',d.manual,c=>`<div style="font-size:12px;opacity:.75">collab post · send from the Instagram app with the invite</div>${mark(c,'posted','mark it posted')}${mark(c,'skipped','skip')}`)}
+    ${sec('Due now',d.due,c=>mark(c,'posted','mark it posted')+mark(c,'failed','mark failed'))}
+    ${sec('Failed',d.failed,c=>mark(c,'scheduled','put it back in the queue')+mark(c,'skipped','give up on it'))}
+    ${sec('Lined up',d.upcoming)}
+    <p style="margin-top:18px;opacity:.6;font-size:12px">Nothing sends itself yet. The queue holds the slots, and sending turns on once one real post is verified through Metricool.</p>`;
+  sheetview.classList.add('open');
+}
+async function markPost(id,status){
+  try{const d=await post({action:'mark',clip_id:id,status});
+    if(d&&d.error){toast('failed: '+(d.error.message||d.error));return}
+    toast(status==='posted'?'marked posted ✓':status==='scheduled'?'back in the queue':'done');
+    await showPosts();await postCount();
+  }catch(e){toast('failed: '+e.message)}
+}
 function renderTasks(){
   if(!T)return;
   // Opus is gone. The server still builds these tasks, so never draw them.
