@@ -333,7 +333,7 @@
 </div>
 
 <div class="apps">
-  <a class="app" href="https://www.opus.pro" target="_blank"><span class="ico">✂️</span><div><div class="name">Open Opus</div><div class="what">cut + schedule clips</div></div></a>
+  <a class="app" href="http://127.0.0.1:8749" target="_blank"><span class="ico">✂️</span><div><div class="name">Open Clipper</div><div class="what">make clips on the Mac</div></div></a>
   <a class="app" href="https://www.bootstrapmediagroup.com/robin-login" target="_blank"><span class="ico">🤖</span><div><div class="name">Open Robin</div><div class="what">replies + posts</div></div></a>
   <a class="app" href="https://drive.google.com/drive/folders/168PTbbSwxkomJgj7kd6FcVu-7EfNPfac" target="_blank"><span class="ico">📁</span><div><div class="name">Show Drive</div><div class="what">assets + guest folders</div></div></a>
   <a class="app" href="https://studio.youtube.com/channel/UCOTv0xZK7uVI5ZuY1IJDKIg/videos/upload?d=ud" target="_blank"><span class="ico">▶️</span><div><div class="name">Upload to YouTube</div><div class="what">full episodes, show channel</div></div></a>
@@ -605,7 +605,7 @@ function fill(g){
   f_handle.value=g.handle||'';f_fol.value=g.fol||'';f_type.value=g.type||'Creator';f_stage.value=g.stage||'Candidate';
   f_seg.value=g.seg||'';f_date.value=g.date||'';f_date_show.value=g.date?longDate(g.date):'';f_notes.value=g.notes||'';f_foot.checked=!!g.foot;f_ep.value=g.ep||'';
   f_drive.value=g.drive||'';f_known.checked=!!g.known;f_call.value=g.call||'';f_loc.value=g.loc||STUDIO;f_loc2.value=g.loc2||(g.p2==='allday'?'':STUDIO);f_rel.checked=!!g.rel;f_rel_lbl.textContent=g.rel?('Release signed'+(g.signedName?' by '+g.signedName:'')):'Release not signed yet';f_p2.value=g.p2||'studio';f_email.value=g.email||'';renderRoster(g.crew||'');
-  f_links.innerHTML=[g.folder?`<a class="on" href="${esc(g.folder)}" target="_blank">📁 episode folder</a>`:'',g.raw?`<a href="${esc(g.raw)}" target="_blank">raw</a>`:'',g.exp?`<a href="${esc(g.exp)}" target="_blank">final export</a>`:'',(g.exp&&STAGES.indexOf(g.stage)>=4)?`<a href="#" class="on" onclick="findClips('${g.id}');return false">🎯 find clips</a>`:'',(g.exp&&STAGES.indexOf(g.stage)>=4)?`<a href="#" onclick="showClips('${g.id}');return false">clip list</a>`:'',g.drive?`<a href="${esc(g.drive)}" target="_blank">guest clips</a>`:'',g.token&&g.id?`<a href="#" onclick="copyText('${SIGN_URL+g.token}','release link copied');return false">🔗 copy release link</a>`:'',g.pdf?`<a class="on" href="${esc(g.pdf)}" target="_blank">signed release</a>`:''].join('');
+  f_links.innerHTML=[g.folder?`<a class="on" href="${esc(g.folder)}" target="_blank">📁 episode folder</a>`:'',g.raw?`<a href="${esc(g.raw)}" target="_blank">raw</a>`:'',g.exp?`<a href="${esc(g.exp)}" target="_blank">final export</a>`:'',`<a href="#" class="on" onclick="prepQuestions('${g.id}');return false">🧠 questions</a>`,(g.exp&&STAGES.indexOf(g.stage)>=4)?`<a href="#" onclick="showClips('${g.id}');return false">clip list</a>`:'',g.drive?`<a href="${esc(g.drive)}" target="_blank">guest clips</a>`:'',g.token&&g.id?`<a href="#" onclick="copyText('${SIGN_URL+g.token}','release link copied');return false">🔗 copy release link</a>`:'',g.pdf?`<a class="on" href="${esc(g.pdf)}" target="_blank">signed release</a>`:''].join('');
 }
 function loc2Default(){if(f_p2.value==='allday'&&f_loc2.value===STUDIO)f_loc2.value='';if(f_p2.value==='studio'&&!f_loc2.value)f_loc2.value=STUDIO}
 function unfold(){
@@ -691,28 +691,66 @@ async function markShot(id){
   const g=guests.find(x=>x.id===id);if(!g)return;
   try{await sb('show_guests?id=eq.'+id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({stage:'Shot',shot_confirmed_at:new Date().toISOString()})});g.stage='Shot';renderBoard();renderNudge();toast(g.handle+' marked shot ✓')}catch(e){toast('could not mark shot: '+e.message)}
 }
-async function findClips(id){
-  if(!confirm('Transcribe the newest video in Final Export, pick 8 to 12 clips, and send them to Opus? Uses Opus credits (about 10 per clip).'))return;
-  toast('starting: transcribing…');
-  try{const d=await fn({action:'clips_start',id});if(!d.ok){toast(d.error||'failed');return}toast('transcribing '+d.file+' · check back in ~10 min')}catch(e){toast('failed: '+e.message)}
-}
+const clipTime=s=>{s=Math.round(Number(s)||0);const m=Math.floor(s/60),x=s%60;return m+':'+String(x).padStart(2,'0')};
 async function showClips(id){
-  try{const d=await fn({action:'clips_list',id});
-    if(!d.clips.length){toast(d.status?('status: '+d.status+(d.error?' · '+d.error:'')):'no clips yet');return}
-    const fmt=s=>{const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':':'')+(h?String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')};
-    const lines=d.clips.map(c=>`${c.n}. ${fmt(c.start_sec)} to ${fmt(c.end_sec)} — ${c.name} [${c.status}]`).join('\n');
-    document.getElementById('runsheet').innerHTML=`<h1>Clips · ${d.status||''}</h1>${d.error?`<p style="color:#b00">${esc(d.error)}</p>`:''}<ul>${d.clips.map(c=>`<li>${c.n}. ${fmt(c.start_sec)} to ${fmt(c.end_sec)} — ${esc(c.name)} <span style="opacity:.6">[${c.status}]</span>${c.clip_url?` <a href="${esc(c.clip_url)}" target="_blank">open</a>`:''}</li>`).join('')}</ul>`;
+  try{
+    const rows=await sb('show_clips?guest_id=eq.'+id+'&select=*&order=n.asc');
+    const rej=await sb('show_clip_rejects?guest_id=eq.'+id+'&select=*&order=score.desc');
+    if(!rows.length&&!rej.length){toast('no clips yet · make them in Clipper on the Mac');return}
+    const band=v=>v>=80?'#2f6f4f':v>=70?'#8a6d1f':'#9a3b1f';
+    const badge=c=>c.score==null?'':`<span style="border:1px solid ${band(c.score)};color:${band(c.score)};border-radius:999px;padding:1px 8px;font-size:12px;margin-left:6px">${c.score}</span>`;
+    const item=c=>`<li style="margin-bottom:10px">${c.n}. ${clipTime(c.start_sec)} to ${clipTime(c.end_sec)} — ${esc(c.name||'')}${badge(c)}
+      ${c.hook?`<div style="opacity:.75;font-size:13px">hook: ${esc(c.hook)}</div>`:''}
+      ${c.score_reason?`<div style="opacity:.55;font-size:12px">${esc(c.score_reason)}</div>`:''}</li>`;
+    document.getElementById('runsheet').innerHTML=`<h1>Clips</h1>
+      ${rows.length?`<ul>${rows.map(item).join('')}</ul>`:'<p>None made yet.</p>'}
+      ${rej.length?`<h2 style="font-size:16px;opacity:.7;margin-top:18px">Scored too low (${rej.length})</h2><ul style="opacity:.7">${rej.map(r=>`<li>${clipTime(r.start_sec)} to ${clipTime(r.end_sec)} — ${esc(r.hook||'')}${badge(r)}<div style="font-size:12px;opacity:.7">${esc(r.score_reason||'')}</div></li>`).join('')}</ul>`:''}`;
     sheetview.classList.add('open');
-    copyText(lines,'clip list copied');
   }catch(e){toast('failed: '+e.message)}
 }
-async function sendOpus(id){
-  toast('sending to Opus…');
-  try{const d=await fn({action:'opus',id});
-    if(!d.ok){toast(d.error||'failed');return}
-    if(d.sent){await refreshOne(id);toast('sent to Opus ✓ '+d.file)}
-    else{await copyText(d.link,(d.error||d.note||'link copied')+' · paste into Opus')}
-  }catch(e){toast('Opus failed: '+e.message)}
+const PREP=SB_URL+'/functions/v1/show-prep';
+function prepList(v){
+  if(!v)return[];
+  if(typeof v==='string'){try{v=JSON.parse(v)}catch{return[v]}}
+  return Array.isArray(v)?v:[v];
+}
+function prepText(x){
+  if(typeof x==='string')return x;
+  return x.question||x.q||x.text||x.ask||'';
+}
+function prepWhy(x){
+  if(typeof x==='string')return '';
+  return x.purpose||x.why||x.reason||x.goal||'';
+}
+function showPrep(r,g){
+  const seeds=prepList(r.seed_questions),banned=prepList(r.banned_questions);
+  document.getElementById('runsheet').innerHTML=`<h1>Questions · ${esc(g?g.handle:'')}</h1>
+    ${r.throughline?`<p><b>The thread:</b> ${esc(r.throughline)}</p>`:''}
+    ${r.opening_question?`<p><b>Open with:</b> ${esc(prepText(r.opening_question))}</p>`:''}
+    <ol>${seeds.map(s=>`<li style="margin-bottom:8px">${esc(prepText(s))}${prepWhy(s)?`<div style="opacity:.6;font-size:12px">${esc(prepWhy(s))}</div>`:''}</li>`).join('')}</ol>
+    ${r.closing_question?`<p><b>Close with:</b> ${esc(prepText(r.closing_question))}</p>`:''}
+    ${banned.length?`<h2 style="font-size:16px;opacity:.7">Do not ask</h2><ul style="opacity:.7">${banned.map(b=>`<li>${esc(prepText(b))}</li>`).join('')}</ul>`:''}
+    ${r.dossier?`<details style="margin-top:14px"><summary>Background</summary><div style="white-space:pre-wrap;font-size:13px;opacity:.8">${esc(typeof r.dossier==='string'?r.dossier:JSON.stringify(r.dossier,null,2))}</div></details>`:''}
+    <p style="margin-top:16px"><a href="#" onclick="prepQuestions('${g?g.id:''}',true);return false">run it again</a></p>`;
+  sheetview.classList.add('open');
+}
+async function prepQuestions(id,force){
+  const g=guests.find(x=>x.id===id);
+  if(!force){
+    try{const have=await sb('interview_research?guest_id=eq.'+id+'&select=*&order=created_at.desc&limit=1');
+      if(have.length&&have[0].throughline){showPrep(have[0],g);return}
+    }catch(e){}
+  }
+  if(!confirm('Research '+(g?g.handle:'this guest')+' and write the question list? Takes about a minute.'))return;
+  toast('researching '+(g?g.handle:'')+'…');
+  try{
+    const r=await fetch(PREP,{method:'POST',headers:{'Content-Type':'application/json','x-show-key':showKey,'apikey':SB_KEY},body:JSON.stringify({action:'research',guest_id:id})});
+    const d=await r.json().catch(()=>({}));
+    if(d&&d.error){toast(d.error);return}
+    const fresh=await sb('interview_research?guest_id=eq.'+id+'&select=*&order=created_at.desc&limit=1');
+    if(!fresh.length||!fresh[0].throughline){toast('still working · tap questions again in a minute');return}
+    showPrep(fresh[0],g);
+  }catch(e){toast('prep failed: '+e.message)}
 }
 async function refreshOne(id){
   const r=await sb('show_guests?id=eq.'+id+'&select=*');if(!r[0])return null;
@@ -862,8 +900,10 @@ function renderAlts(box,t,primaryInputs){
   });
   box.appendChild(row);
 }
+const OPUS_ACTS=['clips_start','clips_start_one','clips_sweep','opus'];
 async function runTask(t,inputs,altInputs){
   const args=Object.assign({},t.args||{});
+  if(OPUS_ACTS.includes(t.act)){toast('clips are made in Clipper on the Mac now');return}
   if(inputs){args.date=inputs.querySelector('input[type=date]')?.value;args.call=inputs.querySelector('input[type=time]')?.value;if(!args.date){toast('pick a day first');return}}
   toast(t.copy?'copied. working…':'working…');
   try{
@@ -878,6 +918,7 @@ async function runTask(t,inputs,altInputs){
 }
 async function runAlt(t,a,inputs){
   const args=Object.assign({},a.args||{});
+  if(OPUS_ACTS.includes(a.act)){toast('clips are made in Clipper on the Mac now');return}
   if(a.inputs&&inputs){args.date=inputs.querySelector('input[type=date]')?.value;args.call=inputs.querySelector('input[type=time]')?.value;if(!args.date){toast('pick a day first');return}}
   toast('working…');
   try{
