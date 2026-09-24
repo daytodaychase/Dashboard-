@@ -997,6 +997,7 @@ async function showPosts(){
       ${c.hook?`<div style="opacity:.6;font-size:12px">hook: ${esc(c.hook)}</div>`:''}
       ${c.post_error?`<div style="color:#9a3b1f;font-size:12px">${esc(c.post_error)}</div>`:''}
       ${extra||''}</li>`;
+  const pull=(c,label)=>`<a href="#" onclick="pullPost('${c.id}');return false" style="font-size:12px;margin-right:10px">${label}</a>`;
   const mark=(c,s,label)=>`<a href="#" onclick="markPost('${c.id}','${s}');return false" style="font-size:12px;margin-right:10px">${label}</a>`;
   const sec=(title,items,extra)=>items.length?`<h2 style="font-size:16px;margin-top:18px">${title} (${items.length})</h2><ul>${items.map(c=>row(c,extra?extra(c):'')).join('')}</ul>`:'';
 
@@ -1005,9 +1006,19 @@ async function showPosts(){
     ${sec('You post these',d.manual,c=>`<div style="font-size:12px;opacity:.75">collab post · send from the Instagram app with the invite</div>${mark(c,'posted','mark it posted')}${mark(c,'skipped','skip')}`)}
     ${sec('Due now',d.due,c=>mark(c,'posted','mark it posted')+mark(c,'failed','mark failed'))}
     ${sec('Failed',d.failed,c=>mark(c,'scheduled','put it back in the queue')+mark(c,'skipped','give up on it'))}
-    ${sec('Lined up',d.upcoming)}
-    <p style="margin-top:18px;opacity:.6;font-size:12px">Nothing sends itself yet. The queue holds the slots, and sending turns on once one real post is verified through Metricool.</p>`;
+    ${sec('Lined up',d.upcoming,c=>pull(c,'pull it from the queue'))}
+    ${sec('Sent to Metricool',d.sent||[],c=>`${c.post_results&&c.post_results.planner?`<a href="${esc(c.post_results.planner)}" target="_blank" style="font-size:12px;margin-right:10px">open in Metricool</a>`:''}${pull(c,'pull it back')}`)}
+    <p style="margin-top:18px;opacity:.6;font-size:12px">Sending runs every 15 minutes once posting is switched on. Until then the queue only holds the slots.</p>`;
   sheetview.classList.add('open');
+}
+async function pullPost(id){
+  if(noWrite())return;
+  if(!confirm('Pull this clip? If it already reached Metricool it gets deleted there too.'))return;
+  try{const d=await post({action:'unschedule',clip_id:id,then:'skipped'});
+    if(!d||!d.ok){toast(d&&d.error?d.error:'could not pull it');return}
+    toast(d.removed_from_metricool?'pulled back from Metricool ✓':'pulled from the queue ✓');
+    await showPosts();await postCount();
+  }catch(e){toast('failed: '+e.message)}
 }
 async function markPost(id,status){
   if(noWrite())return;
