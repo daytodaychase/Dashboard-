@@ -940,12 +940,34 @@ async function afterFlag(id,field,val){
 }
 // Which guests already have questions written, so the board can show it.
 const PREP_READY=new Set();
+const PREP_FAILED=new Map();
 async function loadPrep(){
   try{
-    const rows=await sb('interview_research?status=eq.ready&select=guest_id');
-    PREP_READY.clear();
-    for(const r of rows)PREP_READY.add(r.guest_id);
+    const rows=await sb('interview_research?status=in.(ready,failed)&select=guest_id,status,error');
+    PREP_READY.clear();PREP_FAILED.clear();
+    for(const r of rows){
+      if(r.status==='ready')PREP_READY.add(r.guest_id);
+      else PREP_FAILED.set(r.guest_id,r.error||'');
+    }
+    for(const id of PREP_READY)PREP_FAILED.delete(id);
+    renderAlerts();
   }catch(e){}
+}
+// Failures go at the top of the page in plain words, not buried in a table.
+function renderAlerts(){
+  let box=document.getElementById('alerts');
+  if(!box){
+    box=document.createElement('div');box.id='alerts';
+    box.style.cssText='margin:0 0 12px;font-size:14px';
+    const week=document.getElementById('week');
+    if(week&&week.parentNode)week.parentNode.insertBefore(box,week);
+  }
+  const lines=[];
+  for(const [gid,err] of PREP_FAILED){
+    const g=guests.find(x=>x.id===gid);if(!g)continue;
+    lines.push(`<div style="padding:8px 10px;border-left:3px solid #9a3b1f;margin-bottom:6px">Questions failed for <b>${esc(g.handle)}</b>${err?`: <span style="opacity:.7">${esc(String(err).slice(0,90))}</span>`:''} · <a href="#" onclick="prepQuestions('${g.id}',true);return false">try again</a></div>`);
+  }
+  box.innerHTML=lines.join('');
 }
 // Stamp post slots on a guest's finished clips.
 async function scheduleClips(id){
@@ -982,6 +1004,10 @@ async function postCount(){
     const c=d.counts,bits=[];
     if(c.due)bits.push(c.due+' due');
     if(c.failed)bits.push(c.failed+' failed');
+    const box=document.getElementById('alerts');
+    if(box&&c.failed&&!box.innerHTML.includes('clips failed to post')){
+      box.insertAdjacentHTML('beforeend',`<div style="padding:8px 10px;border-left:3px solid #9a3b1f;margin-bottom:6px"><b>${c.failed}</b> clip${c.failed===1?'':'s'} failed to post · <a href="#" onclick="showPosts();return false">see why</a></div>`);
+    }
     if(c.manual)bits.push(c.manual+' on you');
     if(!bits.length&&c.upcoming)bits.push(c.upcoming+' lined up');
     document.getElementById('postcount').textContent=bits.length?bits.join(' · '):'nothing queued';
