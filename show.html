@@ -658,6 +658,13 @@ async function save(){
   if(dup){toast(dup.handle+' is already on the board ('+dup.stage+')');return}
   const g={handle:h,fol:f_fol.value.trim(),name:f_name.value.trim(),type:f_type.value,stage:f_stage.value,seg:f_seg.value.trim(),date:f_date.value,notes:f_notes.value.trim(),foot:f_foot.checked,ep:f_ep.value.trim(),known:f_known.checked,call:f_call.value.trim(),loc:f_loc.value.trim(),loc2:f_loc2.value.trim(),p2:f_p2.value,email:f_email.value.trim(),crew:collectCrew()};
   const wasStage=editing?editing.stage:'';
+  // Part 2 is what makes the field questions sharp. Do not let a guest reach
+  // Booked without it, because that is when the research fires.
+  if(STAGES.indexOf(g.stage)>=3&&!g.seg){
+    toast('fill in Part 2, the ending, before booking them');
+    try{f_seg.focus();f_seg.scrollIntoView({block:'center'})}catch(e){}
+    return;
+  }
   if(g.stage==='Shot'&&wasStage!=='Shot'&&g.date&&new Date(g.date+'T00:00')>new Date()){if(!confirm(`Shoot date is ${longDate(g.date)}, that's in the future. Mark as shot anyway?`))return}
   if(g.stage==='Reached Out'&&!(editing&&editing.stage==='Reached Out'))g.reachedAt=new Date().toISOString().slice(0,10);
   else g.reachedAt=editing?editing.reachedAt:'';
