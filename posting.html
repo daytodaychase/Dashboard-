@@ -205,6 +205,22 @@ details.ref[open] summary::before{content:"\2212 ";}
 .folder{display:flex; align-items:center; gap:12px; background:var(--cell); border:1px solid var(--grid); border-radius:12px; padding:14px 16px; margin-bottom:8px; text-decoration:none; color:var(--ink);}
 .folder b{flex:1; font-weight:600;} .folder span{color:var(--soft); font-size:13px;}
 .folder.main{border:2px solid var(--key);}
+
+.upbtn{background:var(--key); color:#fff; border:0; border-radius:11px; padding:10px 18px; font-weight:700; font-size:15px; cursor:pointer; min-height:42px;}
+:root[data-theme="dark"] .upbtn{color:#0B1A18;}
+.fgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:9px; margin-bottom:16px;}
+.fbtn{display:flex; flex-direction:column; gap:3px; background:var(--cell); border:1px solid var(--grid); border-radius:12px; padding:13px 14px; text-decoration:none; color:var(--ink); min-height:64px;}
+.fbtn:hover{border-color:var(--key);}
+.fbtn b{font-size:14.5px;} .fbtn span{font-size:12.5px; color:var(--soft);}
+.fhead{display:flex; align-items:baseline; justify-content:space-between; margin:4px 0 8px;}
+.fhead h3{margin:0; font:700 16px/1.2 Archivo,sans-serif;} .fhead a{font-size:13px; color:var(--soft);}
+.wiz h3{font:700 20px/1.2 Archivo,sans-serif; margin:4px 0 14px;}
+.wopt{display:flex; width:100%; text-align:left; flex-direction:column; gap:2px; background:var(--cell2); border:1px solid var(--grid); border-radius:12px; padding:13px 14px; margin-bottom:8px; cursor:pointer;}
+.wopt:hover{border-color:var(--key);} .wopt b{font-size:15.5px;} .wopt span{font-size:13px; color:var(--soft);}
+.wiz input{width:100%; box-sizing:border-box; font-size:17px; padding:13px; border-radius:10px; border:1px solid var(--grid); background:var(--cell2); color:var(--ink);}
+.wlink{display:block; text-align:center; background:var(--key); color:#fff; text-decoration:none; font-weight:700; font-size:16px; padding:15px; border-radius:12px; margin-top:14px;}
+:root[data-theme="dark"] .wlink{color:#0B1A18;}
+.wback{background:none; border:0; color:var(--soft); cursor:pointer; padding:8px 0; font-size:14px;}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
 </style></head><body>
 
@@ -214,6 +230,7 @@ details.ref[open] summary::before{content:"\2212 ";}
     <span class="live"><span class="pip" id="pip"></span><span id="livetext">connecting</span></span>
     <span class="grow"></span>
     <span class="tz">Eastern time</span>
+    <button class="upbtn" id="upload">Upload</button>
     <button class="btn" id="theme">Dark</button>
     <button class="btn" id="power" hidden></button>
   </div>
@@ -234,6 +251,9 @@ details.ref[open] summary::before{content:"\2212 ";}
     <div class="chip" id="photochip"><span>Photos left</span><b id="photosval">&mdash;</b><span id="photosnote"></span></div>
   </div>
 
+  <div class="fhead"><h3>Your folders</h3><a id="alldrive" href="#" target="_blank" rel="noopener">All of Drive ↗</a></div>
+  <div class="fgrid" id="folders"></div>
+
   <div class="cal">
     <div class="calhead">
       <button class="nav" id="prev" aria-label="Previous month">&#8249;</button>
@@ -245,21 +265,7 @@ details.ref[open] summary::before{content:"\2212 ";}
     <div class="grid" id="grid"></div>
   </div>
 
-  <details class="ref">
-    <summary>What each Drive folder becomes</summary>
-    <div style="margin-top:12px">
-      <div class="refrow"><b>1 reels</b><span>Trial reel at noon and 8:30 pm every day. Instagram, TikTok, YouTube, Facebook.</span></div>
-      <div class="refrow"><b>1 reels › Vlog Clips</b><span>Same, labelled camera footage.</span></div>
-      <div class="refrow"><b>1 reels › Yap Videos</b><span>Same, labelled phone footage.</span></div>
-      <div class="refrow"><b>1 reels › Show Clips</b><span>Same, labelled show clips.</span></div>
-      <div class="refrow"><b>3 camera photos</b><span>Photo at 7 pm Tuesday, Thursday, Saturday. Tags @daytodayportraits.</span></div>
-      <div class="refrow"><b>3 camera photos › @handle</b><span>One carousel. Tags that handle and @daytodayportraits.</span></div>
-      <div class="refrow"><b>2 iphone photos › Posts date</b><span>Sunday 7 pm carousel. No tags. Fill it by Thursday.</span></div>
-      <div class="refrow"><b>4 postcards</b><span>Horizontal feed video at 7 pm.</span></div>
-      <div class="refrow"><b>stories</b><span>Story about 5 minutes after you drop it.</span></div>
-    </div>
-  </details>
-  <div id="folders" style="margin-top:14px"></div>
+
   </section>
 
   <section id="sStats" class="sec" hidden></section>
@@ -693,11 +699,85 @@ function renderIdeas(){
     I.ideas.map(i => '<div class="idea"><span class="eff">' + esc(i.effort || "") + "</span><h4>" + esc(i.title) + '</h4><div class="say">' + esc(i.hook) + "</div><p>" + esc(i.why || "") + "</p></div>").join("");
 }
 function renderFolders(){
-  const f = DATA && DATA.folders; const el = document.getElementById("folders");
-  if (!f) { el.innerHTML = ""; return; }
-  const a = (id, name, sub, main) => id ? '<a class="folder' + (main ? " main" : "") + '" href="https://drive.google.com/drive/folders/' + esc(id) + '" target="_blank" rel="noopener"><b>' + name + "</b><span>" + sub + " ↗</span></a>" : "";
-  el.innerHTML = a(f.drop, "Open the drop folder", "drop files here", true) + a(f.done, "Posted files", "where files go after") + a(f.guests, "Show guests", "episode folders");
+  const el = document.getElementById("folders");
+  const list = (DATA && DATA.folder_buttons) || [];
+  const f = (DATA && DATA.folders) || {};
+  const extra = [];
+  if (f.done) extra.push({ label: "Already posted", id: f.done, note: "files move here after" });
+  if (f.guests) extra.push({ label: "Show guests", id: f.guests, note: "episode folders" });
+  el.innerHTML = list.concat(extra).map(b => '<a class="fbtn" href="https://drive.google.com/drive/folders/' + esc(b.id) + '" target="_blank" rel="noopener"><b>' + esc(b.label) + " ↗</b><span>" + esc(b.note || "") + "</span></a>").join("");
+  const all = document.getElementById("alldrive");
+  if (f.drop) all.href = "https://drive.google.com/drive/folders/" + f.drop; else all.hidden = true;
 }
+
+// ---------- Upload helper ----------
+const KINDS = [
+  ["vlog","Vlog clip","Shot on the camera. Posts as a reel."],
+  ["yap","Yap video","Me talking on the phone. Posts as a reel."],
+  ["show","Show clip","From the Day To Day Show. Posts as a reel."],
+  ["postcard","Cinematic postcard","Horizontal video for the feed."],
+  ["portrait","Portrait photo","Camera photo. Tags @daytodayportraits."],
+  ["iphone","iPhone photos","The Sunday photo dump."],
+  ["story","Story","Goes up right away."]
+];
+function wizOpen(html){
+  const panel = document.getElementById("panel");
+  panel.innerHTML = '<div class="phead"><span class="grow"></span><button class="close" id="pclose" aria-label="Close">×</button></div><div class="wiz">' + html + "</div>";
+  document.getElementById("scrim").hidden = false; panel.hidden = false;
+  document.getElementById("pclose").onclick = closePanel;
+}
+function wizStart(){
+  wizOpen("<h3>What are you uploading?</h3>" + KINDS.map(k => '<button class="wopt" data-kind="' + k[0] + '"><b>' + k[1] + "</b><span>" + k[2] + "</span></button>").join(""));
+}
+function wizHandle(){
+  wizOpen('<button class="wback" data-back="1">‹ Back</button><h3>Who is in the photo?</h3>' +
+    '<p class="pnote" style="margin:0 0 10px">Their Instagram handle. They get tagged as a collaborator. Leave it blank if nobody.</p>' +
+    '<input id="whandle" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="@theirhandle">' +
+    '<button class="wlink" style="width:100%;border:0;cursor:pointer" id="wgo">Next</button>');
+  setTimeout(() => { const i = document.getElementById("whandle"); if (i) i.focus(); }, 50);
+}
+async function wizRun(kind, handle){
+  wizOpen('<h3>Getting your folder ready…</h3>');
+  try {
+    const r = await prepareUpload(kind, handle);
+    const k = KINDS.find(x => x[0] === kind);
+    wizOpen('<h3>' + esc(r.created ? "Made the folder " + r.folder : (r.folder ? r.folder : k[1])) + '</h3>' +
+      '<p class="pcap" style="margin:0">' + esc(r.tip || "") + '</p>' +
+      '<a class="wlink" href="' + esc(r.url) + '" target="_blank" rel="noopener">Open folder and upload ↗</a>' +
+      '<p class="pnote">In Drive tap <b>+</b>, then <b>Upload</b>. It shows on the calendar within about 10 minutes.</p>');
+  } catch (e) {
+    wizOpen('<button class="wback" data-back="1">‹ Back</button><h3>That did not work</h3><p class="pnote">' + esc(explain(e)) + "</p>");
+  }
+}
+async function prepareUpload(kind, handle){
+  if (HOSTED) return await call("prepare_upload", { kind, handle });
+  // Inside Claude: ask the database to call the function, then read the answer back.
+  const body = JSON.stringify({ action: "prepare_upload", kind, handle: handle || "" }).replace(/'/g, "''");
+  const rows = await sql("select net.http_post(url := 'https://gzupnelfmehgdxfhntar.supabase.co/functions/v1/show-drop', " +
+    "headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer ' || (select value from show_secrets where key = 'callback_token')), " +
+    "body := '" + body + "'::jsonb, timeout_milliseconds := 60000) as id");
+  const id = Number(rows[0] && rows[0].id);
+  for (let i = 0; i < 20; i++) {
+    await new Promise(r => setTimeout(r, 1500));
+    const got = await sql("select status_code, content from net._http_response where id = " + id);
+    if (got.length) {
+      let j = {}; try { j = JSON.parse(got[0].content); } catch (e) {}
+      if (!j.ok) throw { code: "tool_error", message: j.error || "error " + got[0].status_code };
+      return j;
+    }
+  }
+  throw { code: "tool_error", message: "Drive took too long. Try again." };
+}
+document.getElementById("upload").addEventListener("click", wizStart);
+document.getElementById("panel").addEventListener("click", e => {
+  const o = e.target.closest(".wopt");
+  if (o) { if (o.dataset.kind === "portrait") wizHandle(); else wizRun(o.dataset.kind); return; }
+  if (e.target.closest("[data-back]")) { wizStart(); return; }
+  if (e.target.closest("#wgo")) { wizRun("portrait", (document.getElementById("whandle").value || "").trim()); }
+});
+document.getElementById("panel").addEventListener("keydown", e => {
+  if (e.key === "Enter" && e.target.id === "whandle") wizRun("portrait", e.target.value.trim());
+});
 
 function render(){ if (!DATA) return; renderSummary(); renderMonth(); renderStats(); renderMoney(); renderIdeas(); renderFolders(); }
 
