@@ -221,6 +221,24 @@ details.ref[open] summary::before{content:"\2212 ";}
 .wlink{display:block; text-align:center; background:var(--key); color:#fff; text-decoration:none; font-weight:700; font-size:16px; padding:15px; border-radius:12px; margin-top:14px;}
 :root[data-theme="dark"] .wlink{color:#0B1A18;}
 .wback{background:none; border:0; color:var(--soft); cursor:pointer; padding:8px 0; font-size:14px;}
+
+.calhead2{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--grid);}
+.calhead2 h2{font:700 17px/1 Archivo,sans-serif; margin:0;}
+.legend{font-size:12.5px; color:var(--soft); display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+.legend .dot{margin-left:6px;}
+.dot{display:inline-block; width:10px; height:10px; border-radius:50%; flex:none;}
+.dot.on{background:var(--posted);} .dot.miss{background:var(--held);} .dot.none{background:transparent; border:1.5px solid var(--grid);}
+.dot.done{background:var(--soft);}
+.nextgap{margin:0; padding:12px 16px 0; font-size:15px; font-weight:600;}
+.nextgap.ok{color:var(--posted);} .nextgap.bad{color:var(--held);}
+.strip{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; padding:12px 16px 8px;}
+.sday{background:var(--cell2); border:1px solid var(--grid); border-radius:10px; padding:8px 4px; text-align:center; cursor:pointer; min-width:0;}
+.sday:hover{border-color:var(--key);} .sday.today{border:2px solid var(--key);}
+.sday .sd{font-size:11px; color:var(--soft); display:block;} .sday .sn{font-size:15px; font-weight:700; display:block; margin-bottom:6px;}
+.sday .dots{display:flex; justify-content:center; gap:4px;}
+.stripkey{margin:0; padding:0 16px 14px; font-size:12.5px; color:var(--soft);}
+.grid.week{grid-template-columns:repeat(7,1fr);}
+@media (max-width:760px){ .grid.week{grid-template-columns:1fr;} .strip{gap:4px; padding:10px;} .sday{padding:6px 2px;} .dot{width:8px;height:8px;} .sday .dots{gap:3px;} .legend{display:none;} }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
 </style></head><body>
 
@@ -255,14 +273,16 @@ details.ref[open] summary::before{content:"\2212 ";}
   <div class="fgrid" id="folders"></div>
 
   <div class="cal">
-    <div class="calhead">
-      <button class="nav" id="prev" aria-label="Previous month">&#8249;</button>
-      <h2 id="month">&nbsp;</h2>
-      <button class="nav" id="next" aria-label="Next month">&#8250;</button>
-      <button class="btn today-btn" id="todaybtn">Today</button>
-    </div>
-    <div class="dow"><div>Sunday</div><div>Monday</div><div>Tuesday</div><div>Wednesday</div><div>Thursday</div><div>Friday</div><div>Saturday</div></div>
-    <div class="grid" id="grid"></div>
+    <div class="calhead2"><h2>This week</h2><button class="btn" id="postedbtn">Posted</button></div>
+    <div class="grid week" id="grid"></div>
+  </div>
+
+  <div class="cal" style="margin-top:16px">
+    <div class="calhead2"><h2>Next 30 days</h2>
+      <span class="legend"><i class="dot on"></i>lined up <i class="dot miss"></i>empty <i class="dot none"></i>no slot</span></div>
+    <p class="nextgap" id="nextgap"></p>
+    <div class="strip" id="strip"></div>
+    <p class="stripkey">Each day has 3 dots: noon reel, 7 pm photo, 8:30 pm reel. Tap a day to see it.</p>
   </div>
 
 
@@ -464,49 +484,64 @@ function renderSummary(){
   document.getElementById("flags").innerHTML = probs.slice(0,4).map(t => '<div class="flag"><b>Needs you:</b> ' + esc(t) + "</div>").join("");
 }
 
+const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+let BYDAY = {};
+function dayKeyAdd(key, n){ const d = new Date(key + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0,10); }
+function slotsFor(key){
+  const sch = (DATA && DATA.schedule) || { reel_times:["12:00","20:30"], photo_time:"19:00", photo_days:[2,4,6], iphone_days:[0] };
+  const dow = new Date(key + "T12:00:00Z").getUTCDay();
+  const photo = (sch.photo_days || []).includes(dow) || (sch.iphone_days || []).includes(dow);
+  return [["12:00", true], [sch.photo_time || "19:00", photo], [(sch.reel_times || [])[1] || "20:30", true]];
+}
 function renderMonth(){
   const d = DATA;
-  const nowEt = etNow(new Date()), today = nowEt.slice(0,10);
-  if (!VIEW) VIEW = { y: Number(today.slice(0,4)), m: Number(today.slice(5,7)) - 1 };
-  document.getElementById("month").textContent = MONTHS[VIEW.m] + " " + VIEW.y;
-
+  const nowEt = etNow(new Date()), today = nowEt.slice(0,10), nowT = nowEt.slice(11,16);
   const all = (d.upcoming || []).concat(d.failed || [], d.posted || []);
-  BYID = all;
-  const byDay = {};
-  all.forEach((r, i) => {
-    if (!r.post_at_et) return;
-    (byDay[r.post_at_et.slice(0,10)] = byDay[r.post_at_et.slice(0,10)] || []).push(i);
-  });
-  for (const k in byDay) byDay[k].sort((a,b) => all[a].post_at_et < all[b].post_at_et ? -1 : 1);
+  BYID = all; BYDAY = {};
+  all.forEach((r, i) => { if (r.post_at_et) (BYDAY[r.post_at_et.slice(0,10)] = BYDAY[r.post_at_et.slice(0,10)] || []).push(i); });
+  for (const k in BYDAY) BYDAY[k].sort((a,b) => all[a].post_at_et < all[b].post_at_et ? -1 : 1);
 
-  const sch = d.schedule || { reel_times:["12:00","20:30"], photo_time:"19:00", photo_days:[2,4,6], iphone_days:[0] };
-  const first = new Date(Date.UTC(VIEW.y, VIEW.m, 1, 12));
-  const start = new Date(first); start.setUTCDate(1 - first.getUTCDay());
+  // This week: today plus six days, full cards.
   let html = "";
-  for (let i = 0; i < 42; i++) {
-    const dt = new Date(start); dt.setUTCDate(start.getUTCDate() + i);
-    const key = dt.toISOString().slice(0,10), dow = dt.getUTCDay();
-    const inMonth = dt.getUTCMonth() === VIEW.m;
-    if (i >= 35 && !inMonth && dow === 0) break;        // drop an empty trailing week
-    const ids = byDay[key] || [];
+  for (let i = 0; i < 7; i++) {
+    const key = dayKeyAdd(today, i), dt = new Date(key + "T12:00:00Z");
+    const ids = BYDAY[key] || [];
     let cards = ids.map(ix => card(all[ix], ix)).join("");
-    // Open slots only matter going forward, so past days stay clean.
-    if (key >= today && inMonth) {
-      const taken = ids.map(ix => all[ix].post_at_et.slice(11,16));
-      const openReels = sch.reel_times.filter(t => !taken.includes(t)).length;
-      const photoDay = (sch.photo_days || []).includes(dow) || (sch.iphone_days || []).includes(dow);
-      const openPhoto = photoDay && !taken.includes(sch.photo_time);
-      const gaps = [];
-      if (openReels) gaps.push(openReels + " reel slot" + (openReels > 1 ? "s" : "") + " open");
-      if (openPhoto) gaps.push((sch.iphone_days || []).includes(dow) ? "Sunday carousel open" : "photo slot open");
-      if (gaps.length) cards += '<div class="gap">' + gaps.join(" · ") + "</div>";
-    }
-    const cls = "day" + (inMonth ? "" : " out") + (key === today ? " today" : "") + (!ids.length && key < today ? " empty" : "");
-    const label = inMonth ? String(dt.getUTCDate()) : MONTHS[dt.getUTCMonth()].slice(0,3) + " " + dt.getUTCDate();
-    const phoneLabel = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][dow] + " ";
-    html += '<div class="' + cls + '"><div class="num"><b>' + (window.innerWidth <= 760 ? phoneLabel : "") + label + "</b></div>" + cards + "</div>";
+    const empty = slotsFor(key).filter(([t, need]) => need && !(key === today && t <= nowT) && !ids.some(ix => all[ix].post_at_et.slice(11,16) === t));
+    if (empty.length) cards += '<div class="gap">' + empty.map(([t]) => clock(t) + " empty").join(" · ") + "</div>";
+    html += '<div class="day' + (key === today ? " today" : "") + '"><div class="num"><b>' + (i === 0 ? "Today" : i === 1 ? "Tomorrow" : DOW[dt.getUTCDay()]) + " " + MONTHS[dt.getUTCMonth()].slice(0,3) + " " + dt.getUTCDate() + "</b></div>" + (cards || '<div class="gap">Nothing</div>') + "</div>";
   }
   document.getElementById("grid").innerHTML = html;
+
+  // Next 30 days: three dots a day.
+  let strip = "", firstGap = null;
+  for (let i = 0; i < 30; i++) {
+    const key = dayKeyAdd(today, i), dt = new Date(key + "T12:00:00Z");
+    const ids = BYDAY[key] || [];
+    const dots = slotsFor(key).map(([t, need]) => {
+      const has = ids.some(ix => all[ix].post_at_et.slice(11,16) === t);
+      if (has) return '<i class="dot on"></i>';
+      if (!need) return '<i class="dot none"></i>';
+      if (key === today && t <= nowT) return '<i class="dot none"></i>';
+      if (!firstGap) firstGap = { key, t };
+      return '<i class="dot miss"></i>';
+    }).join("");
+    strip += '<button class="sday' + (i === 0 ? " today" : "") + '" data-day="' + key + '"><span class="sd">' + DOW[dt.getUTCDay()] + '</span><span class="sn">' + dt.getUTCDate() + '</span><span class="dots">' + dots + "</span></button>";
+  }
+  document.getElementById("strip").innerHTML = strip;
+  const ng = document.getElementById("nextgap");
+  if (firstGap) {
+    const g = new Date(firstGap.key + "T12:00:00Z");
+    ng.className = "nextgap bad";
+    ng.textContent = "Content runs out " + (firstGap.key === today ? "today" : DOW[g.getUTCDay()] + " " + MONTHS[g.getUTCMonth()].slice(0,3) + " " + g.getUTCDate()) + " at " + clock(firstGap.t) + ".";
+  } else { ng.className = "nextgap ok"; ng.textContent = "Every slot for the next 30 days is filled."; }
+}
+function openList(title, ids){
+  const panel = document.getElementById("panel");
+  panel.innerHTML = '<div class="phead"><b style="font-size:18px">' + esc(title) + '</b><span class="grow"></span><button class="close" id="pclose" aria-label="Close">×</button></div>' +
+    (ids.length ? ids.map(ix => card(BYID[ix], ix)).join('<div style="height:8px"></div>') : '<p class="pnote">Nothing on this day.</p>');
+  document.getElementById("scrim").hidden = false; panel.hidden = false;
+  document.getElementById("pclose").onclick = closePanel;
 }
 
 function openPanel(i){
@@ -577,9 +612,16 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closePanel()
 document.getElementById("grid").addEventListener("click", e => {
   const b = e.target.closest(".pc"); if (b) openPanel(Number(b.dataset.i));
 });
-document.getElementById("prev").addEventListener("click", () => { VIEW.m--; if (VIEW.m < 0) { VIEW.m = 11; VIEW.y--; } renderMonth(); });
-document.getElementById("next").addEventListener("click", () => { VIEW.m++; if (VIEW.m > 11) { VIEW.m = 0; VIEW.y++; } renderMonth(); });
-document.getElementById("todaybtn").addEventListener("click", () => { VIEW = null; renderMonth(); });
+document.getElementById("strip").addEventListener("click", e => {
+  const b = e.target.closest(".sday"); if (!b) return;
+  const k = b.dataset.day, dt = new Date(k + "T12:00:00Z");
+  openList(DOW[dt.getUTCDay()] + " " + MONTHS[dt.getUTCMonth()] + " " + dt.getUTCDate(), BYDAY[k] || []);
+});
+document.getElementById("postedbtn").addEventListener("click", () => {
+  const ids = BYID.map((r, i) => i).filter(i => BYID[i].post_status === "posted").sort((a, b) => (BYID[a].post_at_et < BYID[b].post_at_et ? 1 : -1));
+  openList("Already posted", ids);
+});
+document.getElementById("panel").addEventListener("click", e => { const c = e.target.closest(".pc"); if (c) openPanel(Number(c.dataset.i)); });
 let lastWide = window.innerWidth > 760;
 window.addEventListener("resize", () => { const w = window.innerWidth > 760; if (w !== lastWide && DATA) { lastWide = w; renderMonth(); } });
 
