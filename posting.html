@@ -239,50 +239,66 @@ details.ref[open] summary::before{content:"\2212 ";}
 .stripkey{margin:0; padding:0 16px 14px; font-size:12.5px; color:var(--soft);}
 .grid.week{grid-template-columns:repeat(7,1fr);}
 @media (max-width:760px){ .grid.week{grid-template-columns:1fr;} .strip{gap:4px; padding:10px;} .sday{padding:6px 2px;} .dot{width:8px;height:8px;} .sday .dots{gap:3px;} .legend{display:none;} }
+
+.stat.up{border-left:6px solid var(--posted); background:linear-gradient(90deg,var(--postedsoft),var(--cell) 60%);}
+.stat.down{border-left:6px solid var(--held); background:linear-gradient(90deg,var(--heldsoft),var(--cell) 60%);}
+.trend{font-weight:700;} .trend.up{color:var(--posted);} .trend.down{color:var(--held);} .trend.flat{color:var(--soft);}
+.ic{display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:8px; font-size:14px; line-height:1;}
+.ic.on{background:var(--postedsoft); box-shadow:inset 0 0 0 2px var(--posted);}
+.ic.miss{background:var(--heldsoft); box-shadow:inset 0 0 0 2px var(--held);}
+.ic.past{opacity:.35;}
+.sday .dots{gap:3px; flex-wrap:wrap;}
+.runline{margin:0; padding:12px 16px 0; font-size:15px; font-weight:700; display:flex; flex-direction:column; gap:4px;}
+.runline .ok{color:var(--posted);} .runline .bad{color:var(--held);}
+.nets{display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;}
+.net{font-size:13px; padding:5px 9px; border-radius:8px; background:var(--card);}
+.net.ok{background:var(--postedsoft); color:var(--posted);} .net.bad{background:var(--heldsoft); color:var(--held);}
+.chip.good b{color:var(--posted);}
+@media (max-width:760px){ .ic{width:20px;height:20px;font-size:11px;border-radius:6px;} }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
 </style></head><body>
 
 <div class="wrap">
   <div class="top">
     <h1>DayToDay</h1>
-    <span class="live"><span class="pip" id="pip"></span><span id="livetext">connecting</span></span>
+    <span class="live"><span class="pip" id="pip" hidden></span><span id="livetext">connecting</span></span>
     <span class="grow"></span>
     <span class="tz">Eastern time</span>
-    <button class="upbtn" id="upload">Upload</button>
-    <button class="btn" id="theme">Dark</button>
+    <button class="upbtn" id="upload">⬆️ Upload</button>
+    <button class="btn" id="theme">🌙 Dark</button>
     <button class="btn" id="power" hidden></button>
   </div>
 
   <div class="tabs" role="group" aria-label="Screens">
-    <button data-tab="sCal" aria-pressed="true">Calendar</button>
-    <button data-tab="sStats" aria-pressed="false">Stats</button>
-    <button data-tab="sMoney" aria-pressed="false">Money</button>
-    <button data-tab="sIdeas" aria-pressed="false">Film next</button>
+    <button data-tab="sCal" aria-pressed="true">📅 Calendar</button>
+    <button data-tab="sStats" aria-pressed="false">📈 Stats</button>
+    <button data-tab="sMoney" aria-pressed="false">💵 Money</button>
+    <button data-tab="sIdeas" aria-pressed="false">🎥 Film next</button>
   </div>
   <div id="oops" class="oops" hidden></div>
   <section id="sCal">
   <div id="flags"></div>
 
   <div class="summary">
-    <div class="chip"><span>Next post</span><b id="nextin">&mdash;</b><span id="nextwhat"></span></div>
-    <div class="chip" id="reelchip"><span>Reels left</span><b id="reelsval">&mdash;</b><span id="reelsnote"></span></div>
-    <div class="chip" id="photochip"><span>Photos left</span><b id="photosval">&mdash;</b><span id="photosnote"></span></div>
+    <div class="chip"><span>⏭️ Next post</span><b id="nextin">&mdash;</b><span id="nextwhat"></span></div>
+    <div class="chip" id="reelchip"><span>🎬 Reels left</span><b id="reelsval">&mdash;</b><span id="reelsnote"></span></div>
+    <div class="chip" id="photochip"><span>📷 Photos left</span><b id="photosval">&mdash;</b><span id="photosnote"></span></div>
   </div>
 
-  <div class="fhead"><h3>Your folders</h3><a id="alldrive" href="#" target="_blank" rel="noopener">All of Drive ↗</a></div>
+  <div class="fhead"><h3>📁 Your folders</h3><a id="alldrive" href="#" target="_blank" rel="noopener">All of Drive ↗</a></div>
   <div class="fgrid" id="folders"></div>
 
   <div class="cal">
-    <div class="calhead2"><h2>This week</h2><button class="btn" id="postedbtn">Posted</button></div>
+    <div class="calhead2"><h2>📅 This week</h2><button class="btn" id="postedbtn">✅ Posted</button></div>
     <div class="grid week" id="grid"></div>
   </div>
 
   <div class="cal" style="margin-top:16px">
-    <div class="calhead2"><h2>Next 30 days</h2>
-      <span class="legend"><i class="dot on"></i>lined up <i class="dot miss"></i>empty <i class="dot none"></i>no slot</span></div>
-    <p class="nextgap" id="nextgap"></p>
+    <div class="calhead2"><h2>🗓️ Next 30 days</h2>
+      <span class="legend">🟢 ready &nbsp; 🔴 add something</span></div>
+    <div class="runline" id="nextgap"></div>
     <div class="strip" id="strip"></div>
-    <p class="stripkey">Each day has 3 dots: noon reel, 7 pm photo, 8:30 pm reel. Tap a day to see it.</p>
+    <p class="stripkey">🎬 reel at noon and 8:30 pm &nbsp;·&nbsp; 📷 photo at 7 pm &nbsp;·&nbsp; 📱 Sunday iPhone dump. Tap a day to see it.</p>
   </div>
 
 
@@ -290,20 +306,20 @@ details.ref[open] summary::before{content:"\2212 ";}
 
   <section id="sStats" class="sec" hidden></section>
   <section id="sMoney" class="sec" hidden>
-    <h3>What you can prove</h3>
+    <h3>✅ What you can prove</h3>
     <p class="hint">Numbers a brand can check. Updated from Metricool every few days.</p>
     <div class="cards" id="proof"></div>
-    <h3>The honest read</h3>
-    <div class="note bad"><b>You are not an influencer play</b><p id="readReach"></p></div>
-    <div class="note"><b>You are a production play</b><p>Twenty years behind a camera, a 5,600 square foot studio, and credits that include MrBeast, Disney and Amazon. That is what the money is for. The post is a bonus you throw in, not the product.</p></div>
-    <h3>What to charge</h3>
+    <h3>🧠 The honest read</h3>
+    <div class="note bad"><b>❌ Selling your reach alone</b><p id="readReach"></p></div>
+    <div class="note"><b>✅ Selling the shoot</b><p>Twenty years behind a camera, a 5,600 square foot studio, and credits that include MrBeast, Disney and Amazon. That is what the money is for. The post is a bonus you throw in, not the product.</p></div>
+    <h3>💵 What to charge</h3>
     <p class="hint">Tap to build a quote. The posting fee comes from your real views.</p>
     <div id="quote"></div>
     <div class="cards" style="margin-top:10px">
-      <div class="stat" style="border:2px solid #C8950A"><p class="lab">QUOTE THEM</p><p class="num" id="qTotal">$0</p><p class="scope" id="qBreak"></p></div>
-      <div class="stat"><p class="lab">WALK AWAY BELOW</p><p class="num sm" id="qFloor">$0</p><p class="scope">75% of the quote. Under this you are working for exposure.</p></div>
+      <div class="stat" style="border:2px solid #C8950A"><p class="lab">💰 QUOTE THEM</p><p class="num" id="qTotal">$0</p><p class="scope" id="qBreak"></p></div>
+      <div class="stat"><p class="lab">✋ WALK AWAY BELOW</p><p class="num sm" id="qFloor">$0</p><p class="scope">75% of the quote. Under this you are working for exposure.</p></div>
     </div>
-    <h3>Who to pitch</h3>
+    <h3>🎯 Who to pitch</h3>
     <p class="hint">Built from who follows you.</p>
     <div id="brands"></div>
   </section>
@@ -333,12 +349,12 @@ const Q_THUMBS = "select coalesce(jsonb_object_agg((e->>'file_name') || '|' || (
   try { saved = localStorage.getItem("dtd-board-theme"); } catch (e) {}
   const dark = saved === "dark";
   document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
-  document.getElementById("theme").textContent = dark ? "Light" : "Dark";
+  document.getElementById("theme").textContent = dark ? "☀️ Light" : "🌙 Dark";
 })();
 document.getElementById("theme").addEventListener("click", () => {
   const dark = document.documentElement.getAttribute("data-theme") === "dark";
   document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
-  document.getElementById("theme").textContent = dark ? "Dark" : "Light";
+  document.getElementById("theme").textContent = dark ? "🌙 Dark" : "☀️ Light";
   try { localStorage.setItem("dtd-board-theme", dark ? "light" : "dark"); } catch (e) {}
 });
 
@@ -365,18 +381,18 @@ function ago(iso){
 }
 function kindOf(row){
   const p = row.plan || {};
-  if (p.instagram === "TRIAL_REEL") return "Trial reel";
-  if (row.lane === "stories") return "Story";
-  if ((row.item_count || 1) > 1) return "Carousel";
-  if (!row.plan && row.lane === "reels") return "Trial reel";
-  if (String(row.mime || "").startsWith("video/")) return "Feed video";
-  return "Photo";
+  if (p.instagram === "TRIAL_REEL") return "🎬 Reel";
+  if (row.lane === "stories") return "⚡ Story";
+  if ((row.item_count || 1) > 1) return "🖼️ Carousel";
+  if (!row.plan && row.lane === "reels") return "🎬 Reel";
+  if (String(row.mime || "").startsWith("video/")) return "🌅 Feed video";
+  return "📷 Photo";
 }
 function isVideo(row){ return String(row.mime || "").startsWith("video/"); }
 function statusOf(row){
-  if (row.post_status === "posted") return { t:"Posted", c:"posted" };
-  if (row.post_status === "failed") return { t:"Held", c:"held" };
-  return { t:"Scheduled", c:"sched" };
+  if (row.post_status === "posted") return { t:"✅ Posted", c:"posted" };
+  if (row.post_status === "failed") return { t:"⚠️ Problem", c:"held" };
+  return { t:"🕒 Coming up", c:"sched" };
 }
 function thumbOf(row){ return THUMBS[(row.file_name || "") + "|" + (row.post_at || "")] || null; }
 
@@ -445,10 +461,10 @@ function card(row, idx){
                 : '<span class="th none">' + (isVideo(row) ? "video" : "photo") + "</span>";
   return '<button class="pc" data-i="' + idx + '"><span class="pcrow">' + img +
     '<span class="pcbody"><span class="pill ' + st.c + '">' + st.t + "</span>" +
-    '<span class="pcwhat' + (kind === "Trial reel" ? "" : " photo") + '">' + esc(kind) + "</span>" +
+    '<span class="pcwhat' + (kind === "🎬 Reel" ? "" : " photo") + '">' + esc(kind) + "</span>" +
     '<span class="pctime mono">' + time + "</span></span></span>" +
     (hasCaption(row) ? '<span class="pccap">' + esc(row.caption) + "</span>"
-                     : '<span class="pccap missing">No caption yet, tap to add</span>') + "</button>";
+                     : '<span class="pccap missing">✏️ No caption yet, tap to add</span>') + "</button>";
 }
 
 function renderSummary(){
@@ -456,9 +472,9 @@ function renderSummary(){
   const on = (d.drop_enabled || "off") === "on";
   document.getElementById("pip").className = "pip" + (on ? "" : " off");
   document.getElementById("livetext").textContent =
-    (on ? "Posting on its own" : "Paused, nothing will publish") + (UPDATED ? " · updated " + ago(UPDATED) : "");
+    (on ? "🟢 Posting on its own" : "⏸️ Paused, nothing will post") + (UPDATED ? " · updated " + ago(UPDATED) : "");
   const pw = document.getElementById("power");
-  if (!armed) { pw.hidden = false; pw.className = "btn"; pw.disabled = false; pw.textContent = on ? "Pause posting" : "Turn posting on"; }
+  if (!armed) { pw.hidden = false; pw.className = "btn"; pw.disabled = false; pw.textContent = on ? "⏸️ Pause posting" : "▶️ Turn posting on"; }
 
   const next = (d.upcoming || []).filter(r => r.post_at_et && r.post_at_et > nowEt)
     .sort((a,b) => a.post_at_et < b.post_at_et ? -1 : 1)[0];
@@ -471,17 +487,17 @@ function renderSummary(){
   const reels = (d.upcoming || []).filter(r => (r.plan && r.plan.instagram === "TRIAL_REEL") || r.lane === "reels").map(r => r.post_at_et).sort();
   const lastReel = reels[reels.length - 1];
   const runsOut = lastReel ? ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date(lastReel.slice(0,10) + "T12:00:00Z").getUTCDay()] : null;
-  document.getElementById("reelsnote").textContent = rd < 7 && runsOut ? "last one " + runsOut + ", drop more" : rd + " days";
-  document.getElementById("reelchip").className = "chip" + (rd === 0 ? " out" : rd < 7 ? " low" : "");
+  document.getElementById("reelsnote").textContent = rd < 7 && runsOut ? "🔴 last one " + runsOut + ", add more" : "🟢 " + rd + " days";
+  document.getElementById("reelchip").className = "chip" + (rd === 0 ? " out" : rd < 7 ? " low" : " good");
   document.getElementById("photosval").textContent = rw.photos_left || 0;
-  document.getElementById("photosnote").textContent = wk + " week" + (wk===1?"":"s");
-  document.getElementById("photochip").className = "chip" + (wk === 0 ? " out" : wk < 2 ? " low" : "");
+  document.getElementById("photosnote").textContent = (wk < 2 ? "🔴 " : "🟢 ") + wk + " week" + (wk===1?"":"s");
+  document.getElementById("photochip").className = "chip" + (wk === 0 ? " out" : wk < 2 ? " low" : " good");
 
   const probs = [];
   // Only things that stop a post. Stats hiccups are not his problem.
   for (const a of (d.alerts || [])) if (a.level === "error" && !/results|stats|analytics/i.test(a.title || "")) probs.push(a.title);
   for (const r of (d.failed || [])) probs.push((r.file_name || "") + " did not go out");
-  document.getElementById("flags").innerHTML = probs.slice(0,4).map(t => '<div class="flag"><b>Needs you:</b> ' + esc(t) + "</div>").join("");
+  document.getElementById("flags").innerHTML = probs.slice(0,4).map(t => '<div class="flag"><b>🚨 Needs you:</b> ' + esc(t) + "</div>").join("");
 }
 
 const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -491,7 +507,8 @@ function slotsFor(key){
   const sch = (DATA && DATA.schedule) || { reel_times:["12:00","20:30"], photo_time:"19:00", photo_days:[2,4,6], iphone_days:[0] };
   const dow = new Date(key + "T12:00:00Z").getUTCDay();
   const photo = (sch.photo_days || []).includes(dow) || (sch.iphone_days || []).includes(dow);
-  return [["12:00", true], [sch.photo_time || "19:00", photo], [(sch.reel_times || [])[1] || "20:30", true]];
+  const sunday = (sch.iphone_days || []).includes(dow);
+  return [["12:00", true, "🎬"], [sch.photo_time || "19:00", photo, sunday ? "📱" : "📷"], [(sch.reel_times || [])[1] || "20:30", true, "🎬"]];
 }
 function renderMonth(){
   const d = DATA;
@@ -508,33 +525,37 @@ function renderMonth(){
     const ids = BYDAY[key] || [];
     let cards = ids.map(ix => card(all[ix], ix)).join("");
     const empty = slotsFor(key).filter(([t, need]) => need && !(key === today && t <= nowT) && !ids.some(ix => all[ix].post_at_et.slice(11,16) === t));
-    if (empty.length) cards += '<div class="gap">' + empty.map(([t]) => clock(t) + " empty").join(" · ") + "</div>";
-    html += '<div class="day' + (key === today ? " today" : "") + '"><div class="num"><b>' + (i === 0 ? "Today" : i === 1 ? "Tomorrow" : DOW[dt.getUTCDay()]) + " " + MONTHS[dt.getUTCMonth()].slice(0,3) + " " + dt.getUTCDate() + "</b></div>" + (cards || '<div class="gap">Nothing</div>') + "</div>";
+    if (empty.length) cards += empty.map(([t, n, icon]) => '<div class="gap">🔴 ' + clock(t) + " " + icon + " nothing loaded</div>").join("");
+    html += '<div class="day' + (key === today ? " today" : "") + '"><div class="num"><b>' + (i === 0 ? "Today" : i === 1 ? "Tomorrow" : DOW[dt.getUTCDay()]) + " " + MONTHS[dt.getUTCMonth()].slice(0,3) + " " + dt.getUTCDate() + "</b></div>" + (cards || '<div class="gap">😴 Nothing today</div>') + "</div>";
   }
   document.getElementById("grid").innerHTML = html;
 
   // Next 30 days: three dots a day.
-  let strip = "", firstGap = null;
+  let strip = "", firstReel = null, firstPhoto = null, firstDump = null;
   for (let i = 0; i < 30; i++) {
     const key = dayKeyAdd(today, i), dt = new Date(key + "T12:00:00Z");
     const ids = BYDAY[key] || [];
-    const dots = slotsFor(key).map(([t, need]) => {
+    const dots = slotsFor(key).map(([t, need, icon]) => {
       const has = ids.some(ix => all[ix].post_at_et.slice(11,16) === t);
-      if (has) return '<i class="dot on"></i>';
-      if (!need) return '<i class="dot none"></i>';
-      if (key === today && t <= nowT) return '<i class="dot none"></i>';
-      if (!firstGap) firstGap = { key, t };
-      return '<i class="dot miss"></i>';
+      const past = key === today && t <= nowT;
+      if (has) return '<i class="ic on' + (past ? " past" : "") + '">' + icon + "</i>";
+      if (!need || past) return "";
+      if (icon === "🎬") { if (!firstReel) firstReel = { key, t }; } else if (icon === "📱") { if (!firstDump) firstDump = { key, t }; } else if (!firstPhoto) firstPhoto = { key, t };
+      return '<i class="ic miss">' + icon + "</i>";
     }).join("");
     strip += '<button class="sday' + (i === 0 ? " today" : "") + '" data-day="' + key + '"><span class="sd">' + DOW[dt.getUTCDay()] + '</span><span class="sn">' + dt.getUTCDate() + '</span><span class="dots">' + dots + "</span></button>";
   }
   document.getElementById("strip").innerHTML = strip;
   const ng = document.getElementById("nextgap");
-  if (firstGap) {
-    const g = new Date(firstGap.key + "T12:00:00Z");
-    ng.className = "nextgap bad";
-    ng.textContent = "Content runs out " + (firstGap.key === today ? "today" : DOW[g.getUTCDay()] + " " + MONTHS[g.getUTCMonth()].slice(0,3) + " " + g.getUTCDate()) + " at " + clock(firstGap.t) + ".";
-  } else { ng.className = "nextgap ok"; ng.textContent = "Every slot for the next 30 days is filled."; }
+  const line = (gap, what) => {
+    if (!gap) return '<span class="ok">🟢 ' + what + " are ready for the next 30 days</span>";
+    const g = new Date(gap.key + "T12:00:00Z");
+    const days = Math.round((g - new Date(today + "T12:00:00Z")) / 864e5);
+    const when = gap.key === today ? "today" : gap.key === dayKeyAdd(today, 1) ? "tomorrow" : DOW[g.getUTCDay()] + " " + MONTHS[g.getUTCMonth()].slice(0,3) + " " + g.getUTCDate();
+    return '<span class="' + (days < 7 ? "bad" : "ok") + '">' + (days < 7 ? "🔴 " : "🟢 ") + what + " run out " + when + "</span>";
+  };
+  ng.innerHTML = line(firstReel, "🎬 Reels") + line(firstPhoto, "📷 Photos") +
+    (firstDump ? (() => { const g = new Date(firstDump.key + "T12:00:00Z"); return '<span class="bad">🔴 📱 iPhone dump for ' + DOW[g.getUTCDay()] + " " + MONTHS[g.getUTCMonth()].slice(0,3) + " " + g.getUTCDate() + " is empty</span>"; })() : "");
 }
 function openList(title, ids){
   const panel = document.getElementById("panel");
@@ -544,6 +565,19 @@ function openList(title, ids){
   document.getElementById("pclose").onclick = closePanel;
 }
 
+// Which apps it goes to, green when it went out there, red when that app missed.
+function netChips(r){
+  const p = r.plan || {};
+  const list = (p.networks && p.networks.length) ? p.networks : (isVideo(r) && r.lane !== "stories" ? ["instagram","tiktok","youtube","facebook"] : ["instagram","facebook"]);
+  const ICON = { instagram: "📸 Instagram", tiktok: "🎵 TikTok", youtube: "▶️ YouTube", facebook: "📘 Facebook" };
+  const err = String(r.post_error || "").toLowerCase();
+  return '<div class="nets">' + list.map(n => {
+    let cls = "", mark = "🕒";
+    if (r.post_status === "posted") { const miss = err.includes(n); cls = miss ? " bad" : " ok"; mark = miss ? "❌" : "✅"; }
+    else if (r.post_status === "failed") { cls = " bad"; mark = "❌"; }
+    return '<span class="net' + cls + '">' + (ICON[n] || n) + " " + mark + "</span>";
+  }).join("") + "</div>";
+}
 function openPanel(i){
   const r = BYID[i]; if (!r) return;
   const st = statusOf(r), kind = kindOf(r), p = r.plan || {}, t = thumbOf(r);
@@ -566,7 +600,7 @@ function openPanel(i){
   rows.push(["File", r.file_name || ""]);
   const watch = r.open_url
     ? '<a class="watch" href="' + esc(r.open_url) + '" target="_blank" rel="noopener">' +
-      (isVideo(r) ? "Watch video" : (r.item_count > 1 ? "See all photos" : "See photo")) + " ↗</a>" : "";
+      (isVideo(r) ? "▶️ Watch video" : (r.item_count > 1 ? "🖼️ See all photos" : "📷 See photo")) + " ↗</a>" : "";
   const panel = document.getElementById("panel");
   panel.innerHTML =
     '<div class="phead"><span class="pill ' + st.c + '">' + st.t + '</span><span class="grow"></span>' +
@@ -574,8 +608,8 @@ function openPanel(i){
     (t ? '<img class="big" src="' + esc(t) + '" alt="">' : '<div class="big none">' + (isVideo(r) ? "video" : "photo") + "</div>") +
     watch +
     '<div class="pkind" id="pkind">' + esc(kind) + "</div>" +
-    '<div class="pwhen">' + esc(dateText) + "</div>" +
-    '<p class="pcap">' + esc(r.caption || "No caption yet") + "</p>" +
+    '<div class="pwhen">🕒 ' + esc(dateText) + "</div>" + netChips(r) +
+    '<p class="pcap">' + esc(r.caption || "✏️ No caption yet") + "</p>" +
     (r.hashtags ? '<div class="ptags">' + esc(r.hashtags) + "</div>" : "") +
     '<div class="plist">' + rows.map(x => "<div><span>" + esc(x[0]) + "</span><span>" + esc(x[1]) + "</span></div>").join("") + "</div>" +
     (r.post_error ? '<p class="pnote" style="color:var(--held)">' + esc(r.post_error) + "</p>" : "") +
@@ -593,7 +627,7 @@ function editBox(r){
   if (soon) return '<p class="pnote">Goes out in under 15 minutes, so the caption is locked.</p>';
   return '<div class="edit"><label for="ecap">Caption</label><textarea id="ecap">' + esc(r.caption || "") + '</textarea>' +
     '<label for="etags">Hashtags (first comment)</label><input id="etags" value="' + esc(r.hashtags || "") + '">' +
-    '<button class="save" id="esave" data-id="' + r.id + '">Save caption</button></div>';
+    '<button class="save" id="esave" data-id="' + r.id + '">💾 Save caption</button></div>';
 }
 document.addEventListener("click", async e => {
   const b = e.target.closest("#esave"); if (!b) return;
@@ -604,7 +638,7 @@ document.addEventListener("click", async e => {
     await call("set_caption", { id: b.dataset.id, caption, hashtags: document.getElementById("etags").value });
     toast("Saved. Every platform gets the new caption.");
     closePanel(); await load();
-  } catch (err) { b.disabled = false; b.textContent = "Save caption"; toast(explain(err)); }
+  } catch (err) { b.disabled = false; b.textContent = "💾 Save caption"; toast(explain(err)); }
 });
 function closePanel(){ document.getElementById("panel").hidden = true; document.getElementById("scrim").hidden = true; }
 document.getElementById("scrim").addEventListener("click", closePanel);
@@ -658,30 +692,37 @@ const HOURS = [["2 pm",100,"best"],["12 pm",96,"strong"],["4 pm",95,"strong"],["
 const CITIES = [["Philadelphia",9.3],["New York",2.4],["Los Angeles",2.0]];
 function bars(rows, fmtv){ return '<div class="stat bars">' + rows.map(r => '<div class="brow"><span class="blab">' + r[0] + '</span><span class="btrack"><span class="bfill" style="width:' + (r[1] / rows[0][1] * 100) + '%"></span></span><span class="bval">' + fmtv(r) + "</span></div>").join("") + "</div>"; }
 
+// A number with its change: green card when it went up, red when it went down.
+function trendCard(lab, now, prev, scope, sinceTxt){
+  if (now == null) return statCard(lab, null, scope);
+  let cls = "", tr = "";
+  if (prev != null && now !== prev) {
+    const d = now - prev;
+    cls = d > 0 ? " up" : " down";
+    tr = '<span class="trend' + cls + '">' + (d > 0 ? "▲ " : "▼ ") + Math.abs(d).toLocaleString("en-US") + (d > 0 ? " more" : " fewer") + "</span> " + sinceTxt;
+  } else if (prev != null) tr = '<span class="trend flat">➖ same as</span> ' + sinceTxt.replace("since ", "");
+  return '<div class="stat' + cls + '"><p class="lab">' + lab + '</p><p class="num">' + fmt(now) + '</p><p class="scope">' + (tr || scope) + (tr && scope ? "<br>" + scope : "") + "</p></div>";
+}
 function renderStats(){
   const el = document.getElementById("sStats"); const st = DATA && DATA.stats;
-  if (!st || !st.chase) { el.innerHTML = '<h3>Stats</h3><p class="hint">No numbers yet.</p>'; return; }
+  if (!st || !st.chase) { el.innerHTML = '<h3>📈 Stats</h3><p class="hint">No numbers yet.</p>'; return; }
   const c = st.chase, p = st.chase_prev || {}, s = st.show || {}, since = sinceText(p);
   const asof = new Date(c.date + "T12:00:00Z").toLocaleDateString("en-US",{month:"short",day:"numeric"});
+  const T = (lab, k, scope) => trendCard(lab, n0(c[k]), n0(p[k]), scope, since);
   el.innerHTML =
-    '<h3>@daytodaychase</h3><p class="hint">Views are the <b>last 30 days</b>, not all time. Metricool runs 1 to 2 days behind, so today\'s posts are not counted yet. Updated ' + asof + ', changes ' + since + '.</p>' +
-    '<div class="cards">' +
-      statCard("INSTAGRAM FOLLOWERS", fmt(c.instagram_followers), delta(n0(c.instagram_followers), n0(p.instagram_followers)) + " " + since) +
-      statCard("INSTAGRAM VIEWS", fmt(c.instagram_views_30d), "last 30 days") +
-      statCard("TIKTOK FOLLOWERS", fmt(c.tiktok_followers), delta(n0(c.tiktok_followers), n0(p.tiktok_followers)) + " " + since) +
-      statCard("TIKTOK VIEWS", c.tiktok_views_30d == null ? null : fmt(c.tiktok_views_30d), "last 30 days") +
-      statCard("YOUTUBE SUBSCRIBERS", fmt(c.youtube_followers), delta(n0(c.youtube_followers), n0(p.youtube_followers)) + " " + since) +
-      statCard("YOUTUBE VIEWS", fmt(c.youtube_views_30d), "last 30 days") +
-      statCard("POSTS", fmt(c.posts_30d), "last 30 days") +
-      statCard("TOP INSTAGRAM POST", c.instagram_top_post_views == null ? null : fmt(c.instagram_top_post_views) + " views", esc(c.instagram_top_post || ""), true) +
-    "</div>" +
-    '<h3>The show account</h3><p class="hint">@thedaytodayshow, kept separate.</p><div class="cards">' +
+    '<h3>@daytodaychase</h3><p class="hint">🟢 green = going up &nbsp; 🔴 red = going down. Views are the <b>last 30 days</b>. Metricool is 1 to 2 days behind, so today is not counted yet. Updated ' + asof + '.</p>' +
+    '<h3>📸 Instagram</h3><div class="cards">' + T("FOLLOWERS", "instagram_followers", "") + T("VIEWS", "instagram_views_30d", "last 30 days") +
+      statCard("TOP POST", c.instagram_top_post_views == null ? null : fmt(c.instagram_top_post_views) + " views", esc(c.instagram_top_post || ""), true) + "</div>" +
+    '<h3>🎵 TikTok</h3><div class="cards">' + T("FOLLOWERS", "tiktok_followers", "") + T("VIEWS", "tiktok_views_30d", "last 30 days") + "</div>" +
+    '<h3>▶️ YouTube</h3><div class="cards">' + T("SUBSCRIBERS", "youtube_followers", "") + T("VIEWS", "youtube_views_30d", "last 30 days") + "</div>" +
+    '<h3>📝 Posts</h3><div class="cards">' + T("POSTS", "posts_30d", "last 30 days") + "</div>" +
+    '<h3>🎙️ The show account</h3><p class="hint">@thedaytodayshow, kept separate.</p><div class="cards">' +
       statCard("YOUTUBE SUBSCRIBERS", fmt(s.youtube_followers), fmt(s.youtube_views_30d) + " views in 30 days") +
-      statCard("INSTAGRAM FOLLOWERS", s.instagram_followers == null ? null : fmt(s.instagram_followers), "Metricool is not reading this right now") +
+      statCard("INSTAGRAM FOLLOWERS", s.instagram_followers == null ? null : fmt(s.instagram_followers), "") +
     "</div>" +
-    '<h3>Who follows you</h3><p class="hint">Instagram only, read Sep 25. 51% men, 33% women.</p>' + bars(AGE, r => r[1] + "%") +
-    '<h3>Where they are</h3>' + bars(CITIES, r => r[1] + "%") +
-    '<h3>Your best hours</h3><p class="hint">When your Instagram followers are online. Noon is near your peak. 8:30 pm is weaker.</p>' + bars(HOURS, r => r[2]);
+    '<h3>👥 Who follows you</h3><p class="hint">Instagram only, checked Sep 25. 51% men, 33% women.</p>' + bars(AGE, r => r[1] + "%") +
+    '<h3>📍 Where they live</h3>' + bars(CITIES, r => r[1] + "%") +
+    '<h3>⏰ Best times to post</h3><p class="hint">When your followers are online. Noon is near your best. 8:30 pm is weaker.</p>' + bars(HOURS, r => r[2]);
 }
 
 // ---------- money ----------
@@ -736,9 +777,10 @@ document.getElementById("sMoney").addEventListener("click", e => { const b = e.t
 function renderIdeas(){
   const el = document.getElementById("sIdeas"); const I = DATA && DATA.ideas;
   if (!I || !(I.ideas || []).length) { el.innerHTML = '<h3>Film next</h3><p class="hint">No ideas yet.</p>'; return; }
-  el.innerHTML = '<h3>What to film next</h3><p class="hint">Written ' + esc(I.date || "") + ' from your numbers and what is working in your niche.</p>' +
-    (I.read ? '<div class="note gold"><b>The read</b><p>' + esc(I.read) + "</p></div>" : "") +
-    I.ideas.map(i => '<div class="idea"><span class="eff">' + esc(i.effort || "") + "</span><h4>" + esc(i.title) + '</h4><div class="say">' + esc(i.hook) + "</div><p>" + esc(i.why || "") + "</p></div>").join("");
+  const eff = e => ({ "phone right now": "📱 ", "needs an edit": "✂️ ", "studio setup": "🎥 " })[e] || "";
+  el.innerHTML = '<h3>🎥 What to film next</h3><p class="hint">Written ' + esc(I.date || "") + ' from your numbers and what is working in your niche.</p>' +
+    (I.read ? '<div class="note gold"><b>🧠 The read</b><p>' + esc(I.read) + "</p></div>" : "") +
+    I.ideas.map((i, n) => '<div class="idea"><span class="eff">' + eff(i.effort) + esc(i.effort || "") + "</span><h4>" + (n + 1) + ". " + esc(i.title) + '</h4><div class="say">🗣️ Say: ' + esc(i.hook) + "</div><p>" + esc(i.why || "") + "</p></div>").join("");
 }
 function renderFolders(){
   const el = document.getElementById("folders");
@@ -747,20 +789,23 @@ function renderFolders(){
   const extra = [];
   if (f.done) extra.push({ label: "Already posted", id: f.done, note: "files move here after" });
   if (f.guests) extra.push({ label: "Show guests", id: f.guests, note: "episode folders" });
-  el.innerHTML = list.concat(extra).map(b => '<a class="fbtn" href="https://drive.google.com/drive/folders/' + esc(b.id) + '" target="_blank" rel="noopener"><b>' + esc(b.label) + " ↗</b><span>" + esc(b.note || "") + "</span></a>").join("");
+  const EMO = { vlog: "🎥", yap: "🗣️", show: "🎙️", portrait: "📷", iphone: "📱", postcard: "🌅", story: "⚡" };
+  extra[0] && (extra[0].key = "done"); extra[1] && (extra[1].key = "guests");
+  Object.assign(EMO, { done: "✅", guests: "👥" });
+  el.innerHTML = list.concat(extra).map(b => '<a class="fbtn" href="https://drive.google.com/drive/folders/' + esc(b.id) + '" target="_blank" rel="noopener"><b>' + (EMO[b.key] || "📁") + " " + esc(b.label) + " ↗</b><span>" + esc(b.note || "") + "</span></a>").join("");
   const all = document.getElementById("alldrive");
   if (f.drop) all.href = "https://drive.google.com/drive/folders/" + f.drop; else all.hidden = true;
 }
 
 // ---------- Upload helper ----------
 const KINDS = [
-  ["vlog","Vlog clip","Shot on the camera. Posts as a reel."],
-  ["yap","Yap video","Me talking on the phone. Posts as a reel."],
-  ["show","Show clip","From the Day To Day Show. Posts as a reel."],
-  ["postcard","Cinematic postcard","Horizontal video for the feed."],
-  ["portrait","Portrait photo","Camera photo. Tags @daytodayportraits."],
-  ["iphone","iPhone photos","The Sunday photo dump."],
-  ["story","Story","Goes up right away."]
+  ["vlog","🎥 Vlog clip","Shot on the camera. Posts as a reel."],
+  ["yap","🗣️ Yap video","Me talking on the phone. Posts as a reel."],
+  ["show","🎙️ Show clip","From the Day To Day Show. Posts as a reel."],
+  ["postcard","🌅 Cinematic postcard","Wide video for the feed."],
+  ["portrait","📷 Portrait photo","Camera photo. Tags @daytodayportraits."],
+  ["iphone","📱 iPhone photos","The Sunday photo dump."],
+  ["story","⚡ Story","Goes up right away."]
 ];
 function wizOpen(html){
   const panel = document.getElementById("panel");
@@ -769,26 +814,26 @@ function wizOpen(html){
   document.getElementById("pclose").onclick = closePanel;
 }
 function wizStart(){
-  wizOpen("<h3>What are you uploading?</h3>" + KINDS.map(k => '<button class="wopt" data-kind="' + k[0] + '"><b>' + k[1] + "</b><span>" + k[2] + "</span></button>").join(""));
+  wizOpen("<h3>⬆️ What are you uploading?</h3>" + KINDS.map(k => '<button class="wopt" data-kind="' + k[0] + '"><b>' + k[1] + "</b><span>" + k[2] + "</span></button>").join(""));
 }
 function wizHandle(){
-  wizOpen('<button class="wback" data-back="1">‹ Back</button><h3>Who is in the photo?</h3>' +
+  wizOpen('<button class="wback" data-back="1">‹ Back</button><h3>🤝 Who is in the photo?</h3>' +
     '<p class="pnote" style="margin:0 0 10px">Their Instagram handle. They get tagged as a collaborator. Leave it blank if nobody.</p>' +
     '<input id="whandle" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="@theirhandle">' +
     '<button class="wlink" style="width:100%;border:0;cursor:pointer" id="wgo">Next</button>');
   setTimeout(() => { const i = document.getElementById("whandle"); if (i) i.focus(); }, 50);
 }
 async function wizRun(kind, handle){
-  wizOpen('<h3>Getting your folder ready…</h3>');
+  wizOpen('<h3>⏳ Getting your folder ready…</h3>');
   try {
     const r = await prepareUpload(kind, handle);
     const k = KINDS.find(x => x[0] === kind);
     wizOpen('<h3>' + esc(r.created ? "Made the folder " + r.folder : (r.folder ? r.folder : k[1])) + '</h3>' +
       '<p class="pcap" style="margin:0">' + esc(r.tip || "") + '</p>' +
-      '<a class="wlink" href="' + esc(r.url) + '" target="_blank" rel="noopener">Open folder and upload ↗</a>' +
+      '<a class="wlink" href="' + esc(r.url) + '" target="_blank" rel="noopener">📂 Open folder and upload ↗</a>' +
       '<p class="pnote">In Drive tap <b>+</b>, then <b>Upload</b>. It shows on the calendar within about 10 minutes.</p>');
   } catch (e) {
-    wizOpen('<button class="wback" data-back="1">‹ Back</button><h3>That did not work</h3><p class="pnote">' + esc(explain(e)) + "</p>");
+    wizOpen('<button class="wback" data-back="1">‹ Back</button><h3>⚠️ That did not work</h3><p class="pnote">' + esc(explain(e)) + "</p>");
   }
 }
 async function prepareUpload(kind, handle){
@@ -855,7 +900,7 @@ document.getElementById("power").addEventListener("click", async () => {
   if ((!MCP && !HOSTED) || !DATA) return;
   const b = document.getElementById("power");
   const on = (DATA.drop_enabled || "off") === "on";
-  if (on && !armed) { armed = true; b.className = "btn armed"; b.textContent = "Tap again to pause"; return; }
+  if (on && !armed) { armed = true; b.className = "btn armed"; b.textContent = "⚠️ Tap again to pause"; return; }
   armed = false;
   const value = on ? "off" : "on";
   b.disabled = true; b.textContent = "saving";
@@ -888,7 +933,7 @@ function lockScreen(){
     HOSTED = true;
     try { KEY = localStorage.getItem("dtd_show_key") || localStorage.getItem("dtd-show-key") || ""; } catch (e) {}
     if (!KEY) { lockScreen(); return; }
-    const kb = document.createElement("button"); kb.className = "btn"; kb.textContent = "Key";
+    const kb = document.createElement("button"); kb.className = "btn"; kb.textContent = "🔑 Key";
     kb.onclick = () => { try { localStorage.removeItem("dtd_show_key"); localStorage.removeItem("dtd-show-key"); } catch (e) {} location.reload(); };
     document.getElementById("theme").before(kb);
     await load();
