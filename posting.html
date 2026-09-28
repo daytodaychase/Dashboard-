@@ -616,7 +616,7 @@ function renderStats(){
   const c = st.chase, p = st.chase_prev || {}, s = st.show || {}, since = sinceText(p);
   const asof = new Date(c.date + "T12:00:00Z").toLocaleDateString("en-US",{month:"short",day:"numeric"});
   el.innerHTML =
-    '<h3>@daytodaychase</h3><p class="hint">From Metricool, ' + asof + '. Changes are ' + since + '.</p>' +
+    '<h3>@daytodaychase</h3><p class="hint">Views are the <b>last 30 days</b>, not all time. Metricool runs 1 to 2 days behind, so today\'s posts are not counted yet. Updated ' + asof + ', changes ' + since + '.</p>' +
     '<div class="cards">' +
       statCard("INSTAGRAM FOLLOWERS", fmt(c.instagram_followers), delta(n0(c.instagram_followers), n0(p.instagram_followers)) + " " + since) +
       statCard("INSTAGRAM VIEWS", fmt(c.instagram_views_30d), "last 30 days") +
