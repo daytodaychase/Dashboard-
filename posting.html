@@ -471,7 +471,7 @@ function renderSummary(){
   const reels = (d.upcoming || []).filter(r => (r.plan && r.plan.instagram === "TRIAL_REEL") || r.lane === "reels").map(r => r.post_at_et).sort();
   const lastReel = reels[reels.length - 1];
   const runsOut = lastReel ? ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date(lastReel.slice(0,10) + "T12:00:00Z").getUTCDay()] : null;
-  document.getElementById("reelsnote").textContent = rd < 7 && runsOut ? "runs out " + runsOut + ", drop more" : rd + " days";
+  document.getElementById("reelsnote").textContent = rd < 7 && runsOut ? "last one " + runsOut + ", drop more" : rd + " days";
   document.getElementById("reelchip").className = "chip" + (rd === 0 ? " out" : rd < 7 ? " low" : "");
   document.getElementById("photosval").textContent = rw.photos_left || 0;
   document.getElementById("photosnote").textContent = wk + " week" + (wk===1?"":"s");
