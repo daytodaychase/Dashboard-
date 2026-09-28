@@ -405,6 +405,24 @@ details.ref[open] summary::before{content:"\2212 ";}
 .schips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
 .schip{position:relative;border:1px solid var(--grid);background:var(--cell);border-radius:99px;padding:9px 14px;font:inherit;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer}
 .schip .dot{position:absolute;top:-3px;right:-3px;width:12px;height:12px;border-radius:99px;background:var(--held);border:2px solid var(--paper)}
+
+.qsec{font-size:17px;font-weight:800;margin:18px 0 8px}
+.qgrp{background:var(--cell);border:1px solid var(--grid);border-radius:16px;padding:14px;margin-bottom:8px}
+.qgrp .lab{margin:0}
+.qhelp{margin:2px 0 10px;color:var(--soft);font-size:13px}
+.qapps{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.qapp{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;text-align:left;border:2px solid var(--grid);background:var(--cell2);border-radius:14px;padding:10px;font:inherit;color:var(--ink);cursor:pointer}
+.qapp .qtick{grid-row:span 3;font-size:18px}
+.qapp b{font-size:14px;line-height:1.25}.qapp em{font-style:normal;font-weight:800;color:var(--posted)}
+.qapp small{color:var(--soft);font-size:11px}
+.qapp[aria-pressed="true"]{border-color:var(--posted);background:var(--postedsoft)}
+.rcpt{margin-top:8px;display:flex;flex-direction:column;gap:5px;font-size:13px}
+.rcpt div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--grid);padding-bottom:4px}
+.rcpt .pct b{color:#C8950A}
+.qcards{grid-template-columns:1fr !important}
+.qsticky{position:sticky;bottom:12px;z-index:5;display:flex;align-items:center;gap:8px;margin:10px 0;padding:12px 16px;border-radius:99px;background:#17181C;color:#fff;text-decoration:none;font-weight:700;box-shadow:var(--shadow)}
+.qsticky b{font-size:20px}.qsticky span{margin-left:auto;opacity:.75;font-size:13px}
+:root[data-theme="dark"] .qsticky{background:#EEF0F3;color:#111}
 </style></head><body>
 
 <div class="wrap">
@@ -464,8 +482,9 @@ details.ref[open] summary::before{content:"\2212 ";}
     <h3>💵 What to charge</h3>
     <p class="hint">Tap to build a quote. The posting fee comes from your real views.</p>
     <div id="quote"></div>
-    <div class="cards" style="margin-top:10px">
-      <div class="stat" style="border:2px solid #C8950A"><p class="lab">💰 QUOTE THEM</p><p class="num" id="qTotal">$0</p><p class="scope" id="qBreak"></p></div>
+    <a class="qsticky" id="qSticky" href="#qCard">💰 Quote <b id="qStickyN">$0</b><span>See it ↓</span></a>
+    <div class="cards qcards" style="margin-top:10px">
+      <div class="stat" id="qCard" style="border:2px solid #C8950A"><p class="lab">💰 QUOTE THEM</p><p class="num" id="qTotal">$0</p><div class="scope" id="qBreak"></div></div>
       <div class="stat"><p class="lab">✋ WALK AWAY BELOW</p><p class="num sm" id="qFloor">$0</p><p class="scope">75% of the quote. Under this you are working for exposure.</p></div>
     </div>
     <h3>🎯 Who to pitch</h3>
@@ -928,25 +947,46 @@ function renderStats(){
 
 // ---------- money ----------
 const RATE_CPM = 25;              // dollars per 1,000 views, typical for a small creator post
-let Q = { shoot:1, extra:0, post:0, usage:0, excl:0 };
+let Q = { shoot:1, shorts:0, yt:0, photos:0, usage:0, excl:0, partner:0 };
+let QAPPS = new Set(["ig"]), QEXTRA = new Set();
+function perPostOf(views){ const c = (DATA && DATA.stats && DATA.stats.chase) || {}; return views && c.posts_30d ? views / c.posts_30d : 0; }
+function priceFrom(views, cpm, floor){ return Math.max(floor, Math.round(views * cpm / 1000 / 25) * 25 * 3); }
 function quoteGroups(){
   const c = (DATA && DATA.stats && DATA.stats.chase) || {};
-  const perPost = c.instagram_views_30d && c.posts_30d ? c.instagram_views_30d / c.posts_30d : 0;
-  const ig = Math.max(150, Math.round(perPost * RATE_CPM / 1000 / 25) * 25 * 3);
+  const ipp = perPostOf(c.instagram_views_30d), tpp = perPostOf(c.tiktok_views_30d), ypp = perPostOf(c.youtube_views_30d);
+  const apps = [
+    ["ig", "📸 Instagram reel", priceFrom(ipp, RATE_CPM, 150), ipp],
+    ["story", "⚡ Instagram story", priceFrom(ipp * .3, RATE_CPM, 75), ipp * .3],
+    ["tt", "🎵 TikTok", priceFrom(tpp, 20, 100), tpp],
+    ["yts", "▶️ YouTube Short", priceFrom(ypp, 20, 75), ypp],
+    ["fb", "📘 Facebook reel", 50, null],
+    ["ytl", "📺 Full video about them on your YouTube", 600, null],
+    ["ytm", "🗣️ 60 second shoutout in a YouTube video", 250, null],
+    ["show", "🎙️ Segment on the Day To Day Show", 400, null]
+  ];
   return {
-    perPost,
+    perPost: ipp, apps,
     groups: [
-      ["shoot","SHOOT",[["No shoot, post only",0],["Half day",1200],["Full day",2200],["Two days",4000]]],
-      ["extra","EXTRA VIDEOS",[["Just the one",0],["2 videos",350],["3 videos",700],["5 videos",1400]]],
-      ["post","YOU POST IT",[["They post it",0],["Instagram, " + usd(ig),ig],["Instagram and TikTok, " + usd(Math.round(ig * 1.5)), Math.round(ig * 1.5)]]],
-      ["usage","AD RIGHTS",[["Organic only",0],["Ads, 3 months",.4],["Ads, 6 months",.6],["Ads, forever",1]]],
-      ["excl","EXCLUSIVITY",[["None",0],["3 months",.25],["6 months",.4]]]
+      ["shoot","🎥 THE SHOOT","How long you film.",[["No shoot",0],["Half day",1200],["Full day",2200],["Two days",4000]]],
+      ["shorts","📱 SHORT VIDEOS","Vertical videos they get. The first one is in the shoot price.",[["Just 1",0],["2",350],["3",700],["5",1400],["10",2600]]],
+      ["yt","📺 YOUTUBE LONG FORM","A full edited horizontal video they keep and post themselves.",[["None",0],["Up to 5 min",900],["5 to 10 min",1500],["10 to 20 min",2500]]],
+      ["photos","📷 PHOTOS","Edited photos from the same shoot.",[["None",0],["10 photos",300],["25 photos",600],["50 photos",1000]]],
+      ["usage","📢 AD RIGHTS","Can they run your video as a paid ad?",[["No, just posts",0],["3 months",.4],["6 months",.6],["Forever",1]]],
+      ["partner","🤝 BOOST FROM YOUR ACCOUNT","They pay to push your post as you. Instagram partnership ads or TikTok Spark ads.",[["No",0],["30 days",250],["90 days",600]]],
+      ["excl","🚫 NO COMPETITORS","You won't work with their rivals.",[["None",0],["3 months",.25],["6 months",.4]]]
+    ],
+    extras: [
+      ["raw","🗂️ All the raw footage",500,"flat"],
+      ["rush","⚡ Rush, done in 3 days",.25,"pct"],
+      ["rev","🔁 Extra round of changes",150,"flat"],
+      ["link","🔗 Link in bio for 7 days",50,"flat"],
+      ["travel","🚗 Travel outside Philly",300,"flat"]
     ]
   };
 }
 function renderMoney(){
   const c = (DATA && DATA.stats && DATA.stats.chase) || {};
-  const { perPost, groups } = quoteGroups();
+  const { perPost, apps, groups, extras } = quoteGroups();
   document.getElementById("proof").innerHTML =
     statCard("VIEWS PER POST", perPost ? fmt(perPost) : null, "Instagram, last 30 days") +
     statCard("VIEWS A MONTH", fmt(c.instagram_views_30d), "Instagram, last 30 days") +
@@ -954,16 +994,38 @@ function renderMoney(){
     statCard("WHO THEY ARE", "25 to 44", "77% of followers. Slightly more men.", true);
   document.getElementById("readReach").textContent = "A brand paying for a post buys about " + (perPost ? fmt(perPost) : "a few thousand") +
     " views. At normal creator rates that is worth a few hundred dollars, not thousands. Pitch the shoot, not the reach.";
-  document.getElementById("quote").innerHTML = groups.map(g => '<div class="stat" style="margin-bottom:8px"><p class="lab">' + g[1] + '</p><div class="opts">' +
-    g[2].map((o,i) => '<button class="opt" data-q="' + g[0] + '" data-i="' + i + '" aria-pressed="' + (Q[g[0]] === i) + '">' + esc(o[0]) + "</button>").join("") + "</div></div>").join("");
-  const v = k => groups.find(g => g[0] === k)[2][Q[k]][1];
-  const base = v("shoot") + v("extra") + v("post"), total = base * (1 + v("usage") + v("excl"));
+  const opt = (k, i, label, on) => '<button class="opt" data-q="' + k + '" data-i="' + i + '" aria-pressed="' + on + '">' + esc(label) + "</button>";
+  const grp = g => '<div class="qgrp"><p class="lab">' + g[1] + '</p><p class="qhelp">' + esc(g[2]) + '</p><div class="opts">' +
+    g[3].map((o, i) => opt(g[0], i, o[0] + (!o[1] ? "" : (g[0] === "usage" || g[0] === "excl") ? " · +" + Math.round(o[1] * 100) + "%" : " · " + usd(o[1])), Q[g[0]] === i)).join("") + "</div></div>";
+  const appsHtml = '<div class="qgrp"><p class="lab">📣 YOU POST IT</p><p class="qhelp">Tap every app you post it on. Prices come from your real views, with a floor.</p><div class="qapps">' +
+    apps.map(a => '<button class="qapp" data-app="' + a[0] + '" aria-pressed="' + QAPPS.has(a[0]) + '"><span class="qtick">' + (QAPPS.has(a[0]) ? "✅" : "⬜") + "</span><b>" + esc(a[1]) + "</b><em>" + usd(a[2]) + "</em>" +
+      (a[3] != null && a[3] >= 100 ? "<small>📊 about " + fmt(a[3]) + " views a post</small>" : "<small>Your starting price</small>") + "</button>").join("") + "</div></div>";
+  const extrasHtml = '<div class="qgrp"><p class="lab">➕ EXTRAS</p><p class="qhelp">Tap any they ask for.</p><div class="opts">' +
+    extras.map(x => '<button class="opt" data-extra="' + x[0] + '" aria-pressed="' + QEXTRA.has(x[0]) + '">' + esc(x[1]) + " · " + (x[3] === "pct" ? "+" + Math.round(x[2] * 100) + "%" : usd(x[2])) + "</button>").join("") + "</div></div>";
+  const G = k => groups.find(g => g[0] === k);
+  document.getElementById("quote").innerHTML =
+    '<p class="qsec">1️⃣ What you make</p>' + ["shoot","shorts","yt","photos"].map(k => grp(G(k))).join("") +
+    '<p class="qsec">2️⃣ Where it goes</p>' + appsHtml +
+    '<p class="qsec">3️⃣ What they can do with it</p>' + ["usage","partner","excl"].map(k => grp(G(k))).join("") +
+    '<p class="qsec">4️⃣ Anything else</p>' + extrasHtml;
+  // receipt
+  const lines = [], v = k => G(k)[3][Q[k]];
+  const LBL = { shoot: o => "🎥 " + o[0] + " shoot", shorts: o => "📱 " + o[0] + " short videos", yt: o => "🎬 YouTube video they keep, " + o[0].toLowerCase(), photos: o => "📷 " + o[0] };
+  ["shoot","shorts","yt","photos"].forEach(k => { const o = v(k); if (o[1]) lines.push([LBL[k](o), o[1]]); });
+  apps.filter(a => QAPPS.has(a[0])).forEach(a => lines.push([a[1], a[2]]));
+  if (v("partner")[1]) lines.push(["🤝 Boost from your account, " + v("partner")[0], v("partner")[1]]);
+  extras.filter(x => QEXTRA.has(x[0]) && x[3] === "flat").forEach(x => lines.push([x[1], x[2]]));
+  const base = lines.reduce((a, l) => a + l[1], 0);
+  const pcts = [];
+  if (v("usage")[1]) pcts.push(["📢 Ad rights, " + v("usage")[0].toLowerCase(), v("usage")[1]]);
+  if (v("excl")[1]) pcts.push(["🚫 No competitors, " + v("excl")[0], v("excl")[1]]);
+  extras.filter(x => QEXTRA.has(x[0]) && x[3] === "pct").forEach(x => pcts.push([x[1], x[2]]));
+  const total = base * (1 + pcts.reduce((a, p) => a + p[1], 0));
   document.getElementById("qTotal").textContent = usd(total);
+  document.getElementById("qStickyN").textContent = usd(total);
   document.getElementById("qFloor").textContent = usd(total * .75);
-  const bits = [usd(base) + " base"];
-  if (v("usage")) bits.push("plus " + Math.round(v("usage") * 100) + "% ad rights");
-  if (v("excl")) bits.push("plus " + Math.round(v("excl") * 100) + "% exclusivity");
-  document.getElementById("qBreak").textContent = bits.join(", ") + ".";
+  document.getElementById("qBreak").innerHTML = (lines.length ? '<div class="rcpt">' + lines.map(l => "<div><span>" + esc(l[0]) + "</span><b>" + usd(l[1]) + "</b></div>").join("") +
+    pcts.map(p => '<div class="pct"><span>' + esc(p[0]) + "</span><b>+" + Math.round(p[1] * 100) + "%</b></div>").join("") + "</div>" : "Tap what they want above.");
   document.getElementById("brands").innerHTML = [
     ["Philly restaurants, bars, gyms, barbers","About 1,200 of your followers live in Philly. A local owner can picture them walking in.","Half day shoot plus one post. Around $1,500.",""],
     ["Philly real estate and developers","You already shot for Post Brothers. Developers pay production rates and need footage constantly.","Day rate work. The best paying category here.",""],
@@ -972,7 +1034,11 @@ function renderMoney(){
     ["Anything aimed at teenagers","6.5% of your followers are 18 to 24. You are the wrong person for it.","Turn it down or refer it out.","bad"]
   ].map(b => '<div class="note ' + b[3] + '"><b>' + b[0] + "</b><p>" + b[1] + '</p><p class="how">' + b[2] + "</p></div>").join("");
 }
-document.getElementById("sMoney").addEventListener("click", e => { const b = e.target.closest(".opt"); if (!b) return; Q[b.dataset.q] = Number(b.dataset.i); renderMoney(); });
+document.getElementById("sMoney").addEventListener("click", e => {
+  const a = e.target.closest("[data-app]"); if (a) { const k = a.dataset.app; QAPPS.has(k) ? QAPPS.delete(k) : QAPPS.add(k); renderMoney(); return; }
+  const x = e.target.closest("[data-extra]"); if (x) { const k = x.dataset.extra; QEXTRA.has(k) ? QEXTRA.delete(k) : QEXTRA.add(k); renderMoney(); return; }
+  const b = e.target.closest(".opt[data-q]"); if (!b) return; Q[b.dataset.q] = Number(b.dataset.i); renderMoney();
+});
 
 // ---------- film next ----------
 // ---------- Film next ----------
