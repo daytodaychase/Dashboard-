@@ -333,6 +333,78 @@ details.ref[open] summary::before{content:"\2212 ";}
 .iscore{margin:6px 0;padding:8px 12px;border-radius:10px;font-weight:700;font-size:14px}
 .iscore small{display:block;font-weight:500;margin-top:3px}
 .iscore.ok{background:rgba(34,197,94,.15)}.iscore.mid{background:rgba(234,179,8,.18)}.iscore.bad{background:rgba(239,68,68,.15)}
+
+/* Film next, visual */
+.k-talk{--kc:#7C3AED;--kcs:rgba(124,58,237,.13)} .k-ditl{--kc:#EA7A12;--kcs:rgba(234,122,18,.14)}
+.k-showme{--kc:#2563EB;--kcs:rgba(37,99,235,.13)} .k-show{--kc:#DB2777;--kcs:rgba(219,39,119,.13)}
+:root[data-theme="dark"] .k-talk{--kc:#B99BFF} :root[data-theme="dark"] .k-ditl{--kc:#FFB36B}
+:root[data-theme="dark"] .k-showme{--kc:#8FB2FF} :root[data-theme="dark"] .k-show{--kc:#FF8CC0}
+.tiles{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 10px;margin:0 -2px 6px;-webkit-overflow-scrolling:touch}
+.tile{flex:0 0 132px;scroll-snap-align:start;text-align:left;border:2px solid transparent;background:var(--kcs);border-radius:14px;padding:10px;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;gap:4px;font:inherit}
+.tile em{font-style:normal;font-size:22px}
+.tile b{font-size:13px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tile span{font-size:11px;color:var(--soft);margin-top:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile.on{border-color:var(--kc);box-shadow:0 4px 14px var(--kcs)}
+.fcard{border-radius:20px;overflow:hidden;background:var(--cell);border:1px solid var(--grid);box-shadow:var(--shadow);margin-bottom:22px}
+.fband{display:flex;align-items:center;gap:8px;background:var(--kc);color:#fff;padding:10px 14px}
+:root[data-theme="dark"] .fband{color:#111}
+.femo{font-size:24px}.ftype{font-weight:800;letter-spacing:.02em}.fcount{font-weight:700;opacity:.85}
+.finfo{background:rgba(255,255,255,.25);border:0;border-radius:99px;width:32px;height:32px;cursor:pointer;font-size:15px}
+.fbody{padding:14px}
+.ftitle{font-size:22px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.fchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.fchips span{background:var(--card);border-radius:99px;padding:5px 10px;font-size:13px;font-weight:600}
+.fwhy{background:var(--card);border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:12px;line-height:1.45}
+.fsay{background:var(--kcs);border-left:5px solid var(--kc);border-radius:12px;padding:12px 14px;font-size:19px;font-weight:700;line-height:1.35}
+.fsay small{display:block;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--kc);margin-bottom:4px}
+.fstatus{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0}
+.bricks{display:flex;align-items:center;gap:3px}
+.bricks i{width:16px;height:12px;border-radius:3px;background:var(--grid)}
+.bricks.ok i.on{background:var(--posted)} .bricks.mid i.on{background:#E0A800} .bricks.bad i.on{background:var(--held)}
+.bricks b{margin-left:6px;font-size:13px}
+.blankchip{background:#FDE68A;color:#78350F;border:0;border-radius:99px;padding:7px 12px;font-weight:800;cursor:pointer;font:inherit;font-weight:800}
+.readychip{background:var(--postedsoft);color:var(--posted);border-radius:99px;padding:7px 12px;font-weight:800}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--card);border-radius:12px;padding:4px;margin-bottom:12px}
+.seg button{border:0;background:transparent;border-radius:9px;padding:10px 4px;font:inherit;font-weight:700;font-size:13px;color:var(--soft);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--cell);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.fpanel{min-height:120px}
+.onscreen{border:2px dashed var(--kc);border-radius:12px;padding:10px 12px;font-weight:700;margin-bottom:12px;text-align:center}
+.onscreen small{display:block;font-size:11px;letter-spacing:.06em;color:var(--soft);margin-bottom:3px}
+.thread{display:flex;flex-direction:column;gap:6px}
+.me{align-self:flex-end;max-width:86%;background:var(--kc);color:#fff;border-radius:18px 18px 4px 18px;padding:10px 14px;font-size:16px;font-weight:600;line-height:1.35}
+:root[data-theme="dark"] .me{color:#111}
+.them{align-self:flex-start;max-width:80%;background:var(--card);color:var(--soft);border-radius:18px 18px 18px 4px;padding:7px 12px;font-size:13px;font-style:italic}
+.them span{font-style:normal;margin-right:5px}
+.scene{align-self:center;width:100%;background:transparent;border:1px solid var(--grid);border-radius:12px;padding:9px 12px;font-size:14px;color:var(--soft);text-align:center}
+.step{background:var(--card);border-radius:12px;padding:10px 12px;font-size:15px;font-weight:600}
+.gap{background:#FDE68A;color:#78350F;border-radius:6px;padding:1px 5px;font-weight:700}
+.refcard{display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit;background:var(--card);border-radius:14px;padding:10px;margin-bottom:12px}
+.refimg{position:relative;flex:0 0 92px;height:130px;border-radius:10px;overflow:hidden;background:linear-gradient(160deg,var(--kc),#111)}
+.refimg img{width:100%;height:100%;object-fit:cover;display:block}
+.refimg .play{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:26px;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.refimg .fire{position:absolute;left:5px;bottom:5px;background:#EF4444;color:#fff;font-weight:800;font-size:12px;border-radius:99px;padding:2px 7px}
+.refinfo{display:flex;flex-direction:column;gap:4px}
+.refinfo b{font-size:17px}.refinfo span{font-size:14px}.refinfo em{font-style:normal;color:var(--kc);font-weight:700;font-size:14px;margin-top:4px}
+.plabel{font-size:12px;font-weight:800;letter-spacing:.05em;color:var(--soft);text-transform:uppercase;margin:12px 0 6px}
+.beats{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.beat,.blank{display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.4}
+.beat span{flex:0 0 28px;height:28px;border-radius:99px;background:var(--kc,var(--key));color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px}
+.blank{background:#FEF3C7;color:#78350F;border-radius:12px;padding:10px 12px;margin-bottom:8px;font-weight:600}
+.blank span{flex:0 0 24px;height:24px;border-radius:99px;background:#F59E0B;color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.allset{background:var(--postedsoft);color:var(--posted);border-radius:12px;padding:12px;font-weight:700;margin-bottom:8px}
+.fbtns{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:14px}
+.fnav{display:flex;align-items:center;justify-content:space-between;margin-top:10px;color:var(--faint);font-size:12px}
+.fnav button{width:44px;height:44px;border-radius:99px;border:1px solid var(--grid);background:var(--cell);font-size:24px;color:var(--ink);cursor:pointer}
+.sbar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.sbar div{background:var(--cell);border:1px solid var(--grid);border-radius:14px;padding:10px;text-align:center}
+.sbar b{display:block;font-size:24px}.sbar span{font-size:12px;color:var(--soft)}
+.dumpbtn{width:100%;border:0;border-radius:16px;padding:14px;background:linear-gradient(135deg,#7C3AED,#DB2777);color:#fff;font:inherit;font-size:17px;font-weight:800;cursor:pointer;margin-bottom:10px}
+.dumpbtn small{display:block;font-size:12px;font-weight:600;opacity:.9;margin-top:2px}
+.sdump{display:flex;gap:6px;align-items:center;padding:8px 12px;border-radius:10px;background:var(--card);margin:0 0 8px;font-size:14px}
+.sdump span{margin-left:auto;color:var(--soft)}
+.schips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.schip{position:relative;border:1px solid var(--grid);background:var(--cell);border-radius:99px;padding:9px 14px;font:inherit;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer}
+.schip .dot{position:absolute;top:-3px;right:-3px;width:12px;height:12px;border-radius:99px;background:var(--held);border:2px solid var(--paper)}
 </style></head><body>
 
 <div class="wrap">
@@ -920,6 +992,63 @@ function reelNeed(){
   }
   return { n, first };
 }
+const KCOL = { talk: "k-talk", ditl: "k-ditl", showme: "k-showme", show: "k-show", job: "k-ditl" };
+let FTAB = "script", WHY_OPEN = false;
+function hl(t){ return esc(t || "").replace(/\[YOUR DETAIL: ?([^\]]*)\]/g, '<span class="gap">✍️ $1</span>'); }
+function blanksOf(it){
+  const out = [], seen = new Set(), re = /\[YOUR DETAIL: ?([^\]]*)\]/g;
+  const texts = [it.hook, it.on_screen].concat((Array.isArray(it.script) ? it.script : []).map(l => l.say));
+  texts.forEach(t => { let m; re.lastIndex = 0; while ((m = re.exec(String(t || "")))) { const q = m[1].trim(); if (!seen.has(q)) { seen.add(q); out.push(q); } } });
+  return out;
+}
+function bricks(a){
+  if (!a || a.score == null) return "";
+  const of = a.of || 7, s = a.score;
+  const cls = s >= 6 ? "ok" : s >= 5 ? "mid" : "bad";
+  return '<div class="bricks ' + cls + '" title="' + s + " of " + of + '">' + Array.from({ length: of }, (_, i) => '<i class="' + (i < s ? "on" : "") + '"></i>').join("") + "<b>" + s + "/" + of + "</b></div>";
+}
+function refThumb(r){
+  const m = String((r && r.sandcastles_url) || "").match(/video\/([0-9a-f-]{36})/);
+  return m ? "https://storage.googleapis.com/prod-sandcastles-thumbnails/" + m[1] + ".jpg" : "";
+}
+function scriptPanel(it){
+  const script = Array.isArray(it.script) ? it.script : [];
+  let h = it.on_screen ? '<div class="onscreen"><small>📝 WORDS ON SCREEN</small>' + hl(it.on_screen) + "</div>" : "";
+  h += '<div class="thread">';
+  script.forEach(l => {
+    const say = String(l.say || "");
+    const scene = /^\(no talking\)|^\(text on screen\)|^\(cut|^\(walk/i.test(say);
+    if (scene) h += '<div class="scene">🎬 ' + hl(say.replace(/^\((no talking|text on screen)\)\s*/i, "")) + "</div>";
+    else if (it.kind === "show") h += '<div class="step">✂️ ' + hl(say) + "</div>";
+    else h += '<div class="me">' + hl(say) + "</div>";
+    if (l.think) h += '<div class="them"><span>💭</span>' + esc(l.think) + "</div>";
+  });
+  return h + "</div>";
+}
+function copyPanel(it){
+  const r = it.ref;
+  if (!r || !r.handle) return '<p class="hint">No reference video on this one.</p>';
+  const link = r.url || r.sandcastles_url, th = refThumb(r);
+  let h = '<a class="refcard" href="' + esc(link || "#") + '" target="_blank" rel="noopener">' +
+    '<div class="refimg">' + (th ? '<img src="' + esc(th) + '" alt="" loading="lazy" onerror="this.remove()">' : "") + '<span class="play">▶</span>' +
+      (r.outlier ? '<span class="fire">🔥 ' + r.outlier + "x</span>" : "") + "</div>" +
+    '<div class="refinfo"><b>@' + esc(r.handle) + "</b>" +
+      (r.views ? "<span>👀 " + fmt(r.views) + " views</span>" : "") +
+      (r.outlier ? "<span>🔥 " + r.outlier + " times their normal</span>" : "") +
+      '<em>Tap to watch ↗</em></div></a>';
+  if (Array.isArray(r.beats) && r.beats.length) {
+    h += '<p class="plabel">Copy these steps</p><div class="beats">' + r.beats.map((b, i) => '<div class="beat"><span>' + (i + 1) + "</span>" + esc(b) + "</div>").join("") + "</div>";
+  }
+  h += '<p class="hint">Same steps. Your story. Never their story.</p>';
+  return h;
+}
+function fillPanel(it){
+  const q = blanksOf(it);
+  if (!q.length) return '<div class="allset">✅ Nothing to fill in. Every line is already true.</div>';
+  return '<p class="hint">Only you know these. Fill them in when you film, or say them in a story dump.</p>' +
+    q.map((x, i) => '<div class="blank"><span>' + (i + 1) + "</span>" + esc(x) + "</div>").join("") +
+    '<button class="ibtn sk" style="width:100%;margin-top:6px" data-dump="1">🎤 Say them in a story dump</button>';
+}
 function renderIdeas(){
   const el = document.getElementById("sIdeas");
   const F = (DATA && DATA.film) || { list: [], winners: [] };
@@ -929,63 +1058,62 @@ function renderIdeas(){
   if (need.n) {
     const g = new Date(need.first + "T12:00:00Z");
     head = '<div class="fneed bad">🎬 Film ' + need.n + " reel" + (need.n === 1 ? "" : "s") + " this week<small>First empty spot: " + DOW[g.getUTCDay()] + " " + MONTHS[g.getUTCMonth()].slice(0,3) + " " + g.getUTCDate() + ". ✅ " + (F.filmed_7d || 0) + " filmed in the last 7 days.</small></div>";
-  } else head = '<div class="fneed ok">🟢 Reels are covered for the next 7 days<small>✅ ' + (F.filmed_7d || 0) + " filmed in the last 7 days. Keep going to stay ahead.</small></div>";
-  if (!list.length) { el.innerHTML = '<h3>🎥 Film next</h3>' + head + '<p class="hint">No ideas right now. New ones come every Monday and Thursday.</p>' + winnersHtml(F.winners) + storiesHtml(); return; }
+  } else head = '<div class="fneed ok">🟢 Reels are covered for the next 7 days<small>✅ ' + (F.filmed_7d || 0) + " filmed in the last 7 days.</small></div>";
+  if (!list.length) { el.innerHTML = '<h3>🎥 Film next</h3>' + head + '<p class="hint">No ideas right now. New ones come every Monday and Thursday.</p>' + storiesHtml() + winnersHtml(F.winners); return; }
   if (IDX >= list.length) IDX = 0;
-  const it = list[IDX], k = IKIND[it.kind] || ["💡", it.kind];
-  const script = Array.isArray(it.script) ? it.script : [];
-  el.innerHTML = '<h3>🎥 Film next</h3>' + head +
-    '<div class="icard">' +
-      '<div class="itop"><span class="ibadge">' + k[0] + " " + k[1] + '</span><span class="icount">Idea ' + (IDX + 1) + " of " + list.length + "</span></div>" +
-      (it.shoot ? '<div class="imeta" style="margin-top:0"><span>📅 ' + esc(it.shoot.when || "") + " · " + esc(it.shoot.title || "") + "</span></div>" : "") +
-      '<div class="ititle">' + esc(it.title) + "</div>" +
-      '<div class="isay"><small>🗣️ SAY THIS FIRST</small>' + hl(it.hook) + "</div>" +
-      (it.on_screen ? '<div class="iscreen"><small>📝 TEXT ON SCREEN</small>' + hl(it.on_screen) + "</div>" : "") +
-      refHtml(it) +
-      '<div class="imeta"><span>📍 ' + (IPLACE[it.place] || esc(it.place || "")) + "</span><span>⏱️ about " + (it.length_sec || 30) + " sec</span></div>" +
-      (it.why ? '<p class="iwhy">🔥 ' + esc(it.why) + "</p>" : "") +
-      (SCRIPT_OPEN ? '<ul class="iscript">' + script.map(l => '<li><div class="s">' + hl(l.say) + "</div>" + (l.think ? '<div class="t">💭 They\'re thinking: ' + esc(l.think) + "</div>" : "") + "</li>").join("") + "</ul>" : "") +
-      '<div class="ibtns">' +
-        '<button class="ibtn sc" data-film="script">' + (SCRIPT_OPEN ? "📜 Hide script" : "📜 Show full script") + "</button>" +
-        '<button class="ibtn go" data-film="done">✅ Filmed it</button>' +
-        '<button class="ibtn sk" data-film="skip">⏭️ Skip</button>' +
+  const it = list[IDX], k = IKIND[it.kind] || ["💡", it.kind], kc = KCOL[it.kind] || "k-talk";
+  const q = blanksOf(it);
+  const tabs = [["script", "🗣️ Script"], ["copy", "🎯 Copy this"], ["fill", "✍️ Fill in" + (q.length ? " " + q.length : "")]];
+  const tiles = '<div class="tiles">' + list.map((x, i) => {
+    const kk = IKIND[x.kind] || ["💡", ""], nb = blanksOf(x).length;
+    return '<button class="tile ' + (KCOL[x.kind] || "k-talk") + (i === IDX ? " on" : "") + '" data-jump="' + i + '"><em>' + kk[0] + "</em><b>" + esc(x.title) + "</b><span>" + (x.shoot ? "📅 " + esc(x.shoot.when || "") : (IPLACE[x.place] || "")) + (nb ? " · ✍️" + nb : " · ✅") + "</span></button>";
+  }).join("") + "</div>";
+  const panel = FTAB === "copy" ? copyPanel(it) : FTAB === "fill" ? fillPanel(it) : scriptPanel(it);
+  el.innerHTML = '<h3>🎥 Film next</h3>' + head + tiles +
+    '<div class="fcard ' + kc + '">' +
+      '<div class="fband"><span class="femo">' + k[0] + '</span><span class="ftype">' + esc(k[1]) + '</span><span class="grow"></span><span class="fcount">' + (IDX + 1) + " / " + list.length + '</span><button class="finfo" data-film="why" aria-label="Why this idea">ℹ️</button></div>' +
+      '<div class="fbody">' +
+        '<div class="ftitle">' + esc(it.title) + "</div>" +
+        '<div class="fchips">' + (it.shoot ? "<span>📅 " + esc(it.shoot.when || "") + "</span>" : "") + "<span>" + (IPLACE[it.place] || esc(it.place || "")) + "</span><span>⏱️ " + (it.length_sec || 30) + " sec</span></div>" +
+        (WHY_OPEN && it.why ? '<div class="fwhy">🔥 ' + esc(it.why) + (it.audit && it.audit.notes ? "<br>💡 " + esc(it.audit.notes) : "") + "</div>" : "") +
+        '<div class="fsay"><small>🗣️ SAY THIS FIRST</small>' + hl(it.hook) + "</div>" +
+        '<div class="fstatus">' + bricks(it.audit) + (q.length ? '<button class="blankchip" data-film="fill">✍️ ' + q.length + " blank" + (q.length === 1 ? "" : "s") + "</button>" : '<span class="readychip">✅ Ready</span>') + "</div>" +
+        '<div class="seg">' + tabs.map(t => '<button data-film="' + t[0] + '" aria-pressed="' + (FTAB === t[0]) + '">' + t[1] + "</button>").join("") + "</div>" +
+        '<div class="fpanel">' + panel + "</div>" +
+        '<div class="fbtns"><button class="ibtn go" data-film="done">✅ Filmed it</button><button class="ibtn sk" data-film="skip">⏭️ Skip</button></div>' +
+        '<div class="fnav"><button data-film="prev" aria-label="Back">‹</button><span>Swipe the tiles or tap the arrows</span><button data-film="next" aria-label="Next">›</button></div>' +
       "</div>" +
-      '<div class="inav"><button data-film="prev">‹ Back</button><button data-film="next">Next idea ›</button></div>' +
-    "</div>" +
-    '<h3>📋 All ideas this week</h3><div class="ilist">' +
-      list.map((x, i) => '<button class="irow' + (i === IDX ? " on" : "") + '" data-jump="' + i + '">' + (IKIND[x.kind] || ["💡"])[0] + " " + esc(x.title) + "<span>" + (x.shoot ? "📅 " + esc(x.shoot.when || "") : (IPLACE[x.place] || "")) + "</span></button>").join("") +
-    "</div>" + winnersHtml(F.winners) + storiesHtml();
-}
-function hl(t){ return esc(t || "").replace(/\[YOUR DETAIL: ?([^\]]*)\]/g, '<span class="gap">✍️ $1</span>'); }
-function refHtml(it){
-  const r = it.ref, a = it.audit; let h = "";
-  if (r && r.handle) {
-    const link = r.url || r.sandcastles_url;
-    h += '<a class="iref" href="' + esc(link || "#") + '" target="_blank" rel="noopener">🎯 Copied from @' + esc(r.handle) + (r.views ? " · 👀 " + fmt(r.views) : "") + (r.outlier ? " · 🔥 " + r.outlier + "x their normal" : "") + (link ? " · Watch ↗" : "") + "</a>";
-    if (Array.isArray(r.beats) && r.beats.length) h += '<ol class="ibeats">' + r.beats.map(b => "<li>" + esc(b) + "</li>").join("") + "</ol>";
-  }
-  if (a && a.score != null) h += '<div class="iscore ' + (a.score >= 6 ? "ok" : a.score >= 5 ? "mid" : "bad") + '">' + "⭐".repeat(a.score) + "☆".repeat(Math.max(0, (a.of || 7) - a.score)) + " " + a.score + "/" + (a.of || 7) + (a.notes ? "<small>" + esc(a.notes) + "</small>" : "") + "</div>";
-  return h;
+    "</div>" + storiesHtml() + winnersHtml(F.winners);
+  const on = el.querySelector(".tile.on"); if (on && on.scrollIntoView) on.scrollIntoView({ block: "nearest", inline: "center" });
 }
 function storiesHtml(){
   const B = (DATA && DATA.story_bank) || { stories: [], dumps: [] };
   const st = B.stories || [], dumps = (B.dumps || []).slice(0, 4);
-  const DS = { transcribing: "⏳ Listening", done: "✅ Read", failed: "❌ Could not read" };
-  const dumpRows = dumps.map(d => '<div class="sdump"><b>🎤 ' + esc(d.name) + "</b><span>" + (DS[d.status] || d.status) + (d.status === "done" ? " · " + (d.stories || 0) + " stories found" : "") + "</span></div>").join("");
+  const DS = { transcribing: ["⏳", "Listening"], done: ["✅", "Read"], failed: ["❌", "Could not read"] };
   const open = st.filter(x => x.needs).length;
-  return '<h3>📚 Your stories (' + st.length + ')</h3>' +
-    '<p class="hint">Real things that happened to you. Scripts are built only from these. ' + (open ? "❓ " + open + " need one more detail." : "") + "</p>" +
-    '<button class="ibtn go" style="width:100%;margin-bottom:10px" data-dump="1">🎤 Record a story dump</button>' +
-    dumpRows +
-    st.map(x => '<details class="story"><summary>' + (x.used ? "✅ " : "") + esc(x.title) + (x.needs ? ' <span class="sneed">❓</span>' : "") + "</summary>" +
-      '<p>' + esc(x.facts || "") + "</p>" +
-      (x.needs ? '<p class="sq">❓ Tell me: ' + esc(x.needs) + "</p>" : "") +
-      '<small>' + (x.source && x.source.indexOf("voice memo") === 0 ? "🎤 " : "🧠 ") + esc(x.source || "") + "</small></details>").join("");
+  return '<h3>📚 Your stories</h3>' +
+    '<div class="sbar"><div><b>' + st.length + "</b><span>stories</span></div><div><b>" + open + "</b><span>❓ need a detail</span></div><div><b>" + st.filter(x => x.used).length + "</b><span>✅ used</span></div></div>" +
+    '<button class="dumpbtn" data-dump="1">🎤 Record a story dump<small>Talk 10 minutes. Real stories only.</small></button>' +
+    dumps.map(d => { const s = DS[d.status] || ["•", d.status]; return '<div class="sdump">' + s[0] + " <b>" + esc(d.name) + "</b><span>" + s[1] + (d.status === "done" ? " · " + (d.stories || 0) + " found" : "") + "</span></div>"; }).join("") +
+    '<div class="schips">' + st.map((x, i) => '<button class="schip" data-story="' + i + '">' + (x.used ? "✅ " : "") + esc(x.title) + (x.needs ? '<i class="dot"></i>' : "") + "</button>").join("") + "</div>";
+}
+function storyOpen(i){
+  const x = (((DATA && DATA.story_bank) || {}).stories || [])[i]; if (!x) return;
+  wizOpen('<h3>' + esc(x.title) + "</h3>" +
+    '<p class="pnote" style="margin:0 0 10px;font-size:15px;line-height:1.5">' + esc(x.facts || "").replace(/\n/g, "<br>") + "</p>" +
+    (x.needs ? '<div class="blank"><span>❓</span>' + esc(x.needs) + "</div>" : '<div class="allset">✅ This story is complete.</div>') +
+    '<p class="plabel">' + (String(x.source || "").indexOf("voice memo") === 0 ? "🎤 " : "🧠 ") + esc(x.source || "") + "</p>" +
+    (x.needs ? '<button class="wlink" style="width:100%;border:0;cursor:pointer" data-kind-go="storydump">🎤 Answer it in a story dump</button>' : ""));
 }
 function dumpHelp(){
   wizOpen('<h3>🎤 Story dump</h3>' +
-    '<p class="pnote" style="margin:0 0 8px">1. Open Voice Memos. Talk for about 10 minutes.<br>2. Tell real stories. What happened, who was there, what they said, how it felt.<br>3. Answer any ❓ questions from your story list.<br>4. Upload the memo to the folder below.</p>' +
-    '<p class="pnote">About 10 minutes later the stories show up here. Nothing is made up. Only what you said.</p>' +
+    '<div class="beats">' +
+      '<div class="beat"><span>1</span>Open Voice Memos. Talk about 10 minutes.</div>' +
+      '<div class="beat"><span>2</span>Tell real stories. Who was there, what they said, how it felt.</div>' +
+      '<div class="beat"><span>3</span>Answer the ❓ questions from your stories.</div>' +
+      '<div class="beat"><span>4</span>Upload the memo to the folder below.</div>' +
+    '</div>' +
+    '<p class="pnote">About 10 minutes later your stories show up here. Nothing gets made up.</p>' +
     '<button class="wlink" style="width:100%;border:0;cursor:pointer" data-kind-go="storydump">📂 Get the upload folder</button>');
 }
 function winnersHtml(w){
@@ -1018,14 +1146,16 @@ async function filmAction(kind, device){
   } catch (e) { wizOpen('<h3>⚠️ That did not work</h3><p class="pnote">' + esc(explain(e)) + "</p>"); }
 }
 document.getElementById("sIdeas").addEventListener("click", e => {
-  const j = e.target.closest("[data-jump]"); if (j) { IDX = Number(j.dataset.jump); SCRIPT_OPEN = false; renderIdeas(); window.scrollTo({ top: 0 }); return; }
+  const j = e.target.closest("[data-jump]"); if (j) { IDX = Number(j.dataset.jump); FTAB = "script"; WHY_OPEN = false; renderIdeas(); return; }
   if (e.target.closest("[data-dump]")) { dumpHelp(); return; }
+  const st = e.target.closest("[data-story]"); if (st) { storyOpen(Number(st.dataset.story)); return; }
   const b = e.target.closest("[data-film]"); if (!b) return;
   const n = ((DATA && DATA.film && DATA.film.list) || []).length;
   const w = b.dataset.film;
-  if (w === "script") { SCRIPT_OPEN = !SCRIPT_OPEN; renderIdeas(); }
-  else if (w === "next") { IDX = (IDX + 1) % Math.max(n, 1); SCRIPT_OPEN = false; renderIdeas(); }
-  else if (w === "prev") { IDX = (IDX - 1 + n) % Math.max(n, 1); SCRIPT_OPEN = false; renderIdeas(); }
+  if (w === "script" || w === "copy" || w === "fill") { FTAB = w; renderIdeas(); }
+  else if (w === "why") { WHY_OPEN = !WHY_OPEN; renderIdeas(); }
+  else if (w === "next") { IDX = (IDX + 1) % Math.max(n, 1); FTAB = "script"; WHY_OPEN = false; renderIdeas(); }
+  else if (w === "prev") { IDX = (IDX - 1 + n) % Math.max(n, 1); FTAB = "script"; WHY_OPEN = false; renderIdeas(); }
   else filmAction(w);
 });
 document.getElementById("panel").addEventListener("click", e => {
@@ -1123,6 +1253,7 @@ async function act(action, extra){
 }
 document.getElementById("upload").addEventListener("click", wizStart);
 document.getElementById("panel").addEventListener("click", e => {
+  if (e.target.closest("[data-dump]")) { dumpHelp(); return; }
   const kg = e.target.closest("[data-kind-go]"); if (kg) { wizRun(kg.dataset.kindGo); return; }
   const o = e.target.closest(".wopt[data-kind]");
   if (o) { if (o.dataset.kind === "portrait") wizHandle(); else wizRun(o.dataset.kind); return; }
