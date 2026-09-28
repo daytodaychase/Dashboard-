@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="en" data-theme="light"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Posting">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="posting-icon.png">
+<link rel="icon" href="posting-icon.png">
+<title>Posting</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Opens light on purpose. Only the toggle changes it. */
+:root{
+  --paper:#F6F5F2; --cell:#FFFFFF; --cell2:#FBFAF8; --card:#F4F3EF; --ink:#17181C;
+  --soft:#6B6F78; --faint:#9CA0A8; --grid:#E4E2DC; --rule:#ECEAE5;
+  --key:#0B6E63; --keysoft:#DFF0EC;
+  --posted:#12805A; --postedsoft:#DDF3E8;
+  --sched:#2F5FD0; --schedsoft:#E4EBFB;
+  --held:#AE322A; --heldsoft:#FBE6E3;
+  --photo:#9A5A32; --photosoft:#F7EAE1;
+  --shadow:0 8px 30px rgba(15,17,22,.16);
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#111316; --cell:#17191D; --cell2:#15171A; --card:#20232A; --ink:#EEF0F3;
+  --soft:#9DA3AD; --faint:#6D737D; --grid:#262A31; --rule:#23262C;
+  --key:#4FD1BE; --keysoft:#132E2A;
+  --posted:#45CF98; --postedsoft:#15301F;
+  --sched:#7EA6FF; --schedsoft:#1B2540;
+  --held:#FF8578; --heldsoft:#351B18;
+  --photo:#E6A07A; --photosoft:#33241B;
+  --shadow:0 8px 30px rgba(0,0,0,.55);
+}
+body{
+  background:var(--paper); color:var(--ink);
+  font:400 14px/1.45 Archivo, system-ui, -apple-system, sans-serif;
+  padding-block:0 60px; padding-left:16px; padding-right:16px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1320px; margin:0 auto;}
+.mono{font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums;}
+button{font:inherit; color:inherit;}
+
+/* top bar */
+.top{display:flex; align-items:center; gap:12px 16px; flex-wrap:wrap; padding-block:22px 18px;}
+h1{font:800 26px/1 Archivo, sans-serif; letter-spacing:-.03em; margin:0;}
+.live{display:inline-flex; align-items:center; gap:7px; font-size:13px; color:var(--soft);}
+.pip{width:8px; height:8px; border-radius:50%; background:var(--posted);}
+.pip.off{background:var(--held);}
+.grow{flex:1;}
+.btn{
+  border:1px solid var(--grid); background:var(--cell); border-radius:9px;
+  padding:8px 13px; font-size:13px; font-weight:500; cursor:pointer; color:var(--soft);
+}
+.btn:hover{color:var(--ink); border-color:var(--soft);}
+.btn.armed{color:var(--held); border-color:var(--held);}
+.tz{font-size:12px; color:var(--faint);}
+
+/* summary */
+.summary{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;}
+.chip{
+  display:flex; align-items:baseline; gap:8px; background:var(--cell); border:1px solid var(--grid);
+  border-radius:10px; padding:10px 14px;
+}
+.chip b{font:700 18px/1 Archivo,sans-serif; letter-spacing:-.02em;}
+.chip span{font-size:13px; color:var(--soft);}
+.chip.low b{color:#A96A0B;} .chip.out b{color:var(--held);}
+
+.flag{background:var(--heldsoft); color:var(--held); border-radius:10px; padding:11px 14px; margin-bottom:10px; font-size:13.5px;}
+.flag b{font-weight:600;}
+.oops{background:var(--heldsoft); color:var(--held); border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:14px;}
+
+/* calendar frame */
+.cal{background:var(--cell); border:1px solid var(--grid); border-radius:14px; overflow:hidden;}
+.calhead{display:flex; align-items:center; justify-content:center; gap:14px; padding:16px; border-bottom:1px solid var(--grid);}
+.calhead h2{font:700 17px/1 Archivo,sans-serif; margin:0; min-width:170px; text-align:center;}
+.nav{width:34px; height:34px; border-radius:8px; border:1px solid var(--grid); background:var(--cell); cursor:pointer; color:var(--soft);}
+.nav:hover{color:var(--ink);}
+.today-btn{position:absolute; right:16px;}
+.calhead{position:relative;}
+.dow{display:grid; grid-template-columns:repeat(7,1fr); border-bottom:1px solid var(--grid);}
+.dow div{padding:11px 10px; text-align:center; font-size:13px; font-weight:600; color:var(--soft);}
+.grid{display:grid; grid-template-columns:repeat(7,1fr);}
+.day{min-height:128px; border-right:1px solid var(--grid); border-bottom:1px solid var(--grid); padding:8px; display:flex; flex-direction:column; gap:6px; min-width:0;}
+.day:nth-child(7n){border-right:0;}
+.day.out{background:var(--cell2);}
+.day.out .num{color:var(--faint);}
+.num{font-size:13px; color:var(--soft); display:flex; align-items:center; gap:6px;}
+.day.today .num b{background:var(--key); color:#fff; border-radius:999px; padding:2px 8px; font-weight:600;}
+:root[data-theme="dark"] .day.today .num b{color:#0B1A18;}
+
+/* post card */
+.pc{
+  display:block; width:100%; text-align:left; background:var(--card); border:1px solid transparent;
+  border-radius:9px; padding:7px; cursor:pointer; min-width:0;
+}
+.pc:hover{border-color:var(--grid);}
+.pc:focus-visible{outline:2px solid var(--key); outline-offset:1px;}
+.pcrow{display:flex; gap:7px; align-items:flex-start;}
+.th{width:30px; height:40px; border-radius:5px; object-fit:cover; flex:none; background:var(--grid);}
+.th.none{display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--faint);}
+.pcbody{min-width:0; flex:1;}
+.pill{display:inline-block; font-size:10.5px; font-weight:600; padding:2px 7px; border-radius:999px; margin-bottom:3px;}
+.pill.posted{color:var(--posted); background:var(--postedsoft);}
+.pill.sched{color:var(--sched); background:var(--schedsoft);}
+.pill.held{color:var(--held); background:var(--heldsoft);}
+.pctime{font-size:11.5px; color:var(--soft); display:block;}
+.pcwhat{font-size:12px; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.pcwhat.photo{color:var(--photo);}
+.pccap{font-size:12px; line-height:1.35; color:var(--ink); margin-top:5px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
+.pccap.missing{color:var(--held); font-weight:600;}
+.edit{margin-top:16px;} .edit label{display:block; font-size:12.5px; color:var(--soft); margin:10px 0 5px;}
+.edit textarea,.edit input{width:100%; box-sizing:border-box; font:inherit; font-size:16px; color:var(--ink); background:var(--cell2); border:1px solid var(--grid); border-radius:10px; padding:10px 12px;}
+.edit textarea{min-height:90px; resize:vertical;}
+.save{margin-top:12px; width:100%; padding:13px; border-radius:11px; border:0; background:var(--key); color:#fff; font-weight:600; font-size:15px; cursor:pointer;}
+.save:disabled{opacity:.6;}
+.lock{max-width:420px; margin:60px auto; background:var(--cell); border:1px solid var(--grid); border-radius:14px; padding:22px;}
+.lock h2{margin:0 0 6px; font-size:20px;} .lock p{color:var(--soft); margin:0 0 14px;}
+.lock input{width:100%; box-sizing:border-box; font-size:16px; padding:12px; border-radius:10px; border:1px solid var(--grid); background:var(--cell2); color:var(--ink);}
+.toast{position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom,0px) + 24px); transform:translateX(-50%); background:var(--ink); color:var(--paper); padding:11px 16px; border-radius:10px; font-size:14px; z-index:60; max-width:90%;}
+
+.gap{font-size:11px; color:var(--faint); border:1px dashed var(--grid); border-radius:7px; padding:4px 7px;}
+
+/* detail panel */
+.scrim{position:fixed; inset:0; background:rgba(10,12,16,.45); z-index:40;}
+.panel{
+  position:fixed; z-index:41; right:0; top:0; bottom:0; width:min(440px,100%); box-sizing:border-box;
+  background:var(--cell); box-shadow:var(--shadow); overflow-y:auto;
+  padding:calc(env(safe-area-inset-top,0px) + 20px) 22px calc(env(safe-area-inset-bottom,0px) + 28px);
+}
+.phead{display:flex; align-items:center; gap:10px; margin-bottom:16px;}
+.phead .grow{flex:1;}
+.close{width:36px; height:36px; border-radius:9px; border:1px solid var(--grid); background:var(--cell); cursor:pointer; font-size:18px; color:var(--soft);}
+.big{width:100%; max-width:100%; aspect-ratio:4/5; object-fit:cover; border-radius:12px; background:var(--grid); display:block;}
+.big.none{aspect-ratio:16/7; display:flex; align-items:center; justify-content:center; color:var(--faint);}
+.watch{
+  display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px;
+  background:var(--ink); color:var(--paper); border-radius:11px; padding:13px; font-weight:600; font-size:15px; text-decoration:none;
+}
+.watch:hover{opacity:.9;}
+.pkind{font:700 20px/1.2 Archivo,sans-serif; letter-spacing:-.02em; margin:18px 0 4px;}
+.pwhen{color:var(--soft); font-size:14px;}
+.pcap{font-size:16px; line-height:1.45; margin:14px 0 6px;}
+.ptags{color:var(--soft); font-size:13.5px;}
+.plist{margin-top:18px; border-top:1px solid var(--rule);}
+.plist div{display:flex; justify-content:space-between; gap:12px; padding:11px 0; border-bottom:1px solid var(--rule); font-size:14px;}
+.plist div span:first-child{color:var(--soft);}
+.plist div span:last-child{text-align:right;}
+.pnote{font-size:13px; color:var(--soft); margin-top:14px;}
+
+details.ref{margin-top:22px; background:var(--cell); border:1px solid var(--grid); border-radius:14px; padding:16px 18px;}
+details.ref summary{cursor:pointer; font-weight:600; color:var(--soft); list-style:none;}
+details.ref summary::-webkit-details-marker{display:none;}
+details.ref summary::before{content:"+ ";}
+details.ref[open] summary::before{content:"\2212 ";}
+.refrow{display:flex; gap:14px; padding:10px 0; border-bottom:1px solid var(--rule); flex-wrap:wrap;}
+.refrow:last-child{border-bottom:0;}
+.refrow b{flex:none; width:170px; font:500 12.5px/1.4 "IBM Plex Mono",monospace;}
+.refrow span{flex:1; min-width:200px; color:var(--soft);}
+
+/* phone: seven columns do not fit, so the month becomes a list of days */
+@media (max-width:760px){
+  .dow{display:none;}
+  .grid{grid-template-columns:1fr;}
+  .day{min-height:0; border-right:0; padding:12px 12px 14px;}
+  .day.out, .day.empty{display:none;}
+  .num{font-size:14px; font-weight:600; color:var(--ink);}
+  .th{width:40px; height:52px;}
+  .pcwhat{font-size:13px;} .pccap{font-size:12.5px;} .pctime{font-size:12.5px;}
+  .today-btn{position:static;}
+  .calhead{flex-wrap:wrap;}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style></head><body>
+
+<div class="wrap">
+  <div class="top">
+    <h1>Calendar</h1>
+    <span class="live"><span class="pip" id="pip"></span><span id="livetext">connecting</span></span>
+    <span class="grow"></span>
+    <span class="tz">Eastern time</span>
+    <button class="btn" id="theme">Dark</button>
+    <button class="btn" id="power" hidden></button>
+  </div>
+
+  <div id="oops" class="oops" hidden></div>
+  <div id="flags"></div>
+
+  <div class="summary">
+    <div class="chip"><span>Next post</span><b id="nextin">&mdash;</b><span id="nextwhat"></span></div>
+    <div class="chip" id="reelchip"><span>Reels left</span><b id="reelsval">&mdash;</b><span id="reelsnote"></span></div>
+    <div class="chip" id="photochip"><span>Photos left</span><b id="photosval">&mdash;</b><span id="photosnote"></span></div>
+  </div>
+
+  <div class="cal">
+    <div class="calhead">
+      <button class="nav" id="prev" aria-label="Previous month">&#8249;</button>
+      <h2 id="month">&nbsp;</h2>
+      <button class="nav" id="next" aria-label="Next month">&#8250;</button>
+      <button class="btn today-btn" id="todaybtn">Today</button>
+    </div>
+    <div class="dow"><div>Sunday</div><div>Monday</div><div>Tuesday</div><div>Wednesday</div><div>Thursday</div><div>Friday</div><div>Saturday</div></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <details class="ref">
+    <summary>What each Drive folder becomes</summary>
+    <div style="margin-top:12px">
+      <div class="refrow"><b>reels/</b><span>Trial reel at noon and 8:30 pm every day. Instagram, TikTok, YouTube, Facebook.</span></div>
+      <div class="refrow"><b>reels/Vlog Clips</b><span>Same, labelled camera footage.</span></div>
+      <div class="refrow"><b>reels/Yap Videos</b><span>Same, labelled phone footage.</span></div>
+      <div class="refrow"><b>reels/Show Clips</b><span>Same, labelled show clips.</span></div>
+      <div class="refrow"><b>camera/</b><span>Photo at 7 pm Tuesday, Thursday, Saturday. Tags @daytodayportraits.</span></div>
+      <div class="refrow"><b>camera/@handle</b><span>One carousel. Tags that handle and @daytodayportraits.</span></div>
+      <div class="refrow"><b>iphone/Posts date</b><span>Sunday 7 pm carousel. No tags. Fill it by Thursday.</span></div>
+      <div class="refrow"><b>postcards/</b><span>Horizontal feed video at 7 pm.</span></div>
+      <div class="refrow"><b>stories/</b><span>Story about 5 minutes after you drop it.</span></div>
+    </div>
+  </details>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="panel" id="panel" hidden role="dialog" aria-modal="true" aria-labelledby="pkind"></aside>
+
+<script>
+// Data comes through the viewer's own Supabase connector. The artifact sandbox
+// blocks direct fetches to outside servers, so this is the only door in.
+const SERVER = "Supabase";
+const PROJECT = "gzupnelfmehgdxfhntar";
+const TZ = "America/New_York";
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const NET = { instagram:"Instagram", tiktok:"TikTok", youtube:"YouTube", facebook:"Facebook" };
+
+const Q_DATA = "select jsonb_build_object('updated_at', updated_at, 'board', payload || " +
+  "jsonb_build_object('upcoming', (select coalesce(jsonb_agg(e - 'thumb_data'), '[]'::jsonb) " +
+  "from jsonb_array_elements(payload->'upcoming') e))) as data from show_board where id = 1";
+const Q_THUMBS = "select coalesce(jsonb_object_agg((e->>'file_name') || '|' || (e->>'post_at'), e->>'thumb_data'), '{}'::jsonb) as thumbs " +
+  "from show_board, jsonb_array_elements(payload->'upcoming') e where e->>'thumb_data' is not null";
+
+(function(){
+  let saved = null;
+  try { saved = localStorage.getItem("dtd-board-theme"); } catch (e) {}
+  const dark = saved === "dark";
+  document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+  document.getElementById("theme").textContent = dark ? "Light" : "Dark";
+})();
+document.getElementById("theme").addEventListener("click", () => {
+  const dark = document.documentElement.getAttribute("data-theme") === "dark";
+  document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  document.getElementById("theme").textContent = dark ? "Dark" : "Light";
+  try { localStorage.setItem("dtd-board-theme", dark ? "light" : "dark"); } catch (e) {}
+});
+
+function etNow(d){ return d.toLocaleString("sv-SE", { timeZone: TZ }).replace(" ", "T"); }
+function clock(hhmm){
+  const [h, m] = hhmm.split(":").map(Number);
+  const hr = h % 12 === 0 ? 12 : h % 12;
+  return hr + ":" + String(m).padStart(2,"0") + " " + (h >= 12 ? "PM" : "AM");
+}
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function soon(ms){
+  if (ms <= 0) return "now";
+  const mins = Math.round(ms / 60000);
+  if (mins < 60) return mins + " min";
+  const h = Math.floor(mins / 60);
+  if (h < 24) return h + "h " + String(mins % 60).padStart(2,"0") + "m";
+  return Math.round(h / 24) + " days";
+}
+function ago(iso){
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return mins + " min ago";
+  return Math.round(mins / 60) + "h ago";
+}
+function kindOf(row){
+  const p = row.plan || {};
+  if (p.instagram === "TRIAL_REEL") return "Trial reel";
+  if (row.lane === "stories") return "Story";
+  if ((row.item_count || 1) > 1) return "Carousel";
+  if (!row.plan && row.lane === "reels") return "Trial reel";
+  if (String(row.mime || "").startsWith("video/")) return "Feed video";
+  return "Photo";
+}
+function isVideo(row){ return String(row.mime || "").startsWith("video/"); }
+function statusOf(row){
+  if (row.post_status === "posted") return { t:"Posted", c:"posted" };
+  if (row.post_status === "failed") return { t:"Held", c:"held" };
+  return { t:"Scheduled", c:"sched" };
+}
+function thumbOf(row){ return THUMBS[(row.file_name || "") + "|" + (row.post_at || "")] || null; }
+
+function rowsFrom(result){
+  // Supabase answers {"result": "<note> <untrusted-data-x> [rows] </untrusted-data-x> <note>"}.
+  let p = result && result.payload;
+  if (Array.isArray(p)) return p;
+  if (p && typeof p === "object" && typeof p.result === "string") p = p.result;
+  if (typeof p !== "string") {
+    const block = ((result && result.content) || []).find(b => b.type === "text");
+    p = block ? block.text : "";
+    try {
+      const o = JSON.parse(p);
+      if (Array.isArray(o)) return o;
+      if (o && typeof o.result === "string") p = o.result;
+    } catch (e) {}
+  }
+  const m = p.match(/<untrusted-data-[^>]*>\s*([\s\S]*?)\s*<\/untrusted-data-/);
+  const body = m ? m[1] : p;
+  const a = body.indexOf("["), z = body.lastIndexOf("]");
+  if (a < 0 || z < a) throw { code:"parse", message:"Supabase answered, but not with rows the board can read." };
+  try { return JSON.parse(body.slice(a, z + 1)); }
+  catch (e) { throw { code:"parse", message:"Supabase answered, but the board could not read it (" + e.message + ")." }; }
+}
+
+let MCP = null, HOSTED = false, KEY = "", DATA = null, THUMBS = {}, UPDATED = null, armed = false, VIEW = null, BYID = [];
+
+const FN = "https://gzupnelfmehgdxfhntar.supabase.co/functions/v1/show-drop";
+function hasCaption(r){
+  const c = String(r.caption || "").trim();
+  if (!c) return false;
+  const bare = String(r.file_name || "").replace(/\.[a-z0-9]+$/i, "").trim().toLowerCase();
+  return c.toLowerCase() !== bare;
+}
+async function call(action, extra){
+  const r = await fetch(FN, { method:"POST", headers:{ "Content-Type":"application/json", "x-show-key": KEY },
+    body: JSON.stringify(Object.assign({ action }, extra || {})) });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) throw { code:"bad_key", message:"That key did not work." };
+  if (!r.ok) throw { code:"tool_error", message: j.error || ("error " + r.status) };
+  return j;
+}
+function toast(t){ const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 3200); }
+async function sql(query){
+  return rowsFrom(await MCP.callTool(SERVER, "execute_sql", { project_id: PROJECT, query }, { cache: false }));
+}
+function explain(e){
+  const code = e && e.code;
+  if (code === "server_not_connected") return "Supabase is not connected to your Claude account. Add it in claude.ai Settings, Connectors, then reload.";
+  if (code === "needs_reauth") return "Your Supabase connection expired. Reconnect it in claude.ai Settings, Connectors, then reload.";
+  if (code === "not_in_manifest") return "Supabase was not allowed for this page. Reload and choose Allow when it asks.";
+  if (code === "selection_required") return "You have more than one Supabase connection. Pick one when Claude asks, then reload.";
+  if (code === "blocked_by_policy" || code === "approval_required") return "Your organization blocks this page from using Supabase.";
+  if (code === "not_granted" || code === "capability_disabled" || code === "capability_removed") return "Live data only loads when this page is open inside Claude.";
+  if (code === "bad_key") return "That key did not work. Tap Key at the top to enter it again.";
+  if (code === "tool_error") return "Supabase answered with an error: " + (e.message || "unknown");
+  if (code === "parse") return e.message;
+  return "Could not reach Supabase just now" + (e && e.message ? ": " + e.message : "") + ".";
+}
+function showProblem(msg){ const o = document.getElementById("oops"); o.hidden = !msg; o.textContent = msg || ""; }
+
+function card(row, idx){
+  const st = statusOf(row), kind = kindOf(row), t = thumbOf(row);
+  const time = row.post_at_et ? clock(row.post_at_et.slice(11,16)) : "";
+  const img = t ? '<img class="th" src="' + esc(t) + '" alt="">'
+                : '<span class="th none">' + (isVideo(row) ? "video" : "photo") + "</span>";
+  return '<button class="pc" data-i="' + idx + '"><span class="pcrow">' + img +
+    '<span class="pcbody"><span class="pill ' + st.c + '">' + st.t + "</span>" +
+    '<span class="pcwhat' + (kind === "Trial reel" ? "" : " photo") + '">' + esc(kind) + "</span>" +
+    '<span class="pctime mono">' + time + "</span></span></span>" +
+    (hasCaption(row) ? '<span class="pccap">' + esc(row.caption) + "</span>"
+                     : '<span class="pccap missing">No caption yet, tap to add</span>') + "</button>";
+}
+
+function renderSummary(){
+  const d = DATA, now = new Date(), nowEt = etNow(now);
+  const on = (d.drop_enabled || "off") === "on";
+  document.getElementById("pip").className = "pip" + (on ? "" : " off");
+  document.getElementById("livetext").textContent =
+    (on ? "Posting on its own" : "Paused, nothing will publish") + (UPDATED ? " · updated " + ago(UPDATED) : "");
+  const pw = document.getElementById("power");
+  if (!armed) { pw.hidden = false; pw.className = "btn"; pw.disabled = false; pw.textContent = on ? "Pause posting" : "Turn posting on"; }
+
+  const next = (d.upcoming || []).filter(r => r.post_at_et && r.post_at_et > nowEt)
+    .sort((a,b) => a.post_at_et < b.post_at_et ? -1 : 1)[0];
+  document.getElementById("nextin").textContent = next ? soon(new Date(next.post_at).getTime() - now.getTime()) : "none";
+  document.getElementById("nextwhat").textContent = next ? kindOf(next) + " at " + clock(next.post_at_et.slice(11,16)) : "";
+
+  const rw = d.runway || {};
+  const rd = rw.days_of_reels || 0, wk = rw.weeks_of_photos || 0;
+  document.getElementById("reelsval").textContent = rw.reels_left || 0;
+  const reels = (d.upcoming || []).filter(r => (r.plan && r.plan.instagram === "TRIAL_REEL") || r.lane === "reels").map(r => r.post_at_et).sort();
+  const lastReel = reels[reels.length - 1];
+  const runsOut = lastReel ? ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date(lastReel.slice(0,10) + "T12:00:00Z").getUTCDay()] : null;
+  document.getElementById("reelsnote").textContent = rd < 7 && runsOut ? "runs out " + runsOut + ", drop more" : rd + " days";
+  document.getElementById("reelchip").className = "chip" + (rd === 0 ? " out" : rd < 7 ? " low" : "");
+  document.getElementById("photosval").textContent = rw.photos_left || 0;
+  document.getElementById("photosnote").textContent = wk + " week" + (wk===1?"":"s");
+  document.getElementById("photochip").className = "chip" + (wk === 0 ? " out" : wk < 2 ? " low" : "");
+
+  const probs = [];
+  // Only things that stop a post. Stats hiccups are not his problem.
+  for (const a of (d.alerts || [])) if (a.level === "error" && !/results|stats|analytics/i.test(a.title || "")) probs.push(a.title);
+  for (const r of (d.failed || [])) probs.push((r.file_name || "") + " did not go out");
+  document.getElementById("flags").innerHTML = probs.slice(0,4).map(t => '<div class="flag"><b>Needs you:</b> ' + esc(t) + "</div>").join("");
+}
+
+function renderMonth(){
+  const d = DATA;
+  const nowEt = etNow(new Date()), today = nowEt.slice(0,10);
+  if (!VIEW) VIEW = { y: Number(today.slice(0,4)), m: Number(today.slice(5,7)) - 1 };
+  document.getElementById("month").textContent = MONTHS[VIEW.m] + " " + VIEW.y;
+
+  const all = (d.upcoming || []).concat(d.failed || [], d.posted || []);
+  BYID = all;
+  const byDay = {};
+  all.forEach((r, i) => {
+    if (!r.post_at_et) return;
+    (byDay[r.post_at_et.slice(0,10)] = byDay[r.post_at_et.slice(0,10)] || []).push(i);
+  });
+  for (const k in byDay) byDay[k].sort((a,b) => all[a].post_at_et < all[b].post_at_et ? -1 : 1);
+
+  const sch = d.schedule || { reel_times:["12:00","20:30"], photo_time:"19:00", photo_days:[2,4,6], iphone_days:[0] };
+  const first = new Date(Date.UTC(VIEW.y, VIEW.m, 1, 12));
+  const start = new Date(first); start.setUTCDate(1 - first.getUTCDay());
+  let html = "";
+  for (let i = 0; i < 42; i++) {
+    const dt = new Date(start); dt.setUTCDate(start.getUTCDate() + i);
+    const key = dt.toISOString().slice(0,10), dow = dt.getUTCDay();
+    const inMonth = dt.getUTCMonth() === VIEW.m;
+    if (i >= 35 && !inMonth && dow === 0) break;        // drop an empty trailing week
+    const ids = byDay[key] || [];
+    let cards = ids.map(ix => card(all[ix], ix)).join("");
+    // Open slots only matter going forward, so past days stay clean.
+    if (key >= today && inMonth) {
+      const taken = ids.map(ix => all[ix].post_at_et.slice(11,16));
+      const openReels = sch.reel_times.filter(t => !taken.includes(t)).length;
+      const photoDay = (sch.photo_days || []).includes(dow) || (sch.iphone_days || []).includes(dow);
+      const openPhoto = photoDay && !taken.includes(sch.photo_time);
+      const gaps = [];
+      if (openReels) gaps.push(openReels + " reel slot" + (openReels > 1 ? "s" : "") + " open");
+      if (openPhoto) gaps.push((sch.iphone_days || []).includes(dow) ? "Sunday carousel open" : "photo slot open");
+      if (gaps.length) cards += '<div class="gap">' + gaps.join(" · ") + "</div>";
+    }
+    const cls = "day" + (inMonth ? "" : " out") + (key === today ? " today" : "") + (!ids.length && key < today ? " empty" : "");
+    const label = inMonth ? String(dt.getUTCDate()) : MONTHS[dt.getUTCMonth()].slice(0,3) + " " + dt.getUTCDate();
+    const phoneLabel = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][dow] + " ";
+    html += '<div class="' + cls + '"><div class="num"><b>' + (window.innerWidth <= 760 ? phoneLabel : "") + label + "</b></div>" + cards + "</div>";
+  }
+  document.getElementById("grid").innerHTML = html;
+}
+
+function openPanel(i){
+  const r = BYID[i]; if (!r) return;
+  const st = statusOf(r), kind = kindOf(r), p = r.plan || {}, t = thumbOf(r);
+  const when = r.post_at_et ? new Date(r.post_at_et.slice(0,10) + "T12:00:00Z") : null;
+  const dateText = when ? ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][when.getUTCDay()] +
+    ", " + MONTHS[when.getUTCMonth()] + " " + when.getUTCDate() + " at " + clock(r.post_at_et.slice(11,16)) + " ET" : "";
+  const rows = [];
+  const types = { TRIAL_REEL:"Trial reel", POST:"Post", REEL:"Reel", short:"Short", video:"Video" };
+  for (const n of (p.networks || [])) {
+    let v = "Post";
+    if (n === "instagram") v = (types[p.instagram] || p.instagram || "Post") + (p.auto_share ? ", promotes itself if it hits" : "");
+    else if (n === "facebook") v = types[p.facebook] || "Post";
+    else if (n === "youtube") v = types[p.youtube] || "Short";
+    else if (n === "tiktok") v = "Video";
+    rows.push([NET[n] || n, v]);
+  }
+  if ((p.collaborators || []).length) rows.push(["Tagged", "@" + p.collaborators.join(", @")]);
+  if (r.source_folder) rows.push(["Folder", r.source_folder]);
+  if (r.duration_seconds) rows.push(["Length", Math.floor(r.duration_seconds/60) + ":" + String(r.duration_seconds%60).padStart(2,"0")]);
+  rows.push(["File", r.file_name || ""]);
+  const watch = r.open_url
+    ? '<a class="watch" href="' + esc(r.open_url) + '" target="_blank" rel="noopener">' +
+      (isVideo(r) ? "Watch video" : (r.item_count > 1 ? "See all photos" : "See photo")) + " ↗</a>" : "";
+  const panel = document.getElementById("panel");
+  panel.innerHTML =
+    '<div class="phead"><span class="pill ' + st.c + '">' + st.t + '</span><span class="grow"></span>' +
+    '<button class="close" id="pclose" aria-label="Close">×</button></div>' +
+    (t ? '<img class="big" src="' + esc(t) + '" alt="">' : '<div class="big none">' + (isVideo(r) ? "video" : "photo") + "</div>") +
+    watch +
+    '<div class="pkind" id="pkind">' + esc(kind) + "</div>" +
+    '<div class="pwhen">' + esc(dateText) + "</div>" +
+    '<p class="pcap">' + esc(r.caption || "No caption yet") + "</p>" +
+    (r.hashtags ? '<div class="ptags">' + esc(r.hashtags) + "</div>" : "") +
+    '<div class="plist">' + rows.map(x => "<div><span>" + esc(x[0]) + "</span><span>" + esc(x[1]) + "</span></div>").join("") + "</div>" +
+    (r.post_error ? '<p class="pnote" style="color:var(--held)">' + esc(r.post_error) + "</p>" : "") +
+    (r.open_url ? '<p class="pnote">Opens in Google Drive in a new tab. It plays there.</p>' : "") +
+    editBox(r);
+  document.getElementById("scrim").hidden = false;
+  panel.hidden = false;
+  document.getElementById("pclose").focus();
+  document.getElementById("pclose").addEventListener("click", closePanel);
+}
+function editBox(r){
+  if (r.post_status === "posted" || !r.id) return "";
+  if (!HOSTED) return '<p class="pnote">To change this caption, open the posting app on your phone.</p>';
+  const soon = r.post_at && (new Date(r.post_at).getTime() - Date.now() < 15 * 60000);
+  if (soon) return '<p class="pnote">Goes out in under 15 minutes, so the caption is locked.</p>';
+  return '<div class="edit"><label for="ecap">Caption</label><textarea id="ecap">' + esc(r.caption || "") + '</textarea>' +
+    '<label for="etags">Hashtags (first comment)</label><input id="etags" value="' + esc(r.hashtags || "") + '">' +
+    '<button class="save" id="esave" data-id="' + r.id + '">Save caption</button></div>';
+}
+document.addEventListener("click", async e => {
+  const b = e.target.closest("#esave"); if (!b) return;
+  const caption = document.getElementById("ecap").value.trim();
+  if (!caption) return toast("Write a caption first");
+  b.disabled = true; b.textContent = "Saving";
+  try {
+    await call("set_caption", { id: Number(b.dataset.id), caption, hashtags: document.getElementById("etags").value });
+    toast("Saved. Every platform gets the new caption.");
+    closePanel(); await load();
+  } catch (err) { b.disabled = false; b.textContent = "Save caption"; toast(explain(err)); }
+});
+function closePanel(){ document.getElementById("panel").hidden = true; document.getElementById("scrim").hidden = true; }
+document.getElementById("scrim").addEventListener("click", closePanel);
+document.addEventListener("keydown", e => { if (e.key === "Escape") closePanel(); });
+document.getElementById("grid").addEventListener("click", e => {
+  const b = e.target.closest(".pc"); if (b) openPanel(Number(b.dataset.i));
+});
+document.getElementById("prev").addEventListener("click", () => { VIEW.m--; if (VIEW.m < 0) { VIEW.m = 11; VIEW.y--; } renderMonth(); });
+document.getElementById("next").addEventListener("click", () => { VIEW.m++; if (VIEW.m > 11) { VIEW.m = 0; VIEW.y++; } renderMonth(); });
+document.getElementById("todaybtn").addEventListener("click", () => { VIEW = null; renderMonth(); });
+let lastWide = window.innerWidth > 760;
+window.addEventListener("resize", () => { const w = window.innerWidth > 760; if (w !== lastWide && DATA) { lastWide = w; renderMonth(); } });
+
+function render(){ if (!DATA) return; renderSummary(); renderMonth(); }
+
+let retried = false;
+async function load(){
+  if (!MCP && !HOSTED) return;
+  try {
+    let wrap;
+    if (HOSTED) wrap = await call("board");
+    else { const rows = await sql(Q_DATA); wrap = rows[0] && rows[0].data; }
+    if (!wrap || !wrap.board) throw { code:"parse", message:"The board snapshot is empty. It rebuilds every two minutes." };
+    DATA = wrap.board; UPDATED = wrap.updated_at;
+    showProblem(""); retried = false;
+    render();
+  } catch (e) {
+    if (e && e.retryable && !retried) { retried = true; setTimeout(load, (e.retryAfterMs || 2000) + Math.random() * 1500); return; }
+    showProblem(explain(e) + (DATA ? " Showing the last good copy." : ""));
+    if (e && e.code === "bad_key") { lockScreen(); return; }
+    if (e && ["needs_reauth","server_not_connected","not_in_manifest","blocked_by_policy","approval_required"].includes(e.code)) {
+      DATA = null; document.getElementById("grid").innerHTML = "";
+    }
+    return;
+  }
+  if (HOSTED) {
+    THUMBS = {};
+    for (const r of (DATA.upcoming || [])) if (r.thumb_data) THUMBS[r.file_name + "|" + r.post_at] = r.thumb_data;
+    render(); return;
+  }
+  try { const t = await sql(Q_THUMBS); THUMBS = (t[0] && t[0].thumbs) || {}; render(); } catch (e) {}
+}
+
+document.getElementById("power").addEventListener("click", async () => {
+  if ((!MCP && !HOSTED) || !DATA) return;
+  const b = document.getElementById("power");
+  const on = (DATA.drop_enabled || "off") === "on";
+  if (on && !armed) { armed = true; b.className = "btn armed"; b.textContent = "Tap again to pause"; return; }
+  armed = false;
+  const value = on ? "off" : "on";
+  b.disabled = true; b.textContent = "saving";
+  try {
+    if (HOSTED) { await call("set_enabled", { value }); await call("snapshot"); }
+    else await sql("update show_secrets set value = '" + value + "' where key = 'drop_enabled' returning key;" +
+      " update show_board set payload = jsonb_set(payload, '{drop_enabled}', to_jsonb('" + value + "'::text)) where id = 1 returning id");
+    DATA.drop_enabled = value; render();
+  } catch (e) {
+    b.disabled = false; b.textContent = "Not sure it saved, reloading";
+    showProblem(explain(e)); setTimeout(load, 1500);
+  }
+});
+
+function lockScreen(){
+  document.querySelector(".wrap").hidden = true;
+  let l = document.getElementById("lock");
+  if (!l) { l = document.createElement("div"); l.id = "lock"; l.className = "lock"; document.body.appendChild(l); }
+  l.innerHTML = '<h2>Posting calendar</h2><p>Enter your show key once. This phone remembers it.</p>' +
+    '<input id="kin" type="password" autocomplete="off" placeholder="DTD-SHOW-..."><button class="save" id="kgo">Open</button>';
+  document.getElementById("kgo").onclick = async () => {
+    KEY = document.getElementById("kin").value.trim();
+    try { await call("ping"); } catch (e) {}
+    try { await call("board"); try { localStorage.setItem("dtd_show_key", KEY); } catch (e) {} location.reload(); }
+    catch (e) { toast(explain(e)); }
+  };
+}
+(async function boot(){
+  if (!window.claude || typeof window.claude.use !== "function") {
+    HOSTED = true;
+    try { KEY = localStorage.getItem("dtd_show_key") || localStorage.getItem("dtd-show-key") || ""; } catch (e) {}
+    if (!KEY) { lockScreen(); return; }
+    const kb = document.createElement("button"); kb.className = "btn"; kb.textContent = "Key";
+    kb.onclick = () => { try { localStorage.removeItem("dtd_show_key"); localStorage.removeItem("dtd-show-key"); } catch (e) {} location.reload(); };
+    document.getElementById("theme").before(kb);
+    await load();
+    setInterval(() => { if (!document.hidden) load(); }, 60000);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
+    return;
+  }
+  try { MCP = await claude.use("mcp"); } catch (e) { MCP = null; }
+  if (!MCP) {
+    showProblem("Live data only loads when this page is open inside Claude, with Supabase connected.");
+    document.getElementById("livetext").textContent = "not connected";
+    return;
+  }
+  await load();
+  setInterval(() => { if (!document.hidden) load(); }, 60000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
+})();
+</script>
+
+</body></html>
