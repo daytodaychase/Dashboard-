@@ -560,7 +560,7 @@ document.addEventListener("click", async e => {
   if (!caption) return toast("Write a caption first");
   b.disabled = true; b.textContent = "Saving";
   try {
-    await call("set_caption", { id: Number(b.dataset.id), caption, hashtags: document.getElementById("etags").value });
+    await call("set_caption", { id: b.dataset.id, caption, hashtags: document.getElementById("etags").value });
     toast("Saved. Every platform gets the new caption.");
     closePanel(); await load();
   } catch (err) { b.disabled = false; b.textContent = "Save caption"; toast(explain(err)); }
