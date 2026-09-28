@@ -318,6 +318,21 @@ details.ref[open] summary::before{content:"\2212 ";}
 .hold.good .hbar span{background:var(--posted);} .hold.ok .hbar span{background:#C8950A;} .hold.bad .hbar span{background:var(--held);}
 .htxt{font-size:12.5px; color:var(--soft);}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+.story{background:var(--card,#fff);border:1px solid rgba(128,128,128,.25);border-radius:12px;padding:10px 12px;margin:0 0 8px}
+.story summary{font-weight:700;cursor:pointer;list-style:none}
+.story summary::-webkit-details-marker{display:none}
+.story p{margin:8px 0 4px;line-height:1.45}
+.story .sq{color:#b45309;font-weight:600}
+.story small{opacity:.6}
+.sdump{display:flex;justify-content:space-between;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(128,128,128,.1);margin:0 0 8px;font-size:14px}
+.gap{background:#fde68a;color:#78350f;border-radius:6px;padding:1px 5px;font-weight:700}
+.iscreen{margin:8px 0;padding:10px 12px;border-radius:10px;border:2px dashed rgba(128,128,128,.45);font-weight:600}
+.iscreen small,.isay small{display:block;font-size:11px;opacity:.65;letter-spacing:.04em}
+.iref{display:block;margin:8px 0 4px;padding:9px 12px;border-radius:10px;background:rgba(59,130,246,.12);color:inherit;text-decoration:none;font-size:14px;font-weight:600}
+.ibeats{margin:4px 0 8px 18px;padding:0;font-size:13px;opacity:.8}
+.iscore{margin:6px 0;padding:8px 12px;border-radius:10px;font-weight:700;font-size:14px}
+.iscore small{display:block;font-weight:500;margin-top:3px}
+.iscore.ok{background:rgba(34,197,94,.15)}.iscore.mid{background:rgba(234,179,8,.18)}.iscore.bad{background:rgba(239,68,68,.15)}
 </style></head><body>
 
 <div class="wrap">
@@ -915,7 +930,7 @@ function renderIdeas(){
     const g = new Date(need.first + "T12:00:00Z");
     head = '<div class="fneed bad">🎬 Film ' + need.n + " reel" + (need.n === 1 ? "" : "s") + " this week<small>First empty spot: " + DOW[g.getUTCDay()] + " " + MONTHS[g.getUTCMonth()].slice(0,3) + " " + g.getUTCDate() + ". ✅ " + (F.filmed_7d || 0) + " filmed in the last 7 days.</small></div>";
   } else head = '<div class="fneed ok">🟢 Reels are covered for the next 7 days<small>✅ ' + (F.filmed_7d || 0) + " filmed in the last 7 days. Keep going to stay ahead.</small></div>";
-  if (!list.length) { el.innerHTML = '<h3>🎥 Film next</h3>' + head + '<p class="hint">No ideas right now. New ones come every Monday and Thursday.</p>' + winnersHtml(F.winners); return; }
+  if (!list.length) { el.innerHTML = '<h3>🎥 Film next</h3>' + head + '<p class="hint">No ideas right now. New ones come every Monday and Thursday.</p>' + winnersHtml(F.winners) + storiesHtml(); return; }
   if (IDX >= list.length) IDX = 0;
   const it = list[IDX], k = IKIND[it.kind] || ["💡", it.kind];
   const script = Array.isArray(it.script) ? it.script : [];
@@ -924,10 +939,12 @@ function renderIdeas(){
       '<div class="itop"><span class="ibadge">' + k[0] + " " + k[1] + '</span><span class="icount">Idea ' + (IDX + 1) + " of " + list.length + "</span></div>" +
       (it.shoot ? '<div class="imeta" style="margin-top:0"><span>📅 ' + esc(it.shoot.when || "") + " · " + esc(it.shoot.title || "") + "</span></div>" : "") +
       '<div class="ititle">' + esc(it.title) + "</div>" +
-      '<div class="isay"><small>🗣️ SAY THIS FIRST</small>' + esc(it.hook || "") + "</div>" +
+      '<div class="isay"><small>🗣️ SAY THIS FIRST</small>' + hl(it.hook) + "</div>" +
+      (it.on_screen ? '<div class="iscreen"><small>📝 TEXT ON SCREEN</small>' + hl(it.on_screen) + "</div>" : "") +
+      refHtml(it) +
       '<div class="imeta"><span>📍 ' + (IPLACE[it.place] || esc(it.place || "")) + "</span><span>⏱️ about " + (it.length_sec || 30) + " sec</span></div>" +
       (it.why ? '<p class="iwhy">🔥 ' + esc(it.why) + "</p>" : "") +
-      (SCRIPT_OPEN ? '<ul class="iscript">' + script.map(l => '<li><div class="s">' + esc(l.say || "") + "</div>" + (l.think ? '<div class="t">💭 They\'re thinking: ' + esc(l.think) + "</div>" : "") + "</li>").join("") + "</ul>" : "") +
+      (SCRIPT_OPEN ? '<ul class="iscript">' + script.map(l => '<li><div class="s">' + hl(l.say) + "</div>" + (l.think ? '<div class="t">💭 They\'re thinking: ' + esc(l.think) + "</div>" : "") + "</li>").join("") + "</ul>" : "") +
       '<div class="ibtns">' +
         '<button class="ibtn sc" data-film="script">' + (SCRIPT_OPEN ? "📜 Hide script" : "📜 Show full script") + "</button>" +
         '<button class="ibtn go" data-film="done">✅ Filmed it</button>' +
@@ -937,7 +954,39 @@ function renderIdeas(){
     "</div>" +
     '<h3>📋 All ideas this week</h3><div class="ilist">' +
       list.map((x, i) => '<button class="irow' + (i === IDX ? " on" : "") + '" data-jump="' + i + '">' + (IKIND[x.kind] || ["💡"])[0] + " " + esc(x.title) + "<span>" + (x.shoot ? "📅 " + esc(x.shoot.when || "") : (IPLACE[x.place] || "")) + "</span></button>").join("") +
-    "</div>" + winnersHtml(F.winners);
+    "</div>" + winnersHtml(F.winners) + storiesHtml();
+}
+function hl(t){ return esc(t || "").replace(/\[YOUR DETAIL: ?([^\]]*)\]/g, '<span class="gap">✍️ $1</span>'); }
+function refHtml(it){
+  const r = it.ref, a = it.audit; let h = "";
+  if (r && r.handle) {
+    const link = r.url || r.sandcastles_url;
+    h += '<a class="iref" href="' + esc(link || "#") + '" target="_blank" rel="noopener">🎯 Copied from @' + esc(r.handle) + (r.views ? " · 👀 " + fmt(r.views) : "") + (r.outlier ? " · 🔥 " + r.outlier + "x their normal" : "") + (link ? " · Watch ↗" : "") + "</a>";
+    if (Array.isArray(r.beats) && r.beats.length) h += '<ol class="ibeats">' + r.beats.map(b => "<li>" + esc(b) + "</li>").join("") + "</ol>";
+  }
+  if (a && a.score != null) h += '<div class="iscore ' + (a.score >= 6 ? "ok" : a.score >= 5 ? "mid" : "bad") + '">' + "⭐".repeat(a.score) + "☆".repeat(Math.max(0, (a.of || 7) - a.score)) + " " + a.score + "/" + (a.of || 7) + (a.notes ? "<small>" + esc(a.notes) + "</small>" : "") + "</div>";
+  return h;
+}
+function storiesHtml(){
+  const B = (DATA && DATA.story_bank) || { stories: [], dumps: [] };
+  const st = B.stories || [], dumps = (B.dumps || []).slice(0, 4);
+  const DS = { transcribing: "⏳ Listening", done: "✅ Read", failed: "❌ Could not read" };
+  const dumpRows = dumps.map(d => '<div class="sdump"><b>🎤 ' + esc(d.name) + "</b><span>" + (DS[d.status] || d.status) + (d.status === "done" ? " · " + (d.stories || 0) + " stories found" : "") + "</span></div>").join("");
+  const open = st.filter(x => x.needs).length;
+  return '<h3>📚 Your stories (' + st.length + ')</h3>' +
+    '<p class="hint">Real things that happened to you. Scripts are built only from these. ' + (open ? "❓ " + open + " need one more detail." : "") + "</p>" +
+    '<button class="ibtn go" style="width:100%;margin-bottom:10px" data-dump="1">🎤 Record a story dump</button>' +
+    dumpRows +
+    st.map(x => '<details class="story"><summary>' + (x.used ? "✅ " : "") + esc(x.title) + (x.needs ? ' <span class="sneed">❓</span>' : "") + "</summary>" +
+      '<p>' + esc(x.facts || "") + "</p>" +
+      (x.needs ? '<p class="sq">❓ Tell me: ' + esc(x.needs) + "</p>" : "") +
+      '<small>' + (x.source && x.source.indexOf("voice memo") === 0 ? "🎤 " : "🧠 ") + esc(x.source || "") + "</small></details>").join("");
+}
+function dumpHelp(){
+  wizOpen('<h3>🎤 Story dump</h3>' +
+    '<p class="pnote" style="margin:0 0 8px">1. Open Voice Memos. Talk for about 10 minutes.<br>2. Tell real stories. What happened, who was there, what they said, how it felt.<br>3. Answer any ❓ questions from your story list.<br>4. Upload the memo to the folder below.</p>' +
+    '<p class="pnote">About 10 minutes later the stories show up here. Nothing is made up. Only what you said.</p>' +
+    '<button class="wlink" style="width:100%;border:0;cursor:pointer" data-kind-go="storydump">📂 Get the upload folder</button>');
 }
 function winnersHtml(w){
   if (!w || !w.length) return "";
@@ -970,6 +1019,7 @@ async function filmAction(kind, device){
 }
 document.getElementById("sIdeas").addEventListener("click", e => {
   const j = e.target.closest("[data-jump]"); if (j) { IDX = Number(j.dataset.jump); SCRIPT_OPEN = false; renderIdeas(); window.scrollTo({ top: 0 }); return; }
+  if (e.target.closest("[data-dump]")) { dumpHelp(); return; }
   const b = e.target.closest("[data-film]"); if (!b) return;
   const n = ((DATA && DATA.film && DATA.film.list) || []).length;
   const w = b.dataset.film;
@@ -992,7 +1042,7 @@ function renderFolders(){
   const extra = [];
   if (f.done) extra.push({ label: "Already posted", id: f.done, note: "files move here after" });
   if (f.guests) extra.push({ label: "Show guests", id: f.guests, note: "episode folders" });
-  const EMO = { vlog: "🎥", yap: "🗣️", show: "🎙️", portrait: "📷", iphone: "📱", postcard: "🌅", story: "⚡" };
+  const EMO = { vlog: "🎥", yap: "🗣️", show: "🎙️", portrait: "📷", iphone: "📱", postcard: "🌅", story: "⚡", storydump: "🎤" };
   extra[0] && (extra[0].key = "done"); extra[1] && (extra[1].key = "guests");
   Object.assign(EMO, { done: "✅", guests: "👥" });
   el.innerHTML = list.concat(extra).map(b => '<a class="fbtn" href="https://drive.google.com/drive/folders/' + esc(b.id) + '" target="_blank" rel="noopener"><b>' + (EMO[b.key] || "📁") + " " + esc(b.label) + " ↗</b><span>" + esc(b.note || "") + "</span></a>").join("");
@@ -1008,7 +1058,8 @@ const KINDS = [
   ["postcard","🌅 Cinematic postcard","Wide video for the feed."],
   ["portrait","📷 Portrait photo","Camera photo. Tags @daytodayportraits."],
   ["iphone","📱 iPhone photos","The Sunday photo dump."],
-  ["story","⚡ Story","Goes up right away."]
+  ["story","⚡ Story","Goes up right away."],
+  ["storydump","🎤 Story dump","A voice memo of you telling real stories. Turns into scripts."]
 ];
 function wizOpen(html){
   const panel = document.getElementById("panel");
@@ -1072,6 +1123,7 @@ async function act(action, extra){
 }
 document.getElementById("upload").addEventListener("click", wizStart);
 document.getElementById("panel").addEventListener("click", e => {
+  const kg = e.target.closest("[data-kind-go]"); if (kg) { wizRun(kg.dataset.kindGo); return; }
   const o = e.target.closest(".wopt[data-kind]");
   if (o) { if (o.dataset.kind === "portrait") wizHandle(); else wizRun(o.dataset.kind); return; }
   if (e.target.closest("[data-back]")) { wizStart(); return; }
