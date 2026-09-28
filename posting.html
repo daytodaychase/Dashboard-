@@ -173,7 +173,7 @@ details.ref[open] summary::before{content:"\2212 ";}
 }
 
 .tabs{display:flex; gap:6px; margin:0 0 16px; background:var(--cell); border:1px solid var(--grid); border-radius:12px; padding:5px; position:sticky; top:0; z-index:20;}
-.tabs button{flex:1; border:0; background:none; border-radius:8px; padding:10px 4px; font-weight:600; font-size:14px; color:var(--soft); cursor:pointer; min-height:42px;}
+.tabs button{flex:1; border:0; background:none; border-radius:8px; padding:8px 2px; font-weight:700; font-size:12.5px; line-height:1.25; color:var(--soft); cursor:pointer; min-height:42px;}
 .tabs button[aria-pressed="true"]{background:var(--ink); color:var(--paper);}
 .sec h3{font:700 18px/1.2 Archivo,sans-serif; margin:26px 0 4px; letter-spacing:-.01em;}
 .sec h3:first-child{margin-top:4px;}
@@ -423,6 +423,27 @@ details.ref[open] summary::before{content:"\2212 ";}
 .qsticky{position:sticky;bottom:12px;z-index:5;display:flex;align-items:center;gap:8px;margin:10px 0;padding:12px 16px;border-radius:99px;background:#17181C;color:#fff;text-decoration:none;font-weight:700;box-shadow:var(--shadow)}
 .qsticky b{font-size:20px}.qsticky span{margin-left:auto;opacity:.75;font-size:13px}
 :root[data-theme="dark"] .qsticky{background:#EEF0F3;color:#111}
+
+.thello{font-size:22px;font-weight:800;margin:4px 0 12px}
+.tcard{background:var(--cell);border:1px solid var(--grid);border-radius:18px;padding:16px;margin-bottom:12px}
+.tcard.todo{border-width:2px}.tcard.todo.bad{border-color:var(--held);background:var(--heldsoft)}.tcard.todo.ok{border-color:var(--posted);background:var(--postedsoft)}.tcard.todo.mid{border-color:#E0A800;background:rgba(234,179,8,.12)}
+.tlab{margin:0 0 6px;font-size:12px;font-weight:800;letter-spacing:.06em;color:var(--soft)}
+.tbig{margin:0;font-size:22px;font-weight:800;line-height:1.25}
+.tbig.ok{color:var(--posted)}.tbig.bad{color:var(--held)}.tbig.mid{color:#B7791F}.tbig.off{color:var(--soft)}
+.tsub{margin:6px 0 0;color:var(--soft);font-size:14px}
+.tgo{width:100%;margin-top:12px}
+.tslot{display:grid;grid-template-columns:82px 30px 1fr;white-space:normal;align-items:center;gap:6px;padding:10px 0;border-bottom:1px dashed var(--grid);font-size:15px}
+.tslot:last-of-type{border-bottom:0}.tslot b{white-space:nowrap}.tslot em{font-style:normal;font-size:20px}
+.tslot span{font-weight:700}.tslot small{display:block;font-weight:400;color:var(--soft);font-size:12px}
+.tslot.ok span{color:var(--posted)}.tslot.bad span{color:var(--held)}.tslot.off span{color:var(--faint)}
+.tlink{background:none;border:0;color:var(--key);font:inherit;font-weight:700;padding:8px 0 0;cursor:pointer}
+.tbar{height:12px;border-radius:99px;background:var(--grid);overflow:hidden;margin:10px 0}
+.tbar i{display:block;height:100%;border-radius:99px}.tbar i.ok{background:var(--posted)}.tbar i.mid{background:#E0A800}.tbar i.bad{background:var(--held)}
+.tmini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.tmini div{background:var(--card);border-radius:12px;padding:8px;text-align:center}
+.tmini b{display:block;font-size:16px}.tmini span{font-size:11px;color:var(--soft)}
+.tbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.tbtns:has(> :only-child){grid-template-columns:1fr}
 </style></head><body>
 
 <div class="wrap">
@@ -437,13 +458,15 @@ details.ref[open] summary::before{content:"\2212 ";}
   </div>
 
   <div class="tabs" role="group" aria-label="Screens">
-    <button data-tab="sCal" aria-pressed="true">📅 Calendar</button>
+    <button data-tab="sToday" aria-pressed="true">🏠 Today</button>
+    <button data-tab="sCal" aria-pressed="false">📅 Calendar</button>
     <button data-tab="sStats" aria-pressed="false">📈 Stats</button>
     <button data-tab="sMoney" aria-pressed="false">💵 Money</button>
-    <button data-tab="sIdeas" aria-pressed="false">🎥 Film next</button>
+    <button data-tab="sIdeas" aria-pressed="false">🎥 Film</button>
   </div>
   <div id="oops" class="oops" hidden></div>
-  <section id="sCal">
+  <section id="sToday" class="sec"></section>
+  <section id="sCal" hidden>
   <div id="flags"></div>
 
   <div class="summary">
@@ -829,12 +852,11 @@ window.addEventListener("resize", () => { const w = window.innerWidth > 760; if 
 
 
 // ---------- tabs ----------
-let TAB = "sCal";
-try { const t = localStorage.getItem("dtd-board-tab"); if (t) TAB = t; } catch (e) {}
+let TAB = "sToday";  // always open on Today, so the first screen is short
 function showTab(id){
   TAB = id;
   for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-pressed", b.dataset.tab === id ? "true" : "false");
-  for (const sid of ["sCal","sStats","sMoney","sIdeas"]) document.getElementById(sid).hidden = sid !== id;
+  for (const sid of ["sToday","sCal","sStats","sMoney","sIdeas"]) document.getElementById(sid).hidden = sid !== id;
   try { localStorage.setItem("dtd-board-tab", id); } catch (e) {}
 }
 document.querySelector(".tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if (b) showTab(b.dataset.tab); });
@@ -1038,6 +1060,117 @@ document.getElementById("sMoney").addEventListener("click", e => {
   const a = e.target.closest("[data-app]"); if (a) { const k = a.dataset.app; QAPPS.has(k) ? QAPPS.delete(k) : QAPPS.add(k); renderMoney(); return; }
   const x = e.target.closest("[data-extra]"); if (x) { const k = x.dataset.extra; QEXTRA.has(k) ? QEXTRA.delete(k) : QEXTRA.add(k); renderMoney(); return; }
   const b = e.target.closest(".opt[data-q]"); if (!b) return; Q[b.dataset.q] = Number(b.dataset.i); renderMoney();
+});
+
+// ---------- Today ----------
+function todaySlots(){
+  const d = DATA, nowEt = etNow(new Date()), today = nowEt.slice(0,10), nowT = nowEt.slice(11,16);
+  const all = (d.upcoming || []).concat(d.failed || [], d.posted || []);
+  const rows = [];
+  for (const [t, need, icon] of slotsFor(today)) {
+    const it = all.find(r => r.post_at_et && r.post_at_et.slice(0,10) === today && r.post_at_et.slice(11,16) === t);
+    const past = t <= nowT;
+    let st;
+    if (it && (d.failed || []).includes(it)) st = ["bad", "❌", "Did not go out"];
+    else if (it && (d.posted || []).includes(it)) st = ["ok", "✅", "Posted"];
+    else if (it) st = ["ok", "✅", past ? "Posting now" : "Ready"];
+    else if (!need) continue;
+    else if (past) st = ["off", "➖", "Nothing went out"];
+    else st = ["bad", "🔴", "Nothing loaded"];
+    rows.push({ t, icon, st, name: it ? (it.caption || it.file_name || "").split("\n")[0].slice(0, 42) : "" });
+  }
+  return rows;
+}
+function todayTodo(){
+  const d = DATA, probs = [];
+  for (const a of (d.alerts || [])) if (a.level === "error" && !/results|stats|analytics|credit/i.test(a.title || "")) probs.push(a.title);
+  for (const r of (d.failed || [])) probs.push((r.file_name || "A post") + " did not go out");
+  if (probs.length) return ["bad", "🚨", probs[0], probs.length > 1 ? "+" + (probs.length - 1) + " more on the calendar" : "", "sCal", "Open calendar"];
+  const need = reelNeed();
+  if (need.n) { const g = new Date(need.first + "T12:00:00Z"); return ["bad", "🎬", "Film " + need.n + " reel" + (need.n === 1 ? "" : "s"), "First empty spot " + DOW[g.getUTCDay()] + " " + MONTHS[g.getUTCMonth()].slice(0,3) + " " + g.getUTCDate() + ". Ideas are ready.", "sIdeas", "Show me what to film"]; }
+  const ai = d.ai || {};
+  if (ai.ok && ai.left != null && ai.left < 2) return ["bad", "🤖", "Add Claude credit", "About $" + ai.left.toFixed(2) + " left. Captions stop at $0.", "", ""];
+  const open = (((d.story_bank || {}).stories) || []).filter(x => x.needs).length;
+  if (open) return ["mid", "🎤", "Answer " + open + " story question" + (open === 1 ? "" : "s"), "One 10 minute voice memo fills your scripts in.", "sIdeas", "Open stories"];
+  return ["ok", "🟢", "Nothing. You're all set.", "Everything is loaded and posting on its own.", "", ""];
+}
+function aiCard(){
+  const ai = (DATA && DATA.ai) || null;
+  if (!ai) return "";
+  const added = ai.added || 0;
+  if (ai.needs_key || !ai.ok) {
+    return '<div class="tcard"><p class="tlab">🤖 CLAUDE CREDIT</p>' +
+      '<p class="tbig">' + (added ? usd2(added) + " added" : "Not set up") + "</p>" +
+      '<p class="tsub">' + (ai.needs_key ? "To see what's used and what's left, add an Admin key once." : "Could not read usage: " + esc(ai.error || "")) + "</p>" +
+      '<div class="tbtns"><button class="ibtn go" data-ai="key">🔑 Set it up</button><button class="ibtn sk" data-ai="add">➕ I added credit</button></div></div>';
+  }
+  const left = ai.left, pct = added ? Math.max(0, Math.min(1, left / added)) : 0;
+  const cls = left == null ? "mid" : left >= 5 ? "ok" : left >= 2 ? "mid" : "bad";
+  return '<div class="tcard"><p class="tlab">🤖 CLAUDE CREDIT</p>' +
+    '<p class="tbig ' + cls + '">' + (left == null ? usd2(ai.spent_month) + " used" : "About " + usd2(left) + " left") + "</p>" +
+    (left != null ? '<div class="tbar"><i class="' + cls + '" style="width:' + (pct * 100).toFixed(0) + '%"></i></div>' : "") +
+    '<div class="tmini">' +
+      "<div><b>" + usd2(ai.spent_month) + "</b><span>used this month</span></div>" +
+      "<div><b>" + usd2(ai.per_day) + "</b><span>a day, lately</span></div>" +
+      "<div><b>" + (ai.days_left != null ? Math.round(ai.days_left) + " days" : "…") + "</b><span>until it runs out</span></div>" +
+    "</div>" +
+    (ai.tokens_month != null ? '<p class="tsub">🔢 ' + fmt(ai.tokens_month) + " tokens this month. Captions, story dumps, clip picks and guest research.</p>" : "") +
+    '<div class="tbtns"><button class="ibtn sk" data-ai="add">➕ I added credit</button></div></div>';
+}
+function usd2(v){ return v == null ? "…" : "$" + Number(v).toFixed(2); }
+function renderToday(){
+  const el = document.getElementById("sToday"); if (!el || !DATA) return;
+  const now = new Date(etNow(new Date()).slice(0,10) + "T12:00:00Z");
+  const slots = todaySlots(), todo = todayTodo();
+  const st = DATA.stats || {}, c = st.chase || {}, p = st.chase_prev || {};
+  const v = change(n0(c.instagram_views_30d), n0(p.instagram_views_30d));
+  const vcls = v.dir === "up" ? "ok" : v.dir === "down" ? "bad" : "off";
+  el.innerHTML =
+    '<p class="thello">👋 ' + ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][now.getUTCDay()] + ", " + MONTHS[now.getUTCMonth()] + " " + now.getUTCDate() + "</p>" +
+    '<div class="tcard todo ' + todo[0] + '"><p class="tlab">👉 DO THIS NEXT</p><p class="tbig"><span>' + todo[1] + "</span> " + esc(todo[2]) + "</p>" + (todo[3] ? '<p class="tsub">' + esc(todo[3]) + "</p>" : "") +
+      (todo[4] ? '<button class="ibtn go tgo" data-go="' + todo[4] + '">' + esc(todo[5]) + " →</button>" : "") + "</div>" +
+    '<div class="tcard"><p class="tlab">📅 POSTING TODAY</p>' +
+      (slots.length ? slots.map(s => '<div class="tslot ' + s.st[0] + '"><b>' + clock(s.t) + "</b><em>" + s.icon + "</em><span>" + s.st[1] + " " + s.st[2] + (s.name ? "<small>" + esc(s.name) + "</small>" : "") + "</span></div>").join("") : '<p class="tsub">😴 Nothing today.</p>') +
+      '<button class="tlink" data-go="sCal">See the week →</button></div>' +
+    '<div class="tcard"><p class="tlab">📈 INSTAGRAM VIEWS</p><p class="tbig ' + vcls + '">' + (v.dir === "up" ? "▲ Going up" : v.dir === "down" ? "▼ Going down" : "➖ Steady") + "</p>" +
+      '<p class="tsub">' + fmt(c.instagram_views_30d) + " views in the last 30 days" + (v.pct != null && v.dir !== "flat" ? ", " + (v.pct > 0 ? "+" : "") + v.pct.toFixed(1) + "%" : "") + ".</p>" +
+      '<button class="tlink" data-go="sStats">All stats →</button></div>' +
+    aiCard();
+}
+function aiAddOpen(){
+  wizOpen('<h3>➕ How much did you add?</h3><p class="pnote" style="margin:0 0 10px">Just the dollar amount you put on console.anthropic.com today.</p>' +
+    '<input id="aiamt" inputmode="decimal" placeholder="10">' +
+    '<button class="wlink" style="width:100%;border:0;cursor:pointer" id="aiAddGo">Save</button>');
+  setTimeout(() => { const i = document.getElementById("aiamt"); if (i) i.focus(); }, 50);
+}
+function aiKeyOpen(){
+  wizOpen('<h3>🔑 See your Claude credit</h3>' +
+    '<div class="beats">' +
+      '<div class="beat"><span>1</span>Open console.anthropic.com on a computer and sign in.</div>' +
+      '<div class="beat"><span>2</span>Settings, then Admin keys, then Create key. Name it Dashboard.</div>' +
+      '<div class="beat"><span>3</span>Copy it. It starts with sk-ant-admin. Paste it here.</div>' +
+    "</div>" +
+    '<input id="aikey" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="sk-ant-admin...">' +
+    '<button class="wlink" style="width:100%;border:0;cursor:pointer" id="aiKeyGo">Save key</button>' +
+    '<p class="pnote">The key is stored in your own database, never on this page. It can only read usage, it cannot spend.</p>');
+}
+document.getElementById("sToday").addEventListener("click", e => {
+  const g = e.target.closest("[data-go]"); if (g) { showTab(g.dataset.go); window.scrollTo({ top: 0 }); return; }
+  const a = e.target.closest("[data-ai]"); if (a) { a.dataset.ai === "key" ? aiKeyOpen() : aiAddOpen(); }
+});
+document.getElementById("panel").addEventListener("click", async e => {
+  if (e.target.closest("#aiAddGo")) {
+    const v = Number((document.getElementById("aiamt").value || "").replace(/[^0-9.]/g, ""));
+    if (!(v > 0)) { toast("Type a dollar amount"); return; }
+    wizOpen("<h3>⏳ Saving…</h3>");
+    try { const r = await act("ai_credit", { usd: v }); if (DATA) DATA.ai = r.ai; closePanel(); renderToday(); toast("✅ Saved $" + v); } catch (x) { wizOpen('<h3>⚠️ That did not work</h3><p class="pnote">' + esc(explain(x)) + "</p>"); }
+  }
+  if (e.target.closest("#aiKeyGo")) {
+    const k = (document.getElementById("aikey").value || "").trim();
+    wizOpen("<h3>⏳ Checking the key…</h3>");
+    try { const r = await act("ai_key", { key: k }); if (DATA) DATA.ai = r.ai; closePanel(); renderToday(); toast("✅ Key works"); } catch (x) { wizOpen('<h3>⚠️ That key did not work</h3><p class="pnote">' + esc(explain(x)) + '</p><button class="wlink" style="width:100%;border:0;cursor:pointer" id="aiKeyRetry">Try again</button>'); }
+  }
+  if (e.target.closest("#aiKeyRetry")) aiKeyOpen();
 });
 
 // ---------- film next ----------
@@ -1332,7 +1465,7 @@ document.getElementById("panel").addEventListener("keydown", e => {
   if (e.key === "Enter" && e.target.id === "whandle") wizRun("portrait", e.target.value.trim());
 });
 
-function render(){ if (!DATA) return; renderSummary(); renderMonth(); renderStats(); renderMoney(); renderIdeas(); renderFolders(); }
+function render(){ if (!DATA) return; renderToday(); renderSummary(); renderMonth(); renderStats(); renderMoney(); renderIdeas(); renderFolders(); }
 
 let retried = false;
 async function load(){
