@@ -255,6 +255,40 @@ details.ref[open] summary::before{content:"\2212 ";}
 .net.ok{background:var(--postedsoft); color:var(--posted);} .net.bad{background:var(--heldsoft); color:var(--held);}
 .chip.good b{color:var(--posted);}
 @media (max-width:760px){ .ic{width:20px;height:20px;font-size:11px;border-radius:6px;} }
+
+.people{margin-top:12px;} .plabel{font-size:13px; color:var(--soft); margin:0 0 8px;}
+.person{display:flex; width:100%; justify-content:space-between; align-items:center; background:var(--cell2); border:1px solid var(--grid); border-radius:11px; padding:12px 14px; margin-bottom:7px; cursor:pointer; font-size:16px;}
+.person:hover{border-color:var(--key);} .person span{font-size:13px; color:var(--soft);}
+.fneed{border-radius:14px; padding:16px; font:700 19px/1.3 Archivo,sans-serif; margin-bottom:12px;}
+.fneed.bad{background:var(--heldsoft); color:var(--held);} .fneed.ok{background:var(--postedsoft); color:var(--posted);}
+.fneed small{display:block; font:500 13.5px/1.4 Archivo,sans-serif; color:var(--soft); margin-top:4px;}
+.icard{background:var(--cell); border:1px solid var(--grid); border-radius:16px; padding:18px;}
+.itop{display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;}
+.ibadge{font-size:13px; font-weight:700; padding:5px 10px; border-radius:999px; background:var(--card);}
+.icount{font-size:13px; color:var(--soft);}
+.ititle{font:800 22px/1.2 Archivo,sans-serif; margin:4px 0 12px;}
+.isay{background:var(--card); border-left:5px solid #C8950A; border-radius:0 12px 12px 0; padding:14px 16px; font-size:19px; font-weight:600; line-height:1.35;}
+.isay small{display:block; font-size:12px; font-weight:700; color:var(--soft); margin-bottom:4px; letter-spacing:.03em;}
+.imeta{display:flex; flex-wrap:wrap; gap:7px; margin:12px 0;}
+.imeta span{font-size:13.5px; background:var(--cell2); border:1px solid var(--grid); border-radius:8px; padding:5px 9px;}
+.iwhy{font-size:14px; color:var(--soft); margin:0 0 12px;}
+.iscript{margin:10px 0 0; padding:0; list-style:none;}
+.iscript li{padding:10px 0; border-top:1px solid var(--rule);}
+.iscript .s{font-size:16px; font-weight:600;} .iscript .t{font-size:13.5px; color:var(--soft); font-style:italic; margin-top:4px;}
+.ibtns{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;}
+.ibtn{border:0; border-radius:12px; padding:15px; font-size:16px; font-weight:700; cursor:pointer;}
+.ibtn.go{background:var(--key); color:#fff;} :root[data-theme="dark"] .ibtn.go{color:#0B1A18;}
+.ibtn.sk{background:var(--card); color:var(--ink);}
+.ibtn.sc{grid-column:1 / -1; background:var(--cell2); border:1px solid var(--grid); color:var(--ink);}
+.inav{display:flex; justify-content:space-between; margin-top:10px;}
+.inav button{background:none; border:0; color:var(--soft); font-size:14px; cursor:pointer; padding:8px 0;}
+.ilist{margin-top:10px;}
+.irow{display:flex; gap:10px; align-items:center; width:100%; text-align:left; background:var(--cell); border:1px solid var(--grid); border-radius:10px; padding:10px 12px; margin-bottom:6px; cursor:pointer; font-size:14.5px;}
+.irow.on{border-color:var(--key); border-width:2px;}
+.irow span{color:var(--soft); font-size:12.5px; margin-left:auto; white-space:nowrap;}
+.fname{font:600 16px/1.3 "IBM Plex Mono",monospace; background:var(--card); border-radius:10px; padding:12px; word-break:break-word; margin:8px 0;}
+.win{display:flex; gap:10px; align-items:center; background:var(--cell); border:1px solid var(--grid); border-radius:12px; padding:12px 14px; margin-bottom:8px; text-decoration:none; color:var(--ink);}
+.win b{flex:1;} .win span{color:var(--posted); font-weight:700; font-size:14px; white-space:nowrap;}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
 </style></head><body>
 
@@ -774,14 +808,103 @@ function renderMoney(){
 document.getElementById("sMoney").addEventListener("click", e => { const b = e.target.closest(".opt"); if (!b) return; Q[b.dataset.q] = Number(b.dataset.i); renderMoney(); });
 
 // ---------- film next ----------
-function renderIdeas(){
-  const el = document.getElementById("sIdeas"); const I = DATA && DATA.ideas;
-  if (!I || !(I.ideas || []).length) { el.innerHTML = '<h3>Film next</h3><p class="hint">No ideas yet.</p>'; return; }
-  const eff = e => ({ "phone right now": "📱 ", "needs an edit": "✂️ ", "studio setup": "🎥 " })[e] || "";
-  el.innerHTML = '<h3>🎥 What to film next</h3><p class="hint">Written ' + esc(I.date || "") + ' from your numbers and what is working in your niche.</p>' +
-    (I.read ? '<div class="note gold"><b>🧠 The read</b><p>' + esc(I.read) + "</p></div>" : "") +
-    I.ideas.map((i, n) => '<div class="idea"><span class="eff">' + eff(i.effort) + esc(i.effort || "") + "</span><h4>" + (n + 1) + ". " + esc(i.title) + '</h4><div class="say">🗣️ Say: ' + esc(i.hook) + "</div><p>" + esc(i.why || "") + "</p></div>").join("");
+// ---------- Film next ----------
+const IKIND = { talk: ["🗣️","Talk"], showme: ["🎥","Show me"], ditl: ["📱","Day in the life"], job: ["📅","On the job"], show: ["🎙️","Show clip"] };
+const IPLACE = { phone: "📱 Phone", studio: "🎥 Studio", edit: "✂️ Edit" };
+let IDX = 0, SCRIPT_OPEN = false;
+function reelNeed(){
+  const d = DATA, nowEt = etNow(new Date()), today = nowEt.slice(0,10), nowT = nowEt.slice(11,16);
+  const taken = new Set((d.upcoming || []).map(r => r.post_at_et && r.post_at_et.slice(0,16)));
+  let n = 0, first = null;
+  for (let i = 0; i < 7; i++) {
+    const key = dayKeyAdd(today, i);
+    for (const [t, need, icon] of slotsFor(key)) {
+      if (icon !== "🎬" || (key === today && t <= nowT)) continue;
+      if (!taken.has(key + "T" + t)) { n++; if (!first) first = key; }
+    }
+  }
+  return { n, first };
 }
+function renderIdeas(){
+  const el = document.getElementById("sIdeas");
+  const F = (DATA && DATA.film) || { list: [], winners: [] };
+  const list = F.list || [];
+  const need = reelNeed();
+  let head;
+  if (need.n) {
+    const g = new Date(need.first + "T12:00:00Z");
+    head = '<div class="fneed bad">🎬 Film ' + need.n + " reel" + (need.n === 1 ? "" : "s") + " this week<small>First empty spot: " + DOW[g.getUTCDay()] + " " + MONTHS[g.getUTCMonth()].slice(0,3) + " " + g.getUTCDate() + ". ✅ " + (F.filmed_7d || 0) + " filmed in the last 7 days.</small></div>";
+  } else head = '<div class="fneed ok">🟢 Reels are covered for the next 7 days<small>✅ ' + (F.filmed_7d || 0) + " filmed in the last 7 days. Keep going to stay ahead.</small></div>";
+  if (!list.length) { el.innerHTML = '<h3>🎥 Film next</h3>' + head + '<p class="hint">No ideas right now. New ones come every Monday and Thursday.</p>' + winnersHtml(F.winners); return; }
+  if (IDX >= list.length) IDX = 0;
+  const it = list[IDX], k = IKIND[it.kind] || ["💡", it.kind];
+  const script = Array.isArray(it.script) ? it.script : [];
+  el.innerHTML = '<h3>🎥 Film next</h3>' + head +
+    '<div class="icard">' +
+      '<div class="itop"><span class="ibadge">' + k[0] + " " + k[1] + '</span><span class="icount">Idea ' + (IDX + 1) + " of " + list.length + "</span></div>" +
+      (it.shoot ? '<div class="imeta" style="margin-top:0"><span>📅 ' + esc(it.shoot.when || "") + " · " + esc(it.shoot.title || "") + "</span></div>" : "") +
+      '<div class="ititle">' + esc(it.title) + "</div>" +
+      '<div class="isay"><small>🗣️ SAY THIS FIRST</small>' + esc(it.hook || "") + "</div>" +
+      '<div class="imeta"><span>📍 ' + (IPLACE[it.place] || esc(it.place || "")) + "</span><span>⏱️ about " + (it.length_sec || 30) + " sec</span></div>" +
+      (it.why ? '<p class="iwhy">🔥 ' + esc(it.why) + "</p>" : "") +
+      (SCRIPT_OPEN ? '<ul class="iscript">' + script.map(l => '<li><div class="s">' + esc(l.say || "") + "</div>" + (l.think ? '<div class="t">💭 They\'re thinking: ' + esc(l.think) + "</div>" : "") + "</li>").join("") + "</ul>" : "") +
+      '<div class="ibtns">' +
+        '<button class="ibtn sc" data-film="script">' + (SCRIPT_OPEN ? "📜 Hide script" : "📜 Show full script") + "</button>" +
+        '<button class="ibtn go" data-film="done">✅ Filmed it</button>' +
+        '<button class="ibtn sk" data-film="skip">⏭️ Skip</button>' +
+      "</div>" +
+      '<div class="inav"><button data-film="prev">‹ Back</button><button data-film="next">Next idea ›</button></div>' +
+    "</div>" +
+    '<h3>📋 All ideas this week</h3><div class="ilist">' +
+      list.map((x, i) => '<button class="irow' + (i === IDX ? " on" : "") + '" data-jump="' + i + '">' + (IKIND[x.kind] || ["💡"])[0] + " " + esc(x.title) + "<span>" + (x.shoot ? "📅 " + esc(x.shoot.when || "") : (IPLACE[x.place] || "")) + "</span></button>").join("") +
+    "</div>" + winnersHtml(F.winners);
+}
+function winnersHtml(w){
+  if (!w || !w.length) return "";
+  return '<h3>🏆 Do more like this</h3><p class="hint">Your best reels ever. Same energy, new topic.</p>' +
+    w.map(x => '<a class="win" href="' + esc(x.url || "#") + '" target="_blank" rel="noopener"><b>' + esc((x.content || "").split("\n")[0].slice(0, 60)) + "</b><span>👀 " + fmt(x.views) + "</span></a>").join("");
+}
+async function filmAction(kind, device){
+  const list = (DATA && DATA.film && DATA.film.list) || [];
+  const it = list[IDX]; if (!it) return;
+  if (kind === "skip") {
+    try { await act("idea_skip", { id: it.id }); list.splice(IDX, 1); SCRIPT_OPEN = false; renderIdeas(); toast("⏭️ Skipped"); } catch (e) { toast(explain(e)); }
+    return;
+  }
+  if (it.kind !== "show" && !device) {
+    wizOpen('<h3>🎉 Nice. What did you film it on?</h3>' +
+      '<button class="wopt" data-dev="phone"><b>📱 Phone</b><span>Goes in Yap Videos</span></button>' +
+      '<button class="wopt" data-dev="camera"><b>🎥 Camera</b><span>Goes in Vlog Clips</span></button>');
+    return;
+  }
+  wizOpen('<h3>⏳ One sec…</h3>');
+  try {
+    const r = await act("idea_done", { id: it.id, device: device || "phone" });
+    list.splice(IDX, 1); SCRIPT_OPEN = false; renderIdeas();
+    wizOpen('<h3>✅ Marked as filmed</h3>' +
+      '<p class="pnote" style="margin:0">Name the video file exactly this, so the caption matches:</p>' +
+      '<div class="fname" id="fname">' + esc(r.file_name || it.title) + "</div>" +
+      '<button class="ibtn sk" style="width:100%" id="copyname">📋 Copy name</button>' +
+      '<a class="wlink" href="' + esc(r.url) + '" target="_blank" rel="noopener">📂 Open ' + esc(r.folder || "folder") + " and upload ↗</a>");
+  } catch (e) { wizOpen('<h3>⚠️ That did not work</h3><p class="pnote">' + esc(explain(e)) + "</p>"); }
+}
+document.getElementById("sIdeas").addEventListener("click", e => {
+  const j = e.target.closest("[data-jump]"); if (j) { IDX = Number(j.dataset.jump); SCRIPT_OPEN = false; renderIdeas(); window.scrollTo({ top: 0 }); return; }
+  const b = e.target.closest("[data-film]"); if (!b) return;
+  const n = ((DATA && DATA.film && DATA.film.list) || []).length;
+  const w = b.dataset.film;
+  if (w === "script") { SCRIPT_OPEN = !SCRIPT_OPEN; renderIdeas(); }
+  else if (w === "next") { IDX = (IDX + 1) % Math.max(n, 1); SCRIPT_OPEN = false; renderIdeas(); }
+  else if (w === "prev") { IDX = (IDX - 1 + n) % Math.max(n, 1); SCRIPT_OPEN = false; renderIdeas(); }
+  else filmAction(w);
+});
+document.getElementById("panel").addEventListener("click", e => {
+  const d = e.target.closest("[data-dev]"); if (d) { filmAction("done", d.dataset.dev); return; }
+  if (e.target.closest("#copyname")) {
+    const t = document.getElementById("fname").textContent;
+    try { navigator.clipboard.writeText(t).then(() => toast("📋 Copied"), () => toast("Hold the name to copy it")); } catch (x) { toast("Hold the name to copy it"); }
+  }
+});
 function renderFolders(){
   const el = document.getElementById("folders");
   const list = (DATA && DATA.folder_buttons) || [];
@@ -820,8 +943,19 @@ function wizHandle(){
   wizOpen('<button class="wback" data-back="1">‹ Back</button><h3>🤝 Who is in the photo?</h3>' +
     '<p class="pnote" style="margin:0 0 10px">Their Instagram handle. They get tagged as a collaborator. Leave it blank if nobody.</p>' +
     '<input id="whandle" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="@theirhandle">' +
+    '<div class="people" id="people"></div>' +
     '<button class="wlink" style="width:100%;border:0;cursor:pointer" id="wgo">Next</button>');
+  drawPeople("");
   setTimeout(() => { const i = document.getElementById("whandle"); if (i) i.focus(); }, 50);
+}
+function drawPeople(q){
+  const el = document.getElementById("people"); if (!el) return;
+  const all = (DATA && DATA.collabs) || [];
+  const f = q.replace(/^@+/, "").toLowerCase();
+  const list = all.filter(p => !f || p.handle.includes(f)).slice(0, 12);
+  el.innerHTML = list.length
+    ? '<p class="plabel">⭐ People you tag</p>' + list.map(p => '<button class="person" data-h="' + esc(p.handle) + '"><b>@' + esc(p.handle) + "</b><span>" + (p.posts ? p.posts + " post" + (p.posts === 1 ? "" : "s") : "saved") + "</span></button>").join("")
+    : (f ? '<p class="plabel">✨ New person. Tap Next to add them.</p>' : "");
 }
 async function wizRun(kind, handle){
   wizOpen('<h3>⏳ Getting your folder ready…</h3>');
@@ -836,10 +970,11 @@ async function wizRun(kind, handle){
     wizOpen('<button class="wback" data-back="1">‹ Back</button><h3>⚠️ That did not work</h3><p class="pnote">' + esc(explain(e)) + "</p>");
   }
 }
-async function prepareUpload(kind, handle){
-  if (HOSTED) return await call("prepare_upload", { kind, handle });
+async function prepareUpload(kind, handle){ return await act("prepare_upload", { kind, handle: handle || "" }); }
+async function act(action, extra){
+  if (HOSTED) return await call(action, extra);
   // Inside Claude: ask the database to call the function, then read the answer back.
-  const body = JSON.stringify({ action: "prepare_upload", kind, handle: handle || "" }).replace(/'/g, "''");
+  const body = JSON.stringify(Object.assign({ action }, extra || {})).replace(/'/g, "''");
   const rows = await sql("select net.http_post(url := 'https://gzupnelfmehgdxfhntar.supabase.co/functions/v1/show-drop', " +
     "headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer ' || (select value from show_secrets where key = 'callback_token')), " +
     "body := '" + body + "'::jsonb, timeout_milliseconds := 60000) as id");
@@ -853,15 +988,17 @@ async function prepareUpload(kind, handle){
       return j;
     }
   }
-  throw { code: "tool_error", message: "Drive took too long. Try again." };
+  throw { code: "tool_error", message: "That took too long. Try again." };
 }
 document.getElementById("upload").addEventListener("click", wizStart);
 document.getElementById("panel").addEventListener("click", e => {
-  const o = e.target.closest(".wopt");
+  const o = e.target.closest(".wopt[data-kind]");
   if (o) { if (o.dataset.kind === "portrait") wizHandle(); else wizRun(o.dataset.kind); return; }
   if (e.target.closest("[data-back]")) { wizStart(); return; }
+  const who = e.target.closest(".person"); if (who) { wizRun("portrait", who.dataset.h); return; }
   if (e.target.closest("#wgo")) { wizRun("portrait", (document.getElementById("whandle").value || "").trim()); }
 });
+document.getElementById("panel").addEventListener("input", e => { if (e.target.id === "whandle") drawPeople(e.target.value.trim()); });
 document.getElementById("panel").addEventListener("keydown", e => {
   if (e.key === "Enter" && e.target.id === "whandle") wizRun("portrait", e.target.value.trim());
 });
