@@ -197,6 +197,10 @@ button:disabled { opacity: .5; cursor: default; }
 .gap { background: var(--warnsoft); color: var(--warnink); border-radius: 6px; padding: 0 4px; font-weight: 700; }
 .lockbox { max-width: 420px; margin: 60px auto; display: flex; flex-direction: column; gap: 12px; }
 .mini { font-size: 14px; color: var(--soft); }
+.chip { min-height: 44px; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 0 14px; font: inherit; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; max-width: 100%; }
+.chip.on { background: var(--keysoft); border-color: var(--key); color: var(--key); }
+select.field { min-height: 52px; }
+input.field { min-height: 48px; }
 </style>
 </head><body>
 <main class="app" id="app"></main>
@@ -210,6 +214,7 @@ const PROJECT = "gzupnelfmehgdxfhntar";
 const BASE = "https://gzupnelfmehgdxfhntar.supabase.co/functions/v1/";
 const TZ = "America/New_York";
 const SHOW_CAL = "https://claude.ai/artifact/V5iXQpGDuEyaXgjnN72e8X";
+const STUDIO = "daytodayportraits";
 const UPLOAD_THESE = "https://drive.google.com/drive/folders/1Y-aJazmBaHD8qt5XaB_DVk4Lx2h7hBIa";
 
 const I = {
@@ -343,7 +348,9 @@ function meItems(){
     out.push({ src:"drop", id:r.id, acct:"me", date:r.post_at_et.slice(0, 10), time:r.post_at_et.slice(11, 16),
       title: cleanName(r.file_name), file:r.file_name, kind: (LANE[r.lane] || "Post") + ((r.item_count || 1) > 1 ? ", " + r.item_count + " photos" : ""),
       type: dropType(r), status, caption: r.caption || "", hashtags: r.hashtags || "", thumb: thumbs, url: r.open_url,
-      handed: !!r.metricool_id, lane: r.lane, error: r.post_error, collabs: ((r.plan && r.plan.collaborators) || []).map(h => "@" + h).join(", ") });
+      handed: !!r.metricool_id, lane: r.lane, error: r.post_error, at: r.post_at,
+      collabList: ((r.plan && r.plan.collaborators) || []).map(h => String(h.username || h).replace(/^@+/, "")).filter(h => h && h !== STUDIO),
+      collabs: ((r.plan && r.plan.collaborators) || []).map(h => "@" + String(h.username || h).replace(/^@+/, "")).join(", ") });
   };
   (b.posted || []).forEach(r => add(r, "posted"));
   (b.failed || []).forEach(r => add(r, "failed"));
@@ -364,7 +371,8 @@ function showItems(){
     return { src:"show", id:r.id, acct:"show", date:String(d.date || ""), time:String(d.time || "10:00").slice(0, 5), title:d.title || "Show post",
       kind: ({ drop:"Full episode", teaser:"Teaser", clip:"Show clip", photo:"Photo carousel", yap:"Yap" })[t] || "Show post",
       type: t === "photo" ? "photo" : "reel", status, caption: d.caption || "", files, collabs: (d.collabs || []).join(", "),
-      url: files[0] && files[0].viewUrl, fixNote: r.fix_note || "", ep: d.ep || "" };
+      url: files[0] && files[0].viewUrl, fixNote: r.fix_note || "", ep: d.ep || "", pending: r.pending_edit || null,
+      collabList: (d.collabs || []).map(h => String(h).replace(/^@+/, "")).filter(Boolean) };
   }).filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x.date));
 }
 function emptySlots(fromYmd, days){
@@ -687,6 +695,46 @@ function monthView(){
 
 // ---------- the post sheet ----------
 function openSlots(type, days){ return emptySlots(today(), days || 14).filter(x => x.type === type && (x.date + "T" + x.time) > addDays(today(), 0) + "T" + etNow().slice(11, 16)); }
+function canEdit(it){
+  if (it.src === "drop") return it.status === "scheduled" && (it.date + "T" + it.time) > minsFromNow(20);
+  if (it.src === "show") return it.status !== "posted" && (it.date + "T" + it.time) > minsFromNow(30);
+  return false;
+}
+function minsFromNow(m){ const d = new Date(Date.now() + m * 60000); return d.toLocaleString("sv-SE", { timeZone: TZ }).replace(" ", "T").slice(0, 16); }
+function edFor(it){
+  if (!S.ed || S.ed.id !== it.id) S.ed = { id: it.id, caption: it.caption || "", hashtags: it.hashtags || "", collabs: (it.collabList || []).slice(), when: it.date + "T" + it.time, date: it.date, time: it.time, add: "" };
+  return S.ed;
+}
+function maxCollabs(it){ return it.src === "drop" && it.lane === "camera" ? 2 : 3; }
+function knownHandles(){
+  const b = (D && D.board) || {};
+  return Array.from(new Set(["spookybooty__"].concat((b.collabs || []).map(c => c.handle)))).filter(Boolean);
+}
+function editForm(it){
+  const e = edFor(it), max = maxCollabs(it);
+  const sugg = knownHandles().filter(h => !e.collabs.includes(h)).slice(0, 6);
+  let when = "";
+  if (it.src === "drop") {
+    const iph = (((D.board || {}).schedule || {}).iphone_days || [0]);
+    const opts = [{ date: it.date, time: it.time }].concat(openSlots(it.type, 21).filter(o => it.lane === "iphone" ? iph.includes(dowOf(o.date)) : (it.type === "photo" ? !iph.includes(dowOf(o.date)) : true)).slice(0, 14));
+    when = `<label class="lab" for="edwhen">WHEN IT GOES OUT</label><select id="edwhen" class="field" data-f="when">${opts.map((o, i) => { const v = o.date + "T" + o.time; return `<option value="${v}" ${e.when === v ? "selected" : ""}>${esc(dayLabel(o.date))} at ${clock(o.time)}${i === 0 ? " (now)" : ""}</option>`; }).join("")}</select>`;
+  } else {
+    when = `<span class="lab">WHEN IT GOES OUT</span><div class="grid2"><input class="field" type="date" data-f="date" value="${esc(e.date)}" aria-label="Date"><input class="field" type="time" data-f="time" value="${esc(e.time)}" aria-label="Time"></div>`;
+  }
+  return `<div class="card pad" style="gap:10px">
+    <label class="lab" for="edcap">CAPTION</label><textarea id="edcap" class="field" rows="5" data-f="caption">${esc(e.caption)}</textarea>
+    ${it.src === "drop" ? `<label class="lab" for="edtags">HASHTAGS, POSTED AS THE FIRST COMMENT</label><input id="edtags" class="field" data-f="hashtags" value="${esc(e.hashtags)}" autocapitalize="off" spellcheck="false">` : ""}
+    <span class="lab">COLLABORATORS, UP TO ${max}</span>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">${e.collabs.map(h => `<button class="chip on" data-a="edrm:${esc(h)}" aria-label="Remove @${esc(h)}">@${esc(h)} <span aria-hidden="true">×</span></button>`).join("") || '<span class="ph">No one yet.</span>'}</div>
+    ${e.collabs.length < max ? `<div style="display:flex;gap:8px"><input id="edadd" class="field" style="flex:1;min-width:0" data-f="add" value="${esc(e.add)}" placeholder="@theirhandle" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="btn" style="width:auto;flex:none" data-a="edadd">Add</button></div>
+      ${sugg.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px">${sugg.map(h => `<button class="chip" data-a="edsug:${esc(h)}">+ @${esc(h)}</button>`).join("")}</div>` : ""}` : ""}
+    ${it.src === "drop" && it.lane === "camera" ? '<span class="mini">@daytodayportraits is always tagged on camera photos.</span>' : ""}
+    ${when}
+    ${it.src === "show" && it.pending ? '<span class="mini">Your last change goes into the show calendar within 2 hours.</span>' : ""}
+    ${it.src === "drop" && it.handed ? '<span class="mini">Metricool already has this one. Saving sends it the new version.</span>' : ""}
+    <button class="btn big" data-a="edsave">Save changes</button>
+  </div>`;
+}
 function postSheet(){
   const it = findItem(S.post);
   if (!it) return "";
@@ -700,16 +748,15 @@ function postSheet(){
   else if (S.sheetMode === "move") { const iph = (((D.board || {}).schedule || {}).iphone_days || [0]); const os = openSlots(it.type).filter(o => it.lane === "iphone" ? iph.includes(dowOf(o.date)) : (it.type === "photo" ? !iph.includes(dowOf(o.date)) : true)).slice(0, 8);
       actions = `<span class="lab">MOVE IT TO AN OPEN ${it.type === "reel" ? "REEL" : "PHOTO"} SPOT</span>${os.map(o => `<button class="btn ghost" data-a="moveto:${o.date}T${o.time}" style="text-align:left">${esc(dayLabel(o.date))} at ${clock(o.time)}</button>`).join("") || '<span class="ph">No open spots in the next 2 weeks.</span>'}<button class="btn ghost" data-a="sheetmode:">Never mind</button>`; }
   else if (it.src === "drop") {
-    const live = it.status === "scheduled";
-    actions = (live ? `<div class="grid2"><button class="btn ghost big" data-a="sheetmode:caption">Change caption</button><button class="btn ghost big" data-a="sheetmode:move" ${it.handed ? "disabled" : ""}>Move it</button></div>
-      ${it.handed ? '<span class="mini">Metricool already has this one, so it can’t move. You can still change the caption.</span>' : ""}
-      <button class="btn ghost" data-a="sheetmode:fix">Fix something else</button>` : "") + linkBtn(it.url, "Open in Drive", true);
+    actions = (canEdit(it) ? editForm(it) + `<button class="btn ghost" data-a="sheetmode:fix">Something else? Tell me</button>` :
+      (it.status === "scheduled" ? `<span class="mini">Goes out in under 20 minutes, so it is locked.</span>` : "")) + linkBtn(it.url, "Open in Drive", true);
   } else if (it.src === "show") {
-    if (it.status === "needs_ok") actions = `<button class="btn big" data-a="approve:${esc(it.id)}">Approve, post it</button><button class="btn ghost big" data-a="sheetmode:fix">Fix something</button>`;
-    else if (it.status === "approved") actions = `<div class="done" style="text-decoration:none">${I.ok}Approved. It goes out on time.</div><button class="btn ghost" data-a="unapprove:${esc(it.id)}">Take back approval</button><button class="btn ghost" data-a="sheetmode:fix">Fix something</button>`;
-    else if (it.status === "fix") actions = `<div class="card pad" style="gap:4px"><span class="lab">YOUR FIX</span><span>${esc(it.fixNote)}</span><span class="mini">The posting desk changes it by morning.</span></div><button class="btn ghost" data-a="unfix:${esc(it.id)}">Cancel the fix</button>`;
+    const ed = canEdit(it) ? editForm(it) : "";
+    if (it.status === "needs_ok") actions = ed + `<button class="btn big" data-a="approve:${esc(it.id)}">Approve, post it</button><button class="btn ghost" data-a="sheetmode:fix">Something else? Tell me</button>`;
+    else if (it.status === "approved") actions = `<div class="done" style="text-decoration:none">${I.ok}Approved. It goes out on time.</div>` + ed + `<button class="btn ghost" data-a="unapprove:${esc(it.id)}">Take back approval</button>`;
+    else if (it.status === "fix") actions = `<div class="card pad" style="gap:4px"><span class="lab">YOUR FIX</span><span>${esc(it.fixNote)}</span><span class="mini">The posting desk changes it by morning.</span></div><button class="btn ghost" data-a="unfix:${esc(it.id)}">Cancel the fix</button>` + ed;
     else if (it.status === "posted") actions = "";
-    else actions = `<div class="err">${it.status === "needs_caption" ? "This one has a file but no caption yet. The posting desk drafts one every morning." : "This one needs a file. Drop it in UPLOAD THESE and the posting desk attaches it by morning."}</div>${linkBtn(UPLOAD_THESE, "Open UPLOAD THESE")}`;
+    else actions = `<div class="err">${it.status === "needs_caption" ? "This one has a file but no caption yet. Write one below, or the posting desk drafts one in the morning." : "This one needs a file. Drop it in UPLOAD THESE and the posting desk attaches it by morning."}</div>${it.status === "needs_file" ? linkBtn(UPLOAD_THESE, "Open UPLOAD THESE") : ""}` + ed;
     actions += linkBtn(it.url, "Open the file", true) + linkBtn(SHOW_CAL, "Open the show calendar", true);
   }
   return `<div class="scrim" data-a="postclose"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.title)}"><div class="in"><span class="grab"></span>
@@ -717,7 +764,7 @@ function postSheet(){
     <div style="display:flex;gap:14px;align-items:center">${thumb(it, 96, 120)}
       <span style="display:flex;flex-direction:column;gap:4px;min-width:0"><b>${esc(when)}</b><span class="ph">${esc(it.kind)}</span><span class="ph">${it.acct === "show" ? "@thedaytodayshow" : "@daytodaychase"}</span>${pill(it)}</span></div>
     ${it.error && it.status === "failed" ? `<div class="err">${esc(it.error)}</div>` : ""}
-    ${S.sheetMode ? "" : `<div class="card pad" style="gap:6px"><span class="lab">CAPTION</span><span>${esc(it.caption || "No caption yet.")}</span>${it.hashtags ? `<span class="ph">${esc(it.hashtags)}</span>` : ""}</div>
+    ${S.sheetMode || canEdit(it) ? "" : `<div class="card pad" style="gap:6px"><span class="lab">CAPTION</span><span>${esc(it.caption || "No caption yet.")}</span>${it.hashtags ? `<span class="ph">${esc(it.hashtags)}</span>` : ""}</div>
     <div class="card pad" style="gap:6px"><span class="lab">COLLABORATORS</span><span>${esc(it.collabs || "None")}</span></div>`}
     ${actions}
   </div></div>`;
@@ -1049,7 +1096,49 @@ document.addEventListener("click", e => {
     case "stripmove": S.stripStart = addDays(S.stripStart || today(), Number(v)); if (S.stripStart < addDays(today(), -28)) S.stripStart = addDays(today(), -28); S.day = S.stripStart; break;
     case "daymove": { const d = addDays(S.day < today() ? today() : S.day, Number(v)); S.day = d < today() ? today() : d; break; }
     case "mmove": S.month = Math.max(-1, Math.min(2, S.month + Number(v))); break;
-    case "post": S.post = v; S.sheetMode = ""; break;
+    case "post": S.post = v; S.sheetMode = ""; S.ed = null; break;
+    case "edrm": if (S.ed) S.ed.collabs = S.ed.collabs.filter(h => h !== v); break;
+    case "edsug": { const it = findItem(S.post); if (S.ed && it && S.ed.collabs.length < maxCollabs(it) && !S.ed.collabs.includes(v)) S.ed.collabs.push(v); break; }
+    case "edadd": { const it = findItem(S.post); const h = String((S.ed && S.ed.add) || "").trim().replace(/^@+/, "").toLowerCase();
+      if (!/^[a-z0-9._]{1,30}$/.test(h)) { say("That doesn't look like an Instagram handle.", null, true); return; }
+      if (S.ed.collabs.length >= maxCollabs(it)) { say("Instagram allows " + maxCollabs(it) + " here.", null, true); return; }
+      if (!S.ed.collabs.includes(h)) S.ed.collabs.push(h); S.ed.add = ""; break; }
+    case "edsave": { const it = findItem(S.post), e = S.ed; if (!it || !e) return;
+      const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+      if (it.src === "drop") {
+        const body = { id: it.id };
+        if (e.caption.trim() !== String(it.caption || "").trim()) { if (!e.caption.trim()) { say("The caption can't be empty.", null, true); return; } body.caption = e.caption.trim(); }
+        if (e.hashtags.trim() !== String(it.hashtags || "").trim()) body.hashtags = e.hashtags.trim();
+        if (!same(e.collabs, it.collabList || [])) body.collabs = e.collabs;
+        if (e.when !== it.date + "T" + it.time) body.to_et = e.when;
+        if (Object.keys(body).length === 1) { say("Nothing changed."); return; }
+        run("Saving…", async () => {
+          const r = await app("edit_drop", body);
+          applyDrop(it.id, body); S.post = null; S.ed = null;
+          const b4 = r.before || {};
+          say(r.rehanded ? "Saved. Metricool got the new version." : "Saved.", () => run("Undoing…", async () => {
+            const back = { id: it.id }; if (body.caption !== undefined) back.caption = b4.caption; if (body.hashtags !== undefined) back.hashtags = b4.hashtags || "";
+            if (body.collabs !== undefined) back.collabs = b4.collabs || []; if (body.to_et !== undefined && b4.to_et) back.to_et = b4.to_et;
+            await app("edit_drop", back); applyDrop(it.id, back); say("Undone."); }));
+        });
+      } else {
+        const body = { id: it.id };
+        if (e.caption !== String(it.caption || "")) body.caption = e.caption;
+        if (!same(e.collabs, it.collabList || [])) body.collabs = e.collabs;
+        if (e.date !== it.date || e.time !== it.time) { if (!e.date || !e.time) { say("Pick a date and a time.", null, true); return; } body.date = e.date; body.time = e.time; }
+        if (Object.keys(body).length === 1) { say("Nothing changed."); return; }
+        run("Saving…", async () => {
+          const r = await app("edit_show", body);
+          const row = (D.show_posts || []).find(x => x.id === it.id); const b4 = r.before || {};
+          if (row) { row.data = Object.assign({}, row.data, body.caption !== undefined ? { caption: body.caption } : {}, body.collabs ? { collabs: body.collabs.map(h => "@" + h) } : {}, body.date ? { date: body.date, time: body.time } : {}); row.pending_edit = Object.assign({}, row.pending_edit || {}, body); }
+          S.post = null; S.ed = null;
+          say("Saved. It goes into the show calendar within 2 hours.", () => run("Undoing…", async () => {
+            await app("edit_show", { id: it.id, undo: true, restore: b4.pending_edit || null, restore_data: b4.data });
+            if (row) { row.data = b4.data; row.pending_edit = b4.pending_edit || null; } say("Undone."); }));
+        });
+      }
+      return; }
+
     case "slot": S.post = null; S.upload = { kind: (findItem(v) || {}).type === "photo" ? null : "yap", step: "idea" }; if (!S.upload.kind) S.upload = { kind: null }; break;
     case "postclose": S.post = null; S.sheetMode = ""; break;
     case "sheetmode": S.sheetMode = v; break;
@@ -1127,7 +1216,18 @@ document.addEventListener("click", e => {
 });
 function patchShow(id, f){ const r = (D.show_posts || []).find(x => x.id === id); if (r) Object.assign(r, f); }
 function setDropCaption(id, cap){ for (const k of ["upcoming","failed","posted"]) for (const r of ((D.board || {})[k] || [])) if (r.id === id) { r.caption = cap; r.metricool_id = null; } }
+function applyDrop(id, body){
+  for (const k of ["upcoming","failed","posted"]) for (const r of ((D.board || {})[k] || [])) if (r.id === id) {
+    if (body.caption !== undefined) r.caption = body.caption;
+    if (body.hashtags !== undefined) r.hashtags = body.hashtags;
+    if (body.collabs !== undefined) { r.plan = Object.assign({}, r.plan || {}); r.plan.collaborators = body.collabs.concat(r.lane === "camera" ? [STUDIO] : []); }
+    if (body.to_et) r.post_at_et = body.to_et + ":00";
+  }
+}
 function setDropTime(id, wall){ for (const r of ((D.board || {}).upcoming || [])) if (r.id === id) r.post_at_et = wall + ":00"; }
+document.addEventListener("input", e => { const f = e.target && e.target.dataset && e.target.dataset.f; if (f && S.ed) S.ed[f] = e.target.value; });
+document.addEventListener("change", e => { const f = e.target && e.target.dataset && e.target.dataset.f; if (f && S.ed) S.ed[f] = e.target.value; });
+document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target && e.target.id === "edadd") { e.preventDefault(); const b = document.querySelector('[data-a="edadd"]'); if (b) b.click(); } });
 document.addEventListener("keydown", e => { if (e.key === "Escape") { if (S.post || S.upload || S.acctOpen) { S.post = null; S.upload = null; S.acctOpen = false; draw(); } } if (e.key === "Enter" && e.target && e.target.id === "kin") document.querySelector('[data-a="keygo"]').click(); });
 
 function lockScreen(msg){
