@@ -363,9 +363,9 @@ async function callFn(fn, action, extra){
     return j;
   }
   const payload = JSON.stringify(body).replace(/'/g, "''");
-  const rows = await sql("select net.http_post(url := '" + BASE + fn + "', headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer ' || (select value from show_secrets where key = 'callback_token')), body := '" + payload + "'::jsonb, timeout_milliseconds := 60000) as id");
+  const rows = await sql("select net.http_post(url := '" + BASE + fn + "', headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer ' || (select value from show_secrets where key = 'callback_token')), body := '" + payload + "'::jsonb, timeout_milliseconds := 90000) as id");
   const id = Number(rows[0] && rows[0].id);
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 60; i++) {
     await new Promise(r => setTimeout(r, i < 3 ? 700 : 1500));
     const got = await sql("select status_code, content from net._http_response where id = " + id);
     if (got.length) {
@@ -379,6 +379,7 @@ async function callFn(fn, action, extra){
 const app = (a, x) => callFn("show-app", a, x);
 const drop = (a, x) => callFn("show-drop", a, x);
 const prev = (a, x) => callFn("show-preview", a, x);
+const scriptFn = (a, x) => callFn("show-script", a, x);
 
 // ---------- toast + undo ----------
 let tt = null, UNDO = null;
@@ -941,6 +942,39 @@ const CITIES = [["Philadelphia",9.3],["New York",2.4],["Los Angeles",2.0]];
 const HOURS = [["2 PM",100,"best"],["12 PM",96,"strong"],["4 PM",95,"strong"],["6 PM",90,"ok"],["8 PM",86,"weaker"],["11 PM",58,"dead"]];
 const TAGOPTS = [["talk","Talking to camera"],["hack","Life hack or tip"],["fun","Funny moment"],["story","Personal story"],["ditl","Day in the life"],["showme","Behind the scenes"],["people","With my people"],["photo","Photo"]];
 function bars(rows, f){ return `<div style="display:flex;flex-direction:column;gap:8px">${rows.map(r => `<div style="display:flex;align-items:center;gap:10px"><span style="flex:none;width:96px;font-size:14px">${esc(r[0])}</span><span style="flex:1;height:12px;background:var(--sunk);border-radius:6px;overflow:hidden"><span style="display:block;height:100%;width:${r[1] / rows[0][1] * 100}%;background:var(--key);border-radius:6px"></span></span><span style="flex:none;width:54px;text-align:right;font-size:13px;color:var(--soft)">${esc(f(r))}</span></div>`).join("")}</div>`; }
+let SCRL = [];
+function scriptSheet(){
+  const x = S.scr; if (!x) return "";
+  let body;
+  if (x.loading) body = `<div class="loading" style="padding:40px 0">${I.pencil}<br>Writing your script…<br><span class="mini">About a minute. It writes it, then checks every fact against your stories.</span></div>`;
+  else if (x.err) body = `<div class="err">${esc(x.err)}</div><button class="btn big" data-a="scragain">Try again</button>`;
+  else {
+    const d = x.data;
+    body = `<span class="ph">${esc(d.why || "")}</span>
+    ${d.lesson ? `<span class="streak">Aimed at: ${esc(d.lesson)}</span>` : ""}
+    <div class="card pad" style="gap:4px"><span class="lab">ON SCREEN TEXT</span><b style="font-size:18px">${esc(d.on_screen || "")}</b></div>
+    <div class="card pad" style="gap:12px"><span class="lab">THE SCRIPT · ABOUT ${Number(d.length_sec) || 45} SEC</span>
+      ${(d.script || []).map(l => `<div style="display:flex;flex-direction:column;gap:3px">${l.think ? `<span style="font-size:14px;font-style:italic;color:var(--soft)">They think: ${hl(l.think)}</span>` : ""}<b style="font-size:17px;line-height:1.35">${hl(l.say)}</b></div>`).join("")}
+      <span class="mini">Read the grey lines in your head. Only say the bold ones. Yellow blanks are details only you know.</span></div>
+    <div class="card pad" style="gap:4px"><span class="lab">CAPTION</span><span style="white-space:pre-line">${esc(d.caption || "")}</span></div>
+    ${d.audit ? `<span class="mini">Self check: ${Number(d.audit.score) || 0} of 7 bricks. ${esc(d.audit.notes || "")}</span>` : ""}
+    ${x.saved ? `<div class="done" style="text-decoration:none">${I.ok}Saved. It's at the top of your Film tab.</div><button class="btn" data-a="tab:film">Open Film</button>` : `<button class="btn big" data-a="scrsave">Save to my Film tab</button>`}
+    <div class="grid2"><button class="btn ghost" data-a="scrcopy">Copy the script</button><button class="btn ghost" data-a="scrclaude">Copy for Claude</button></div>
+    <button class="btn ghost" data-a="scragain">Write a different one</button>`;
+  }
+  return `<div class="scrim" data-a="scrclose"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Your script"><div class="in"><span class="grab"></span>
+    <div class="h"><h2>${esc(x.data && !x.loading && !x.err ? x.data.title : "Your script")}</h2><button class="x" data-a="scrclose" aria-label="Close">${I.x}</button></div>${body}</div></div>`;
+}
+function scriptText(d){
+  return [d.title, "", "ON SCREEN: " + (d.on_screen || ""), ""].concat((d.script || []).map(l => (l.think ? "(they think: " + l.think + ")\n" : "") + l.say)).concat(["", "CAPTION:", d.caption || ""]).join("\n");
+}
+function writeScript(idx){
+  const l = idx >= 0 ? SCRL[idx] : null;
+  S.scr = { loading: true, idx, lesson: l }; drawLayer();
+  scriptFn("write", { account: S.scrAcct || "daytodaychase", lesson: l ? { rule: l.rule, direction: l.direction, confidence: l.confidence } : null })
+    .then(j => { if (!S.scr || S.scr.idx !== idx) return; S.scr = { idx, lesson: l, data: j.script }; drawLayer(); },
+      e => { if (!S.scr) return; S.scr = { idx, lesson: l, err: (e && e.message) || "Couldn't write it. Try again." }; drawLayer(); });
+}
 function stats(){
   const show = S.statsTab === "show";
   const brand = show ? "thedaytodayshow" : "daytodaychase";
@@ -957,10 +991,12 @@ function stats(){
   const mx = Math.max.apply(null, weekly.concat([1]));
   const ls = (D.lessons || []).filter(l => l.account === brand);
   const more = ls.filter(l => l.direction === "do_more"), less = ls.filter(l => l.direction === "do_less"), test = ls.filter(l => l.direction === "test_more");
+  SCRL = ls.slice(); S.scrAcct = brand;
+  const nextL = more.find(l => l.confidence !== "low") || more[0] || test[0] || null;
   const sure = c => `<span style="flex:none;font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px;background:var(--sunk);color:var(--soft);white-space:nowrap">${c === "high" ? "Sure" : c === "medium" ? "Pretty sure" : "Early sign"}</span>`;
   const lrow = (l, color) => `<div style="display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-top:1px solid var(--hair)">
       <b style="flex:none;width:66px;font-size:19px;font-variant-numeric:tabular-nums;color:${color}">${Number(l.median_pull) >= 10 ? "10x+" : Number(l.median_pull).toFixed(1) + "x"}</b>
-      <span style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px"><span style="font-size:15px">${esc(l.rule)}</span>${sure(l.confidence)}</span></div>`;
+      <span style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px"><span style="font-size:15px">${esc(l.rule)}</span><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${sure(l.confidence)}${l.direction !== "do_less" ? `<button class="chip" style="min-height:36px;font-size:14px;color:var(--key);font-weight:700" data-a="scr:${SCRL.indexOf(l)}">Write me one</button>` : ""}</span></span></div>`;
   const tq = (D.tag_queue || []).filter(q => q.account === brand);
   const q0 = tq[0];
   const recent = (D.results || []).filter(r => r.account === brand && r.grade && r.grade !== "too_new").slice(0, 6);
@@ -972,7 +1008,9 @@ function stats(){
     <span class="lab">THE VERDICT</span><span class="bigno" style="line-height:1.15">${esc(verdict)}</span>
     ${weekly.length >= 2 ? `<div style="display:flex;align-items:flex-end;gap:6px;height:64px" aria-hidden="true">${weekly.map((v, i) => `<i style="flex:1;height:${Math.max(6, v / mx * 100)}%;background:${i === weekly.length - 1 ? "var(--key)" : "var(--keysoft)"};border-radius:6px 6px 2px 2px"></i>`).join("")}</div>
       <span class="mini">Instagram views over 30 days, one bar per week. The dark bar is now.</span>` : ""}
-    <div class="doit"><span class="lab">DO THIS</span><b>${esc(todo)}</b></div>
+    <div class="doit"><span class="lab">YOUR NEXT VIDEO</span><b>${esc(nextL ? nextL.rule : todo)}</b></div>
+    <button class="btn big" data-a="scr:${nextL ? SCRL.indexOf(nextL) : -1}">${I.pencil} Write me a script for this</button>
+    <span class="mini">Built from what works on your posts, your real stories, and your yap rules.</span>
   </section>
   ${reach(brand, false)}
   ${more.length ? `<h2>Post more of this</h2><span class="mini" style="margin-top:-10px">Compared to your own normal. The number is views.</span><div class="card" style="overflow:hidden">${more.map(l => lrow(l, "var(--good)")).join("")}</div>` : ""}
@@ -1342,6 +1380,7 @@ function drawLayer(){
   if (S.post) h += postSheet();
   if (S.upload) h += uploadSheet();
   if (S.fixFor) h += fixSheet();
+  if (S.scr) h += scriptSheet();
   if (S.acctOpen) {
     const grp = (label, kind) => `<span class="lab" style="margin-top:4px">${label}</span><div class="card" style="overflow:hidden">${ACCTS.filter(a => a[3] === kind).map(a => `<button data-a="acct:${a[0]}" style="width:100%;display:flex;align-items:center;gap:12px;min-height:64px;padding:8px 16px;border:0;border-bottom:1px solid var(--hair);background:${S.acct === a[0] ? "var(--keysoft)" : "transparent"};text-align:left">${badge(a, 40)}<span style="flex:1;min-width:0;display:flex;flex-direction:column"><b style="font-size:16px">${esc(a[1])}</b><small class="ph">${esc(a[2])}</small></span>${S.acct === a[0] ? '<b style="color:var(--key)">Viewing</b>' : ""}</button>`).join("")}</div>`;
     h += `<div class="scrim" data-a="acctclose"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Switch account"><div class="in"><span class="grab"></span>
@@ -1440,6 +1479,12 @@ document.addEventListener("click", e => {
       flyOut(v); return; }
     case "fixchip": { const t = document.getElementById("fixnote"); if (t) { t.value = (t.value.trim() ? t.value.trim() + ". " : "") + v; t.focus(); } return; }
     case "fixcancel": S.fixFor = null; drawLayer(); return;
+    case "scr": writeScript(Number(v)); return;
+    case "scragain": writeScript(S.scr ? S.scr.idx : -1); return;
+    case "scrclose": S.scr = null; drawLayer(); return;
+    case "scrcopy": if (S.scr && S.scr.data) copyText(scriptText(S.scr.data), () => say("Script copied.")); return;
+    case "scrclaude": if (S.scr && S.scr.data) copyText("Here's a yap script my DayToDay app wrote for me from my post data. Help me make it better using my yap rules. Keep it true to my real stories.\n\n" + scriptText(S.scr.data), () => say("Copied. Paste it into Claude.")); return;
+    case "scrsave": if (!S.scr || !S.scr.data) return; run("Saving…", async () => { await scriptFn("save", { script: S.scr.data }); S.scr.saved = true; say("Saved to Film."); }); return;
     case "fixedit": { const id = S.fixFor; S.fixFor = null; S.fromFix = id; S.post = id; S.sheetMode = ""; S.ed = null; loadSlides(id); break; }
     case "fixdone": run("Saving…", async () => { await app("dismiss", { key: "fixreq:" + v }); AP.needs = (AP.needs || []).filter(n => n.id !== v); say("Marked done."); }); return;
     case "fixsend": { const t = document.getElementById("fixnote"), note = ((t && t.value) || "").trim();
@@ -1609,7 +1654,7 @@ function lockScreen(msg){
 let polling = false;
 function startPolling(){
   if (polling) return; polling = true;
-  setInterval(() => { if (!document.hidden && !S.busy && !S.post && !S.upload && !S.dragging && !S.fixFor) load(); }, HOSTED ? 90000 : 180000);
+  setInterval(() => { if (!document.hidden && !S.busy && !S.post && !S.upload && !S.dragging && !S.fixFor && !S.scr) load(); }, HOSTED ? 90000 : 180000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden && !S.post && !S.upload) load(); });
 }
 (async function boot(){
