@@ -189,6 +189,13 @@ button:disabled { opacity: .5; cursor: default; }
 .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
 .pillx { align-self: flex-start; font-size: 13px; font-weight: 700; border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
 .rowbtn { width: 100%; display: flex; gap: 12px; align-items: center; min-height: 60px; border: 0; border-top: 1px solid var(--hair); background: transparent; padding: 8px 14px; text-align: left; }
+.slides { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px 4px; }
+.slide { position: relative; flex: none; width: 78%; aspect-ratio: 4 / 5; border-radius: 14px; overflow: hidden; background: var(--sunk); scroll-snap-align: center; }
+.slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.slide.ph-load { width: 100%; display: flex; align-items: center; justify-content: center; color: var(--soft); font-weight: 600; aspect-ratio: auto; height: 160px; }
+.slidenum { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.6); color: #FFFFFF; font-size: 13px; font-weight: 700; border-radius: 999px; padding: 3px 9px; }
+.slidevid { position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,.6); color: #FFFFFF; font-size: 13px; font-weight: 700; border-radius: 999px; padding: 3px 9px; display: flex; gap: 4px; align-items: center; }
+.slidevid svg { width: 14px; height: 14px; }
 .thumb { flex: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; background-size: cover; background-position: center; }
 .field { width: 100%; font: inherit; font-size: 16px; border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: var(--card); color: var(--ink); }
 .loading { padding: 60px 0; text-align: center; color: var(--soft); font-weight: 600; }
@@ -271,6 +278,7 @@ const S = { tab:"today", prev:"today", acct:"me", acctOpen:false, filter:"me", p
   ftab:"script", idea:0, statsTab:"me", open:{}, days:0, mins:0, lic:1, apps:{ ig:true }, ex:{},
   creditOpen:"", loadErr:"", showMoreTasks:false, skipping:{} };
 let D = null, HOSTED = false, KEY = "", MCP = null;
+const COVERS = {}, SLIDES = {}; let coversAsked = false;
 let theme = "light";
 try { theme = localStorage.getItem("dtd-board-theme") || "light"; } catch (e) {}
 document.documentElement.setAttribute("data-theme", theme);
@@ -319,6 +327,7 @@ async function callFn(fn, action, extra){
 }
 const app = (a, x) => callFn("show-app", a, x);
 const drop = (a, x) => callFn("show-drop", a, x);
+const prev = (a, x) => callFn("show-preview", a, x);
 
 // ---------- toast + undo ----------
 let tt = null, UNDO = null;
@@ -363,6 +372,7 @@ function showItems(){
     const hasCap = String(d.caption || "").trim().length > 0;
     let status = "needs_file";
     if (String(d.status) === "Posted") status = "posted";
+    else if (/^ON HOLD/i.test(String(d.title || ""))) status = "hold";
     else if (r.fix_note && !(r.fix_done_at && r.fix_done_at >= (r.fix_at || ""))) status = "fix";
     else if (r.approved_at) status = "approved";
     else if (files.length && hasCap) status = "needs_ok";
@@ -371,7 +381,7 @@ function showItems(){
     return { src:"show", id:r.id, acct:"show", date:String(d.date || ""), time:String(d.time || "10:00").slice(0, 5), title:d.title || "Show post",
       kind: ({ drop:"Full episode", teaser:"Teaser", clip:"Show clip", photo:"Photo carousel", yap:"Yap" })[t] || "Show post",
       type: t === "photo" ? "photo" : "reel", status, caption: d.caption || "", files, collabs: (d.collabs || []).join(", "),
-      url: files[0] && files[0].viewUrl, fixNote: r.fix_note || "", ep: d.ep || "", pending: r.pending_edit || null,
+      url: files[0] && files[0].viewUrl, thumb: (COVERS[r.id] || null), fixNote: r.fix_note || "", ep: d.ep || "", pending: r.pending_edit || null,
       collabList: (d.collabs || []).map(h => String(h).replace(/^@+/, "")).filter(Boolean) };
   }).filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x.date));
 }
@@ -397,6 +407,7 @@ function postingOn(){ return ((D && D.board && D.board.drop_enabled) || "off") =
 function stateOf(it){
   if (it.status === "empty") return ["Empty", "var(--bad)", "var(--badsoft)"];
   if (it.status === "posted") return ["Posted", "var(--soft)", "var(--sunk)"];
+  if (it.status === "hold") return ["On hold", "var(--soft)", "var(--sunk)"];
   if (it.status === "failed") return ["Did not go out", "var(--bad)", "var(--badsoft)"];
   if (it.status === "fix" || (it.src === "drop" && fixRequested(it.id))) return ["Fix sent", "var(--info)", "var(--infosoft)"];
   if (it.status === "needs_ok") return ["Needs your OK", "var(--warn)", "var(--warnsoft)"];
@@ -756,13 +767,15 @@ function postSheet(){
     else if (it.status === "approved") actions = `<div class="done" style="text-decoration:none">${I.ok}Approved. It goes out on time.</div>` + ed + `<button class="btn ghost" data-a="unapprove:${esc(it.id)}">Take back approval</button>`;
     else if (it.status === "fix") actions = `<div class="card pad" style="gap:4px"><span class="lab">YOUR FIX</span><span>${esc(it.fixNote)}</span><span class="mini">The posting desk changes it by morning.</span></div><button class="btn ghost" data-a="unfix:${esc(it.id)}">Cancel the fix</button>` + ed;
     else if (it.status === "posted") actions = "";
+    else if (it.status === "hold") actions = `<div class="card pad" style="gap:4px"><span class="lab">ON HOLD</span><span>This won't post until you say the hold is off. Tell Claude when the tags are in.</span></div>`;
     else actions = `<div class="err">${it.status === "needs_caption" ? "This one has a file but no caption yet. Write one below, or the posting desk drafts one in the morning." : "This one needs a file. Drop it in UPLOAD THESE and the posting desk attaches it by morning."}</div>${it.status === "needs_file" ? linkBtn(UPLOAD_THESE, "Open UPLOAD THESE") : ""}` + ed;
     actions += linkBtn(it.url, "Open the file", true) + linkBtn(SHOW_CAL, "Open the show calendar", true);
   }
   return `<div class="scrim" data-a="postclose"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.title)}"><div class="in"><span class="grab"></span>
     <div class="h"><h2 style="font-size:22px">${esc(it.title)}</h2><button class="x" data-a="postclose" aria-label="Close">${I.x}</button></div>
-    <div style="display:flex;gap:14px;align-items:center">${thumb(it, 96, 120)}
+    <div style="display:flex;gap:14px;align-items:center">${SLIDES[it.id] && (SLIDES[it.id].list || []).length ? "" : thumb(it, 96, 120)}
       <span style="display:flex;flex-direction:column;gap:4px;min-width:0"><b>${esc(when)}</b><span class="ph">${esc(it.kind)}</span><span class="ph">${it.acct === "show" ? "@thedaytodayshow" : "@daytodaychase"}</span>${pill(it)}</span></div>
+    ${slideStrip(it)}
     ${it.error && it.status === "failed" ? `<div class="err">${esc(it.error)}</div>` : ""}
     ${S.sheetMode || canEdit(it) ? "" : `<div class="card pad" style="gap:6px"><span class="lab">CAPTION</span><span>${esc(it.caption || "No caption yet.")}</span>${it.hashtags ? `<span class="ph">${esc(it.hashtags)}</span>` : ""}</div>
     <div class="card pad" style="gap:6px"><span class="lab">COLLABORATORS</span><span>${esc(it.collabs || "None")}</span></div>`}
@@ -1060,12 +1073,52 @@ function go(tab){ if (tab !== S.tab) { S.prev = S.tab === "settings" ? S.prev : 
 
 // ---------- actions ----------
 async function load(){
-  try { const j = await app("app_board"); D = j; S.loadErr = ""; }
+  try { const j = await app("app_board"); D = j; S.loadErr = ""; loadCovers(); }
   catch (e) {
     if (e && e.code === "bad_key") { lockScreen("That key didn't work. Enter it again."); return; }
     S.loadErr = (e && e.message) || "Couldn't load your posts.";
   }
   draw();
+}
+// Real pictures for show posts. Covers come once per open; slides load when a post opens.
+function loadCovers(){
+  if (coversAsked) return; coversAsked = true;
+  prev("covers").then(j => { Object.assign(COVERS, (j && j.covers) || {}); draw(); }, () => { coversAsked = false; });
+}
+function loadSlides(id){
+  const it = findItem(id);
+  if (!it || it.src !== "show" || !(it.files || []).length) return;
+  if (SLIDES[id] && !SLIDES[id].err) return;
+  SLIDES[id] = { loading: true };
+  // Outside Claude the server sends the pictures. Inside Claude it sends names only,
+  // then each picture is read from show_slides two at a time so no answer gets too big.
+  prev("slides", { id, lite: !HOSTED }).then(async j => {
+    const list = (j && j.slides) || [];
+    SLIDES[id] = { list, note: j && j.note, missing: (j && j.missing) || 0, total: (j && j.total) || 0 };
+    drawLayer();
+    if (!HOSTED && list.length && !list[0].src) {
+      const safe = String(id).replace(/[^a-z0-9_-]/gi, "");
+      for (let i = 0; i < list.length; i += 2) {
+        try {
+          const rows = await sql("select n, slides->n->>'src' as src from show_slides, generate_series(" + i + ", " + Math.min(i + 1, list.length - 1) + ") n where id = '" + safe + "'");
+          rows.forEach(r => { if (list[Number(r.n)]) list[Number(r.n)].src = r.src; });
+        } catch (e) { /* that pair stays blank */ }
+        drawLayer();
+      }
+    }
+    if (list.length && list[0].src && !COVERS[id]) COVERS[id] = list[0].src;
+  }, e => { SLIDES[id] = { err: (e && e.message) || "Couldn't load the photos." }; drawLayer(); });
+}
+function slideStrip(it){
+  if (it.src !== "show" || !(it.files || []).length) return "";
+  const s = SLIDES[it.id];
+  if (!s || s.loading) return `<div class="slides"><div class="slide ph-load"><span>Loading the photos…</span></div></div>`;
+  if (s.err) return `<div class="err">${esc(s.err)} <button class="btn ghost" style="margin-top:8px" data-a="slidesretry:${esc(it.id)}">Try again</button></div>`;
+  if (!s.list.length) return `<div class="err">${esc(s.note || "No photos found in that folder.")}</div>`;
+  const n = s.list.length;
+  return `<div class="slides" aria-label="${n} ${n === 1 ? "slide" : "slides"}, swipe to see them all">${s.list.map((x, i) =>
+    `<div class="slide">${x.src ? `<img src="${x.src}" alt="Slide ${i + 1} of ${n}">` : ""}<span class="slidenum">${i + 1} of ${n}</span>${x.video ? `<span class="slidevid">${I.play || ""} Video</span>` : ""}</div>`).join("")}</div>
+    <span class="mini">${n} ${n === 1 ? "slide" : "slides"}${n > 1 ? ". Swipe to see them all." : ""}${s.missing ? " " + s.missing + " could not load." : ""}</span>`;
 }
 function copyText(t, done){
   const fallback = () => { const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch (e) {} ta.remove(); };
@@ -1088,7 +1141,7 @@ document.addEventListener("click", e => {
       run("Saving…", async () => { await drop("set_enabled", { value: to }); D.board.drop_enabled = to; try { await drop("snapshot"); } catch (x) {}
         say(to === "on" ? "Posting is on." : "Posting paused. Nothing goes out.", () => run("Undoing…", async () => { await drop("set_enabled", { value: to === "on" ? "off" : "on" }); D.board.drop_enabled = to === "on" ? "off" : "on"; say("Undone."); })); });
       return; }
-    case "review": go("posts"); S.filter = "show"; S.pview = "schedule"; { const w = showItems().find(x => x.status === "needs_ok" && x.date >= today()); if (w) { S.post = w.id; S.sheetMode = ""; } } break;
+    case "review": go("posts"); S.filter = "show"; S.pview = "schedule"; { const w = showItems().find(x => x.status === "needs_ok" && x.date >= today()); if (w) { S.post = w.id; S.sheetMode = ""; loadSlides(w.id); } } break;
     case "filter": S.filter = v; break;
     case "pview": S.pview = v; if (!S.day) S.day = today(); break;
     case "day": S.day = v; break;
@@ -1096,7 +1149,8 @@ document.addEventListener("click", e => {
     case "stripmove": S.stripStart = addDays(S.stripStart || today(), Number(v)); if (S.stripStart < addDays(today(), -28)) S.stripStart = addDays(today(), -28); S.day = S.stripStart; break;
     case "daymove": { const d = addDays(S.day < today() ? today() : S.day, Number(v)); S.day = d < today() ? today() : d; break; }
     case "mmove": S.month = Math.max(-1, Math.min(2, S.month + Number(v))); break;
-    case "post": S.post = v; S.sheetMode = ""; S.ed = null; break;
+    case "post": S.post = v; S.sheetMode = ""; S.ed = null; loadSlides(v); break;
+    case "slidesretry": delete SLIDES[v]; loadSlides(v); break;
     case "edrm": if (S.ed) S.ed.collabs = S.ed.collabs.filter(h => h !== v); break;
     case "edsug": { const it = findItem(S.post); if (S.ed && it && S.ed.collabs.length < maxCollabs(it) && !S.ed.collabs.includes(v)) S.ed.collabs.push(v); break; }
     case "edadd": { const it = findItem(S.post); const h = String((S.ed && S.ed.add) || "").trim().replace(/^@+/, "").toLowerCase();
