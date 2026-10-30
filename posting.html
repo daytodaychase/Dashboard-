@@ -482,7 +482,7 @@ function allItems(fromYmd, days, includePast){
 function itemsOn(ymd){ return allItems(ymd, 1, true); }
 function findItem(id){
   if (String(id).startsWith("slot:")) { const k = id.slice(5); return emptySlots(k.slice(0, 10), 1).find(x => x.id === id) || { src:"slot", id, date:k.slice(0,10), time:k.slice(11,16), type: k.slice(11,16) === "19:00" ? "photo" : "reel", status:"empty", title:"Empty spot" }; }
-  return meItems().concat(showItems()).find(x => x.id === id);
+  return meItems().concat(showItems(), deskItems()).find(x => x.id === id);
 }
 function waitCount(){ return deckItems().length; }
 
@@ -1173,13 +1173,21 @@ const DECIDED = {};
 const SESSION = { approve: 0, reject: 0, fix: 0, skip: 0 };
 const aprv = (a, x) => callFn("show-approve", a, x);
 function loadApprove(){
-  aprv("state").then(j => { AP = { trust: j.trust || [], swipes: j.swipes || [], need: j.need || 15, needs: j.needs || [], loaded: true }; if (!S.dragging) draw(); },
+  aprv("state").then(j => { AP = { trust: j.trust || [], swipes: j.swipes || [], need: j.need || 15, needs: j.needs || [], desk: j.desk || [], loaded: true }; if (!S.dragging) draw(); },
     () => { AP.loaded = true; if (!S.dragging) draw(); });
 }
 const LANE_LABEL = { show_clip:"Show clips", show_photo:"Show photo posts", show_drop:"Full episodes", show_teaser:"Episode teasers", show_yap:"Show yaps",
   me_reels:"Your reels", me_camera:"Your photo posts", me_iphone:"iPhone dumps", me_postcards:"Postcards", me_stories:"Stories" };
-function laneOf(it){ return it.src === "show" ? "show_" + (String(it.stype || "post").replace(/[^a-z]/g, "") || "post") : "me_" + (String(it.lane || "post").replace(/[^a-z]/g, "") || "post"); }
-function laneLabel(l){ return LANE_LABEL[l] || (l.startsWith("show_") ? "Show posts" : "Your posts"); }
+const DESK_NAME = { daytodaychase: "Your", daytodayportraits: "Portraits", daytodayconcerts: "Concerts", thedaytodayshow: "Show" };
+function deskItems(){
+  return (AP.desk || []).map(d => { const et = new Date(d.post_at).toLocaleString("sv-SE", { timeZone: "America/New_York" });
+    const reel = d.kind === "reel"; const files = Array.isArray(d.files) ? d.files : [];
+    return { src: "desk", id: d.id, acct: d.account, date: et.slice(0, 10), time: et.slice(11, 16), type: reel ? "reel" : "photo",
+      kind: (DESK_NAME[d.account] || d.account) + " " + (reel ? "reel" : files.length > 1 ? "carousel" : "photo"), title: (DESK_NAME[d.account] || d.account) + " " + (reel ? "reel" : "post"),
+      caption: d.caption || "", collabs: (d.collabs || []).join(", "), client: !!d.client, files, dkind: reel ? "reel" : "photo", status: "waiting" }; });
+}
+function laneOf(it){ if (it.src === "desk") return ("desk_" + String(it.acct || "x").replace(/[^a-z0-9]/g, "").slice(0, 24) + "_" + it.dkind); return it.src === "show" ? "show_" + (String(it.stype || "post").replace(/[^a-z]/g, "") || "post") : "me_" + (String(it.lane || "post").replace(/[^a-z]/g, "") || "post"); }
+function laneLabel(l){ if (l.startsWith("desk_")) { const p = l.split("_"); return (DESK_NAME[p[1]] || "@" + p[1]) + (p[2] === "reel" ? " reels" : " photo posts"); } return LANE_LABEL[l] || (l.startsWith("show_") ? "Show posts" : "Your posts"); }
 function trustFor(l){ return AP.trust.find(t => t.lane === l) || { lane: l, clean: 0, total: 0, autopilot: false }; }
 function isPulled(it){ return AP.swipes.some(s => s.src === it.src && s.item_id === it.id && s.action === "reject"); }
 function deckBase(){
@@ -1189,7 +1197,8 @@ function deckBase(){
   const shows = showItems().filter(x => x.status === "needs_ok" && (x.date + "T" + x.time) > now && x.date <= end);
   const mine = meItems().filter(x => x.status === "scheduled" && !x.handed && !fixRequested(x.id) && x.date <= end)
     .map(x => Object.assign(x, { stuck: (x.date + "T" + x.time) < now }));
-  return [].concat(shows, mine).filter(x => !DECIDED[x.src + ":" + x.id] && !gone.has(x.src + ":" + x.id))
+  const desk = deskItems().filter(x => (x.date + "T" + x.time) > now && x.date <= end);
+  return [].concat(shows, mine, desk).filter(x => !DECIDED[x.src + ":" + x.id] && !gone.has(x.src + ":" + x.id))
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 }
 function deckItems(){ return deckBase().filter(x => !trustFor(laneOf(x)).autopilot); }
@@ -1211,7 +1220,7 @@ function cardMedia(it){
 }
 function cardHtml(it, behind){
   const l = laneOf(it), t = trustFor(l);
-  const handle = it.acct === "show" ? "@thedaytodayshow" : "@daytodaychase";
+  const handle = it.src === "desk" ? "@" + it.acct : it.acct === "show" ? "@thedaytodayshow" : "@daytodaychase";
   const streak = `<span class="streak">${esc(laneLabel(l))}: ${t.clean} of ${AP.need} clean approvals</span>`;
   return `<div class="dcard${behind ? " behind" : ""}"${behind ? ' aria-hidden="true"' : ' id="topcard"'} data-key="${esc(it.src + ":" + it.id)}">
     ${cardMedia(it)}
@@ -1273,7 +1282,7 @@ function fixSheet(){
     <div class="h"><h2>What should change?</h2><button class="x" data-a="fixcancel" aria-label="Close">${I.x}</button></div>
     <span class="ph">${esc(it.title)} · ${esc(deckWhen(it))}</span>
     ${canEdit(it) ? `<span class="lab">CHANGE IT YOURSELF, RIGHT NOW</span>
-    <div class="grid2" style="grid-template-columns:repeat(3,minmax(0,1fr))"><button class="btn ghost" data-a="fixedit">Caption</button><button class="btn ghost" data-a="fixedit">Time</button><button class="btn ghost" data-a="fixedit">Collabs</button></div>` : `<span class="dwarn">This one missed its time, so it can't be edited yet. Swipe right first and it moves to the next open spot. Then tap it on Scheduled to change the caption.</span>`}
+    <div class="grid2" style="grid-template-columns:repeat(3,minmax(0,1fr))"><button class="btn ghost" data-a="fixedit">Caption</button><button class="btn ghost" data-a="fixedit">Time</button><button class="btn ghost" data-a="fixedit">Collabs</button></div>` : it.src === "desk" ? "" : `<span class="dwarn">This one missed its time, so it can't be edited yet. Swipe right first and it moves to the next open spot. Then tap it on Scheduled to change the caption.</span>`}
     <span class="lab">OR TELL CLAUDE WHAT TO FIX</span>
     <div class="chips">${chips.map(c => `<button class="chip" data-a="fixchip:${esc(c)}">${esc(c)}</button>`).join("")}</div>
     <textarea id="fixnote" class="field" rows="3" placeholder="Like: crop the first photo tighter"></textarea>
@@ -1464,18 +1473,18 @@ function loadCovers(){
 }
 function loadSlides(id){
   const it = findItem(id);
-  if (!it || (it.src !== "show" && it.src !== "drop")) return;
+  if (!it || (it.src !== "show" && it.src !== "drop" && it.src !== "desk")) return;
   if (it.src === "show" && !(it.files || []).length) return;
   if (SLIDES[id] && !SLIDES[id].err) return;
   SLIDES[id] = { loading: true };
   // Outside Claude the server sends the pictures. Inside Claude it sends names only,
   // then each picture is read from show_slides two at a time so no answer gets too big.
-  prev(it.src === "drop" ? "dropslides" : "slides", { id, lite: !HOSTED }).then(async j => {
+  prev(it.src === "drop" ? "dropslides" : it.src === "desk" ? "deskslides" : "slides", { id, lite: !HOSTED }).then(async j => {
     const list = (j && j.slides) || [];
     SLIDES[id] = { list, note: j && j.note, missing: (j && j.missing) || 0, total: (j && j.total) || 0 };
     redrawPics();
     if (!HOSTED && list.length && !list[0].src) {
-      const safe = (it.src === "drop" ? "drop:" : "") + String(id).replace(/[^a-z0-9_-]/gi, "");
+      const safe = (it.src === "drop" ? "drop:" : it.src === "desk" ? "desk:" : "") + String(id).replace(/[^a-z0-9_-]/gi, "");
       for (let i = 0; i < list.length; i += 2) {
         try {
           const rows = await sql("select n, slides->n->>'src' as src from show_slides, generate_series(" + i + ", " + Math.min(i + 1, list.length - 1) + ") n where id = '" + safe + "'");
