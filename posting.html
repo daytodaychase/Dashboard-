@@ -189,6 +189,50 @@ button:disabled { opacity: .5; cursor: default; }
 .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
 .pillx { align-self: flex-start; font-size: 13px; font-weight: 700; border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
 .rowbtn { width: 100%; display: flex; gap: 12px; align-items: center; min-height: 60px; border: 0; border-top: 1px solid var(--hair); background: transparent; padding: 8px 14px; text-align: left; }
+.deckcta{display:flex;align-items:center;gap:14px;width:100%;min-height:84px;border:0;border-radius:20px;background:var(--key);color:var(--keyink);padding:12px 16px;text-align:left}
+.deckcta .dcn{flex:none;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800}
+.deck{position:relative}
+.powerrow{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;border-radius:16px;padding:10px 14px;border:1px solid var(--line);background:var(--card)}
+.powerrow small{font-size:14px;color:var(--soft)}
+.powerrow .pdot{flex:none;width:12px;height:12px;border-radius:50%;background:var(--good)}
+.powerrow.off{border:2px solid var(--bad)} .powerrow.off .pdot{background:var(--bad)}
+.powerrow .psw{flex:none;font-weight:800;font-size:15px;border-radius:999px;padding:9px 14px;background:var(--sunk);color:var(--ink)}
+.powerrow.off .psw{background:var(--bad);color:#FFFFFF}
+.dcard{position:relative;z-index:2;background:var(--card);border-radius:22px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.18);border:1px solid var(--line);touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform}
+.dcard.behind{position:absolute;z-index:1;top:10px;left:0;right:0;transform:scale(.95);opacity:.55;pointer-events:none}
+.dmedia{position:relative;width:100%;aspect-ratio:4/5;max-height:44vh;background:#111;display:flex;align-items:center;justify-content:center}
+.dmedia img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;-webkit-user-drag:none}
+.dnone{color:#C9CBD0;font-weight:700;display:flex;gap:6px;align-items:center}
+.dots{position:absolute;top:8px;left:10px;right:10px;display:flex;gap:4px}
+.dots i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.35)}
+.dots i.on{background:#FFFFFF}
+.dcount{position:absolute;top:18px;right:10px;background:rgba(0,0,0,.6);color:#FFFFFF;font-size:13px;font-weight:700;border-radius:999px;padding:3px 9px}
+.dvid{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.6);color:#FFFFFF;font-size:13px;font-weight:700;border-radius:999px;padding:3px 10px;display:flex;gap:4px;align-items:center}
+.dvid svg{width:14px;height:14px}
+.stamp{position:absolute;top:34px;padding:4px 12px;border:4px solid;border-radius:10px;font-size:30px;font-weight:900;letter-spacing:.02em;opacity:0;background:rgba(0,0,0,.25);pointer-events:none}
+.stamp.yes{left:16px;color:#3CC48E;border-color:#3CC48E;transform:rotate(-12deg)}
+.stamp.no{right:16px;color:#FF6B60;border-color:#FF6B60;transform:rotate(12deg)}
+.stamp.fix{left:50%;top:auto;bottom:30px;color:#8EB0FF;border-color:#8EB0FF;transform:translateX(-50%)}
+.stamp.later{left:50%;top:40%;color:#E6E6E6;border-color:#E6E6E6;transform:translateX(-50%)}
+.dbody{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px}
+.dmeta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.dkind{font-size:14px;font-weight:700;color:var(--soft)}
+.dwarn{background:var(--warnsoft);color:var(--warnink);border-radius:10px;padding:8px 10px;font-size:14px;font-weight:600}
+.dcap{margin:0;font-size:15px;line-height:1.35;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.dcap.open{display:block}
+.streak{align-self:flex-start;font-size:13px;font-weight:700;color:var(--keydeep);background:var(--keysoft);border-radius:999px;padding:4px 10px}
+.deckbtns{display:flex;justify-content:center;align-items:flex-end;gap:16px;position:sticky;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:5;padding:10px 0 6px;margin-top:-8px;background:linear-gradient(to bottom, transparent, var(--bg) 35%)}
+.rbl{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--soft)}
+.rb{width:62px;height:62px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.12);background:var(--card)}
+.rb svg{width:28px;height:28px}
+.rb.no{color:var(--bad)} .rb.fix{color:var(--info)} .rb.later{color:var(--soft)}
+.rb.yes{width:78px;height:78px;border:0;background:var(--good);color:#FFFFFF}
+.rb.yes svg{width:36px;height:36px}
+.rb.yes.holding{transform:scale(.92);box-shadow:0 0 0 8px var(--goodsoft)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;border:1px solid var(--line);border-radius:999px;background:var(--card);padding:0 14px;font-weight:600}
+.meter{height:10px;border-radius:5px;background:var(--sunk);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--key)}
 .slides { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px 4px; }
 .slide { position: relative; flex: none; width: 78%; aspect-ratio: 4 / 5; border-radius: 14px; overflow: hidden; background: var(--sunk); scroll-snap-align: center; }
 .slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -225,6 +269,9 @@ const STUDIO = "daytodayportraits";
 const UPLOAD_THESE = "https://drive.google.com/drive/folders/1Y-aJazmBaHD8qt5XaB_DVk4Lx2h7hBIa";
 
 const I = {
+  pencil:'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  clock:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  approve:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m8 12 3 3 5-6"/></svg>',
   plus:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
   gear:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>',
   back:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>',
@@ -276,7 +323,7 @@ function agoText(iso){
 const S = { tab:"today", prev:"today", acct:"me", acctOpen:false, filter:"me", pview:"schedule", day:null, month:0,
   post:null, sheetMode:"", upload:null, link:null, toast:"", toastBad:false, busy:false,
   ftab:"script", idea:0, statsTab:"me", open:{}, days:0, mins:0, lic:1, apps:{ ig:true }, ex:{},
-  creditOpen:"", loadErr:"", showMoreTasks:false, skipping:{} };
+  creditOpen:"", loadErr:"", showMoreTasks:false, skipping:{}, atab:"swipe", fixFor:null, dragging:false, capOpen:false, si:{} };
 let D = null, HOSTED = false, KEY = "", MCP = null;
 const COVERS = {}, SLIDES = {}; let coversAsked = false;
 let theme = "light";
@@ -331,9 +378,9 @@ const prev = (a, x) => callFn("show-preview", a, x);
 
 // ---------- toast + undo ----------
 let tt = null, UNDO = null;
-function say(msg, undo, bad){
+function say(msg, undo, bad, ms){
   S.toast = msg; S.toastBad = !!bad; UNDO = undo || null; clearTimeout(tt);
-  tt = setTimeout(() => { S.toast = ""; UNDO = null; drawLayer(); }, undo ? 6000 : bad ? 5000 : 2800);
+  tt = setTimeout(() => { S.toast = ""; UNDO = null; drawLayer(); }, ms || (undo ? 6000 : bad ? 5000 : 2800));
   drawLayer();
 }
 async function run(label, fn){
@@ -378,7 +425,7 @@ function showItems(){
     else if (files.length && hasCap) status = "needs_ok";
     else if (files.length) status = "needs_caption";
     const t = String(d.type || "");
-    return { src:"show", id:r.id, acct:"show", date:String(d.date || ""), time:String(d.time || "10:00").slice(0, 5), title:d.title || "Show post",
+    return { src:"show", stype:t, id:r.id, acct:"show", date:String(d.date || ""), time:String(d.time || "10:00").slice(0, 5), title:d.title || "Show post",
       kind: ({ drop:"Full episode", teaser:"Teaser", clip:"Show clip", photo:"Photo carousel", yap:"Yap" })[t] || "Show post",
       type: t === "photo" ? "photo" : "reel", status, caption: d.caption || "", files, collabs: (d.collabs || []).join(", "),
       url: files[0] && files[0].viewUrl, thumb: (COVERS[r.id] || null), fixNote: r.fix_note || "", ep: d.ep || "", pending: r.pending_edit || null,
@@ -408,6 +455,7 @@ function stateOf(it){
   if (it.status === "empty") return ["Empty", "var(--bad)", "var(--badsoft)"];
   if (it.status === "posted") return ["Posted", "var(--soft)", "var(--sunk)"];
   if (it.status === "hold") return ["On hold", "var(--soft)", "var(--sunk)"];
+  if (isPulled(it) && it.status !== "posted") return ["Pulled, won't post", "var(--soft)", "var(--sunk)"];
   if (it.status === "failed") return ["Did not go out", "var(--bad)", "var(--badsoft)"];
   if (it.status === "fix" || (it.src === "drop" && fixRequested(it.id))) return ["Fix sent", "var(--info)", "var(--infosoft)"];
   if (it.status === "needs_ok") return ["Needs your OK", "var(--warn)", "var(--warnsoft)"];
@@ -431,10 +479,7 @@ function findItem(id){
   if (String(id).startsWith("slot:")) { const k = id.slice(5); return emptySlots(k.slice(0, 10), 1).find(x => x.id === id) || { src:"slot", id, date:k.slice(0,10), time:k.slice(11,16), type: k.slice(11,16) === "19:00" ? "photo" : "reel", status:"empty", title:"Empty spot" }; }
   return meItems().concat(showItems()).find(x => x.id === id);
 }
-function waitCount(){
-  const t = today(), end = addDays(t, 14);
-  return showItems().filter(x => x.status === "needs_ok" && x.date >= t && x.date <= end).length + meItems().filter(x => x.status === "failed").length;
-}
+function waitCount(){ return deckItems().length; }
 
 // ---------- accounts ----------
 const ACCTS = [
@@ -454,7 +499,7 @@ function hasData(a){ return ((D && D.results) || []).some(r => r.account === a[6
 const HEAD = () => {
   const d = new Date(today() + "T12:00:00Z");
   return { today:[DOWL[d.getUTCDay()] + ", " + MON[d.getUTCMonth()] + " " + d.getUTCDate(), "Today"],
-    posts:["What goes out, and when", "Posts"], film:[filmSub(), "Film next"],
+    posts:["Swipe right to post it", "Approve"], film:[filmSub(), "Film next"],
     stats:["Last 30 days", "Stats"], money:["Brand asked what you charge?", "Quote it"] };
 };
 function filmSub(){ const n = emptySlots(today(), 7).filter(x => x.type === "reel").length; return n ? n + " empty reel spot" + (n === 1 ? "" : "s") + " this week" : "Reels are covered this week"; }
@@ -497,10 +542,10 @@ function tasksList(){
     why: "“" + cleanName(c.file_name) + "” just posted. If Instagram dropped the collab, add it by hand.", collab:true, handles:c.handles });
   for (const it of meItems().filter(x => x.status === "failed")) tasks.push({ title: "“" + it.title + "” did not go out", why: it.error || "Open it to see what happened.", cta:"Open it", a:"post:" + it.id, bad:true });
   const stuck = meItems().filter(x => x.status === "scheduled" && (x.date + "T" + x.time) < etNow());
-  if (stuck.length && !postingOn()) tasks.push({ title: stuck.length + " post" + (stuck.length === 1 ? " is" : "s are") + " stuck", why:"Posting is off, so they missed their time. Turn posting on and they go out.", cta:"Turn posting on", a:"power", bad:true });
+  // Missed posts now come back as cards in the Approve deck.
   const er = emptySlots(t, 3).filter(x => x.type === "reel").length;
   if (er) tasks.push({ title:"Add " + er + " reel" + (er === 1 ? "" : "s"), why:"Noon and 8:30 PM spots for the next 3 days are empty.", cta:"Add reels", a:"uploadkind:yap" });
-  const waits = showItems().filter(x => x.status === "needs_ok" && x.date >= t && x.date <= addDays(t, 7));
+  const waits = [];
   if (waits.length) tasks.push({ title:"Approve " + waits.length + " show post" + (waits.length === 1 ? "" : "s"), why: waits.slice(0, 2).map(x => x.title).join(" and ") + (waits.length > 2 ? " and more" : "") + " are waiting on you.", cta:"Review them", a:"review" });
   const nf = showItems().filter(x => (x.status === "needs_file" || x.status === "needs_caption") && x.date >= t && x.date <= addDays(t, 3));
   if (nf.length) tasks.push({ title: nf.length + " show post" + (nf.length === 1 ? " needs" : "s need") + " a file", why: nf.slice(0, 2).map(x => x.title + ", " + dayLabel(x.date).replace(/^(Today|Tomorrow), /, "")).join(". ") + ".", cta:"Open UPLOAD THESE", href:UPLOAD_THESE });
@@ -519,11 +564,10 @@ function today_(){
   let n = 0;
   const going = [].concat(meItems(), emptySlots(today(), 1), showItems()).filter(x => x.date === today()).sort((a, b) => a.time.localeCompare(b.time));
   return head() + `
-  <section class="status ${on ? "on" : "off"}">
-    <div class="row"><span class="dot"></span><div><b>${on ? "Posting is ON" : "Posting is OFF"}</b>
-    <span>${on ? (next ? "Next post: " + esc(dayLabel(next.date)) + " at " + clock(next.time) + "." : "On, but nothing is loaded for @daytodaychase.") : "Nothing posts on @daytodaychase until you turn it on."}</span></div></div>
-    <button class="btn" data-a="power">${on ? "Pause posting" : "Turn posting on"}</button>
-  </section>
+  ${waitCount() ? `<button class="deckcta" data-a="review"><span class="dcn">${waitCount()}</span><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:left"><b style="font-size:20px">${waitCount() === 1 ? "1 post needs" : waitCount() + " posts need"} your OK</b><span>Tap to start swiping</span></span>${I.next}</button>` : ""}
+  <button class="powerrow ${on ? "on" : "off"}" data-a="power" aria-label="${on ? "Posting is on. Tap to pause." : "Posting is off. Tap to turn it on."}"><span class="pdot"></span>
+    <span style="flex:1;min-width:0;display:flex;flex-direction:column;text-align:left"><b>${on ? "Posting is on" : "Posting is off"}</b><small>${on ? (next ? "Next: " + esc(dayLabel(next.date)) + " at " + clock(next.time) : "Nothing loaded for @daytodaychase yet") : "Nothing goes out on @daytodaychase"}</small></span>
+    <span class="psw">${on ? "Pause" : "Turn on"}</span></button>
   <div class="sechead"><h2>Do this next</h2><span>${tasks.length ? tasks.length + " left" : "All done"}</span></div>
   ${tasks.length === 0 ? `<div class="card allset"><span class="check">${I.okbig}</span><b style="font-size:22px">Nothing to do</b><span class="ph">You're set. Go film something.</span></div>` : ""}
   ${shown.map(t => { n++; const num = `<span class="num" style="${t.collab ? "background:var(--warn);color:#17181C" : t.bad ? "background:var(--bad);color:#FFFFFF" : ""}">${n}</span>`;
@@ -535,7 +579,7 @@ function today_(){
   ${tasks.length > 3 ? `<button class="btn ghost" data-a="moretasks">${S.showMoreTasks ? "Show fewer" : "Show " + (tasks.length - 3) + " more"}</button>` : ""}
   <h2>Going out today</h2>
   ${going.length ? `<div class="card" style="overflow:hidden">${going.map(it => rowItem(it, true)).join("")}</div>` : `<div class="card pad"><span class="ph">Nothing set for today.</span></div>`}
-  <button class="link" data-a="tab:posts">See the whole week</button>
+  <button class="link" data-a="sched">See the whole week</button>
   ${reach("daytodaychase", true)}`;
 }
 function rowItem(it, first, withDate){
@@ -581,6 +625,9 @@ function reach(brand, link){
 // ---------- Posts ----------
 function legend(){ return `<span class="legend"><span><i style="background:var(--good)"></i>Ready</span><span><i style="background:var(--warn)"></i>Needs you or waiting</span><span><i style="background:var(--bad)"></i>Empty or needs a file</span><span><i style="background:var(--info)"></i>Fix sent</span><span><i style="background:var(--soft)"></i>Posted</span></span>`; }
 function posts(){
+  const tabs = seg("atab", [["swipe", "Swipe" + (waitCount() ? " (" + waitCount() + ")" : "")], ["sched", "Scheduled"]], S.atab, "Approve or see the schedule");
+  if (S.atab !== "sched") return `<div class="head"><div class="t"><span class="sub">${waitCount() ? "Swipe right to post it" : "Nothing waiting"}</span><h1>Approve</h1></div>
+    <button class="sq" data-a="settings" aria-label="Settings">${I.gear}</button></div>` + tabs + swipeView();
   if (!S.day) S.day = today();
   const views = [["schedule","List"],["day","Day"],["three","3 Day"],["week","Week"],["month","Month"]];
   const filt = (S.acct === "me" || S.acct === "show") ? seg("filter", [["all","All"],["me","Me"],["show","Show"]], S.filter, "Account") : "";
@@ -593,7 +640,7 @@ function posts(){
   if (S.pview === "three") body = threeView();
   if (S.pview === "week") body = weekView();
   if (S.pview === "month") body = monthView();
-  return head() + `<div class="seg" role="group" aria-label="View">${views.map(v => `<button data-a="pview:${v[0]}" aria-pressed="${S.pview === v[0]}" style="font-size:14px;padding:0 2px">${v[1]}</button>`).join("")}</div>` + filt + alerts + body + legend();
+  return head() + tabs + `<div class="seg" role="group" aria-label="View">${views.map(v => `<button data-a="pview:${v[0]}" aria-pressed="${S.pview === v[0]}" style="font-size:14px;padding:0 2px">${v[1]}</button>`).join("")}</div>` + filt + alerts + body + legend();
 }
 function listView(){
   const t = today(), blocks = [];
@@ -1032,10 +1079,239 @@ function otherAccount(){
     <span class="mini">It doesn't auto post from this app. Posts for it go through Metricool.</span></section>`;
 }
 
+// ---------- Approve: the swipe deck ----------
+// Right = post it, left = no, up = fix it, down = later. Every swipe can be undone.
+// The trust ladder: 15 clean approvals in a row and that kind of post goes on
+// autopilot. A fix or a no starts it over. Client posts always wait for Chase.
+let AP = { trust: [], swipes: [], need: 15, loaded: false };
+const DECIDED = {};
+const SESSION = { approve: 0, reject: 0, fix: 0, skip: 0 };
+const aprv = (a, x) => callFn("show-approve", a, x);
+function loadApprove(){
+  aprv("state").then(j => { AP = { trust: j.trust || [], swipes: j.swipes || [], need: j.need || 15, loaded: true }; if (!S.dragging) draw(); },
+    () => { AP.loaded = true; if (!S.dragging) draw(); });
+}
+const LANE_LABEL = { show_clip:"Show clips", show_photo:"Show photo posts", show_drop:"Full episodes", show_teaser:"Episode teasers", show_yap:"Show yaps",
+  me_reels:"Your reels", me_camera:"Your photo posts", me_iphone:"iPhone dumps", me_postcards:"Postcards", me_stories:"Stories" };
+function laneOf(it){ return it.src === "show" ? "show_" + (String(it.stype || "post").replace(/[^a-z]/g, "") || "post") : "me_" + (String(it.lane || "post").replace(/[^a-z]/g, "") || "post"); }
+function laneLabel(l){ return LANE_LABEL[l] || (l.startsWith("show_") ? "Show posts" : "Your posts"); }
+function trustFor(l){ return AP.trust.find(t => t.lane === l) || { lane: l, clean: 0, total: 0, autopilot: false }; }
+function isPulled(it){ return AP.swipes.some(s => s.src === it.src && s.item_id === it.id && s.action === "reject"); }
+function deckBase(){
+  if (!D) return [];
+  const now = etNow(), end = addDays(today(), 14);
+  const gone = new Set(AP.swipes.filter(s => s.action === "approve" || s.action === "reject").map(s => s.src + ":" + s.item_id));
+  const shows = showItems().filter(x => x.status === "needs_ok" && (x.date + "T" + x.time) > now && x.date <= end);
+  const mine = meItems().filter(x => x.status === "scheduled" && !x.handed && !fixRequested(x.id) && x.date <= end)
+    .map(x => Object.assign(x, { stuck: (x.date + "T" + x.time) < now }));
+  return [].concat(shows, mine).filter(x => !DECIDED[x.src + ":" + x.id] && !gone.has(x.src + ":" + x.id))
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+}
+function deckItems(){ return deckBase().filter(x => !trustFor(laneOf(x)).autopilot); }
+function autoItems(){ return deckBase().filter(x => trustFor(laneOf(x)).autopilot); }
+function deckWhen(it){ return dayLabel(it.date) + " at " + clock(it.time); }
+
+function cardMedia(it){
+  let srcs = [];
+  if (it.src === "show") { const s = SLIDES[it.id]; if (s && s.list) srcs = s.list.filter(x => x.src).map(x => x.src); if (!srcs.length && it.thumb) srcs = [it.thumb]; }
+  else if (it.thumb) srcs = [it.thumb];
+  const n = srcs.length, i = Math.min((S.si && S.si[it.id]) || 0, Math.max(0, n - 1));
+  const loading = it.src === "show" && (!SLIDES[it.id] || SLIDES[it.id].loading);
+  const img = n ? `<img src="${srcs[i]}" alt="">` : `<span class="dnone">${loading ? "Loading the photos…" : (it.type === "reel" ? I.play + " Video" : "No preview")}</span>`;
+  const total = it.src === "show" && SLIDES[it.id] && SLIDES[it.id].list ? SLIDES[it.id].list.length : n;
+  const dots = total > 1 ? `<div class="dots">${Array.from({ length: total }, (_, k) => `<i class="${k === i ? "on" : ""}"></i>`).join("")}</div><span class="dcount">${i + 1} of ${total}</span>` : "";
+  const vid = it.type === "reel" && n ? `<span class="dvid">${I.play} Video</span>` : "";
+  return `<div class="dmedia">${img}${dots}${vid}<span class="stamp yes">POST IT</span><span class="stamp no">NO</span><span class="stamp fix">FIX</span><span class="stamp later">LATER</span></div>`;
+}
+function cardHtml(it, behind){
+  const l = laneOf(it), t = trustFor(l);
+  const handle = it.acct === "show" ? "@thedaytodayshow" : "@daytodaychase";
+  const streak = `<span class="streak">${esc(laneLabel(l))}: ${t.clean} of ${AP.need} clean approvals</span>`;
+  return `<div class="dcard${behind ? " behind" : ""}"${behind ? ' aria-hidden="true"' : ' id="topcard"'} data-key="${esc(it.src + ":" + it.id)}">
+    ${cardMedia(it)}
+    <div class="dbody">
+      <div class="dmeta"><b>${esc(deckWhen(it))}</b><span class="ph">${esc(handle)}</span></div>
+      ${it.stuck ? `<span class="dwarn">Missed its time because posting was off. Swipe right and it goes in the next open spot.</span>` : ""}
+      <span class="dkind">${esc(it.kind || "Post")}${it.client ? " · Client" : ""}</span>
+      <p class="dcap${S.capOpen ? " open" : ""}">${esc(it.caption || "No caption yet.")}${it.hashtags ? "\n" + esc(it.hashtags) : ""}</p>
+      ${it.collabs ? `<span class="mini">With ${esc(it.collabs)}</span>` : ""}
+      ${streak}
+    </div></div>`;
+}
+function ladder(){
+  const seen = new Set(AP.trust.map(t => t.lane));
+  deckBase().forEach(x => seen.add(laneOf(x)));
+  const rows = [...seen].sort().map(trustFor);
+  if (!rows.length) return "";
+  return `<h2>Your trust ladder</h2>
+  <div class="card pad" style="gap:12px"><span class="mini">${AP.need} clean approvals in a row and that kind of post goes on autopilot. A fix or a no starts it over. Client posts always wait for you.</span>
+  ${rows.map(t => `<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;gap:10px"><b>${esc(laneLabel(t.lane))}</b><span class="ph">${t.autopilot ? "Autopilot" : t.clean + " of " + AP.need}</span></div>
+    <div class="meter"><i style="width:${Math.min(100, Math.round((t.autopilot ? AP.need : t.clean) / AP.need * 100))}%;${t.autopilot ? "background:var(--good)" : ""}"></i></div></div>`).join("")}</div>`;
+}
+function doneView(){
+  const did = SESSION.approve + SESSION.reject + SESSION.fix;
+  const parts = [];
+  if (SESSION.approve) parts.push(SESSION.approve + " approved");
+  if (SESSION.fix) parts.push(SESSION.fix + " fix" + (SESSION.fix === 1 ? "" : "es") + " sent");
+  if (SESSION.reject) parts.push(SESSION.reject + " pulled");
+  const auto = autoItems();
+  const waitingMine = meItems().some(x => x.status === "scheduled") && !postingOn();
+  return `<div class="card allset"><span class="check">${I.okbig}</span><b style="font-size:22px">All caught up</b>
+    <span class="ph">${did ? esc(parts.join(", ")) + "." : "Nothing needs you right now. New posts show up here as cards."}</span></div>
+    ${waitingMine ? `<div class="card pad" style="gap:10px;border:2px solid var(--bad)"><b>Posting is off for @daytodaychase</b><span>Your approved posts won't go out until you turn it on.</span><button class="btn" style="background:var(--bad);color:#FFFFFF" data-a="power">Turn posting on</button></div>` : ""}
+    ${auto.length ? `<h2>Going out on autopilot</h2><div class="card" style="overflow:hidden">${auto.map(it => rowItem(it, true, true)).join("")}</div><span class="mini">Tap one to stop it.</span>` : ""}
+    ${ladder()}
+    <button class="btn ghost" data-a="atab:sched">See everything that's scheduled</button>`;
+}
+function swipeView(){
+  if (!AP.loaded) return `<div class="loading">Loading your posts…</div>`;
+  const list = deckItems();
+  if (!list.length) return doneView();
+  const it = list[0], nx = list[1];
+  [it, nx].forEach(x => { if (x && x.src === "show") loadSlides(x.id); });
+  const client = !!it.client;
+  return `<div class="deck">${nx ? cardHtml(nx, true) : ""}${cardHtml(it, false)}</div>
+  <div class="deckbtns">
+    <span class="rbl"><button class="rb no" data-a="dk:reject" aria-label="No, don't post it">${I.x}</button>No</span>
+    <span class="rbl"><button class="rb fix" data-a="dk:fix" aria-label="Fix it">${I.pencil}</button>Fix</span>
+    <span class="rbl"><button class="rb yes" id="yesbtn" data-a="dk:approve" aria-label="${client ? "Hold to post it" : "Post it"}">${I.ok}</button>${client ? "Hold" : "Post it"}</span>
+    <span class="rbl"><button class="rb later" data-a="dk:skip" aria-label="Later">${I.clock}</button>Later</span>
+  </div>
+  <span class="mini" style="text-align:center">${list.length} waiting. Swipe right to post it, left for no, up to fix it, down for later.</span>`;
+}
+function fixSheet(){
+  const it = deckItems().find(x => x.id === S.fixFor) || findItem(S.fixFor);
+  if (!it) return "";
+  const chips = ["Wrong crop", "Change the caption", "Use different photos", "Post it on a different day", "Fix the collaborators"];
+  return `<div class="scrim" data-a="fixcancel"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Fix this post"><div class="in"><span class="grab"></span>
+    <div class="h"><h2>What should change?</h2><button class="x" data-a="fixcancel" aria-label="Close">${I.x}</button></div>
+    <span class="ph">${esc(it.title)} · ${esc(deckWhen(it))}</span>
+    <div class="chips">${chips.map(c => `<button class="chip" data-a="fixchip:${esc(c)}">${esc(c)}</button>`).join("")}</div>
+    <textarea id="fixnote" class="field" rows="3" placeholder="Like: crop the first photo tighter"></textarea>
+    <button class="btn big" data-a="fixsend">Send the fix</button>
+    <span class="mini">It comes back to you as a new card once it's redone. Caption, time and collaborator fixes are done by morning. Video edits wait until your Mac is on.</span>
+  </div></div>`;
+}
+
+function flyOut(move){
+  const el = document.getElementById("topcard");
+  const it = deckItems()[0];
+  if (!it) return;
+  if (move === "fix") { S.fixFor = it.id; drawLayer(); setTimeout(() => { const t = document.getElementById("fixnote"); if (t) t.focus(); }, 50); return; }
+  if (el) {
+    const to = { approve: "translate(140%, 0) rotate(18deg)", reject: "translate(-140%, 0) rotate(-18deg)", skip: "translate(0, 120%)" }[move];
+    el.style.transition = "transform .22s ease-in, opacity .22s"; el.style.transform = to; el.style.opacity = "0";
+    setTimeout(() => decide(it, move), 200);
+  } else decide(it, move);
+}
+function decide(it, move, note){
+  const key = it.src + ":" + it.id;
+  DECIDED[key] = "saving"; SESSION[move]++;
+  S.capOpen = false; draw();
+  (async () => {
+    try {
+      let movedTo = null;
+      if (move === "approve" && it.src === "drop" && it.stuck) {
+        const limit = minsFromNow(210).slice(0, 16);
+        const slot = emptySlots(today(), 14).find(x => x.type === it.type && (x.date + "T" + x.time) > limit && (it.lane !== "iphone" || dowOf(x.date) === 0));
+        if (!slot) throw { message: "No open spot in the next 2 weeks. Open Scheduled and pick a time." };
+        movedTo = slot.date + "T" + slot.time;
+        await app("move_drop", { id: it.id, to_et: movedTo });
+        setDropTime(it.id, movedTo);
+      }
+      const r = await aprv("swipe", { move, src: it.src, id: it.id, lane: laneOf(it), label: laneLabel(laneOf(it)), note: note || "", client: !!it.client });
+      DECIDED[key] = r.swipe_id || "done";
+      if (r.trust) { AP.trust = AP.trust.filter(t => t.lane !== r.trust.lane).concat([r.trust]); }
+      AP.swipes.unshift({ id: r.swipe_id, src: it.src, item_id: it.id, action: move });
+      const now = new Date().toISOString();
+      if (it.src === "show" && move === "approve") patchShow(it.id, { approved_at: now });
+      if (it.src === "show" && move === "fix") patchShow(it.id, { fix_note: note, fix_at: now, fix_done_at: null, approved_at: null });
+      if (it.src === "drop" && move === "fix") (D.requests = D.requests || []).push({ kind: "fix_drop", target: it.id });
+      let msg = {
+        approve: movedTo ? "Approved. It goes out " + deckWhen({ date: movedTo.slice(0, 10), time: movedTo.slice(11, 16) }) + "." : "Approved. It goes out " + deckWhen(it) + ".",
+        reject: "Pulled. It won't post.", fix: "Fix sent. You'll get it back as a new card.", skip: "Saved for later."
+      }[move];
+      if (move === "approve" && it.src === "drop" && !postingOn()) msg = "Approved. Turn posting on so it goes out.";
+      if (r.trust && r.trust.autopilot && move === "approve" && r.trust.clean === AP.need) msg = laneLabel(r.trust.lane) + " just earned autopilot. They post unless you say no.";
+      say(msg, move === "skip" ? null : () => undoSwipe(it, r.swipe_id, move), false, 10000);
+    } catch (e) {
+      delete DECIDED[key]; SESSION[move]--;
+      say((e && e.message) || "That didn't save. Try again.", null, true);
+    }
+    if (!S.dragging) draw();
+  })();
+}
+function undoSwipe(it, sid, move){
+  run("Putting it back…", async () => {
+    if (sid && sid !== "done" && sid !== "saving") await aprv("undo", { swipe_id: sid });
+    delete DECIDED[it.src + ":" + it.id]; SESSION[move] = Math.max(0, SESSION[move] - 1);
+    AP.swipes = AP.swipes.filter(s => s.id !== sid);
+    if (it.src === "show") patchShow(it.id, move === "approve" ? { approved_at: null } : move === "fix" ? { fix_note: null, fix_at: null } : {});
+    if (it.src === "drop" && move === "fix") D.requests = (D.requests || []).filter(q => !(q.kind === "fix_drop" && q.target === it.id));
+    loadApprove();
+    S.tab = "posts"; S.atab = "swipe";
+    say("Put back. It's on top of the pile.");
+  });
+}
+function bindDeck(){
+  const el = document.getElementById("topcard");
+  if (!el || el.dataset.bound) return;
+  el.dataset.bound = "1";
+  let g = null;
+  const dirOf = (dx, dy) => Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "approve" : "reject") : (dy < 0 ? "fix" : "skip");
+  const stamps = { approve: el.querySelector(".stamp.yes"), reject: el.querySelector(".stamp.no"), fix: el.querySelector(".stamp.fix"), skip: el.querySelector(".stamp.later") };
+  el.addEventListener("pointerdown", e => {
+    if (e.button > 0) return;
+    g = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, t: Date.now(), media: !!e.target.closest(".dmedia"), cap: !!e.target.closest(".dcap"), mx: e.clientX - el.getBoundingClientRect().left };
+    try { el.setPointerCapture(e.pointerId); } catch (x) {}
+    el.style.transition = "none"; S.dragging = true;
+  });
+  el.addEventListener("pointermove", e => {
+    if (!g) return;
+    g.dx = e.clientX - g.x; g.dy = e.clientY - g.y;
+    el.style.transform = `translate(${g.dx}px, ${g.dy}px) rotate(${g.dx / 18}deg)`;
+    const d = dirOf(g.dx, g.dy), p = Math.min(1, Math.max(Math.abs(g.dx), Math.abs(g.dy)) / 110);
+    for (const k in stamps) if (stamps[k]) stamps[k].style.opacity = k === d ? p : 0;
+  });
+  const end = () => {
+    if (!g) return;
+    const { dx, dy, t } = g, dist = Math.max(Math.abs(dx), Math.abs(dy)), fast = dist > 50 && Date.now() - t < 250;
+    const was = g; g = null; S.dragging = false;
+    if (dist < 8) {
+      el.style.transform = "";
+      const it = deckItems()[0];
+      if (it && was.media) {
+        const n = it.src === "show" && SLIDES[it.id] && SLIDES[it.id].list ? SLIDES[it.id].list.length : 1;
+        if (n > 1) { S.si = S.si || {}; const cur = S.si[it.id] || 0; S.si[it.id] = was.mx < el.offsetWidth / 2 ? Math.max(0, cur - 1) : Math.min(n - 1, cur + 1); draw(); }
+      } else if (was.cap) { S.capOpen = !S.capOpen; draw(); }
+      return;
+    }
+    if (dist > 110 || fast) {
+      const d = dirOf(dx, dy);
+      const it = deckItems()[0];
+      if (d === "approve" && it && it.client) { el.style.transition = "transform .2s"; el.style.transform = ""; for (const k in stamps) if (stamps[k]) stamps[k].style.opacity = 0; say("Client post. Hold the green button to post it."); return; }
+      if (d === "fix") { el.style.transition = "transform .2s"; el.style.transform = ""; for (const k in stamps) if (stamps[k]) stamps[k].style.opacity = 0; flyOut("fix"); return; }
+      flyOut(d); return;
+    }
+    el.style.transition = "transform .2s"; el.style.transform = "";
+    for (const k in stamps) if (stamps[k]) stamps[k].style.opacity = 0;
+  };
+  el.addEventListener("pointerup", end);
+  el.addEventListener("pointercancel", end);
+  const yes = document.getElementById("yesbtn"), top = deckItems()[0];
+  if (yes && top && top.client) {
+    let timer = null;
+    yes.addEventListener("pointerdown", () => { yes.classList.add("holding"); timer = setTimeout(() => { yes.classList.remove("holding"); flyOut("approve"); }, 900); });
+    const stop = () => { clearTimeout(timer); yes.classList.remove("holding"); };
+    yes.addEventListener("pointerup", stop); yes.addEventListener("pointerleave", stop);
+  }
+}
+
 // ---------- drawing ----------
 function view(){
   if (!D) return `<div class="loading">${S.loadErr ? `<div class="err" style="text-align:left">${esc(S.loadErr)}</div><button class="btn" data-a="retry" style="margin-top:12px">Try again</button>` : "Loading your posts…"}</div>`;
   if (S.tab === "settings") return settings();
+  if (S.tab === "posts" && S.atab !== "sched") return posts();
   if (S.acct !== "me" && S.acct !== "show") return otherAccount();
   return ({ today: today_, posts, film, stats, money })[S.tab]();
 }
@@ -1043,6 +1319,7 @@ function drawLayer(){
   let h = "";
   if (S.post) h += postSheet();
   if (S.upload) h += uploadSheet();
+  if (S.fixFor) h += fixSheet();
   if (S.acctOpen) {
     const grp = (label, kind) => `<span class="lab" style="margin-top:4px">${label}</span><div class="card" style="overflow:hidden">${ACCTS.filter(a => a[3] === kind).map(a => `<button data-a="acct:${a[0]}" style="width:100%;display:flex;align-items:center;gap:12px;min-height:64px;padding:8px 16px;border:0;border-bottom:1px solid var(--hair);background:${S.acct === a[0] ? "var(--keysoft)" : "transparent"};text-align:left">${badge(a, 40)}<span style="flex:1;min-width:0;display:flex;flex-direction:column"><b style="font-size:16px">${esc(a[1])}</b><small class="ph">${esc(a[2])}</small></span>${S.acct === a[0] ? '<b style="color:var(--key)">Viewing</b>' : ""}</button>`).join("")}</div>`;
     h += `<div class="scrim" data-a="acctclose"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Switch account"><div class="in"><span class="grab"></span>
@@ -1051,7 +1328,7 @@ function drawLayer(){
   if (S.toast) h += `<div class="toast" role="status" style="${S.toastBad ? "background:var(--bad)" : ""}">${S.toastBad ? "" : I.ok}<span style="flex:1;min-width:0">${esc(S.toast)}</span>${UNDO ? '<button data-a="undo" style="flex:none;border:0;background:transparent;color:#7FD9B9;font-weight:800;font-size:16px;min-height:44px;padding:0 6px">Undo</button>' : ""}</div>`;
   const el = document.getElementById("layer");
   const keepVal = id => { const x = document.getElementById(id); return x ? x.value : null; };
-  const saved = ["capbox","fixbox","upother","aiamt","aikey"].map(id => [id, keepVal(id)]);
+  const saved = ["capbox","fixbox","upother","aiamt","aikey","fixnote"].map(id => [id, keepVal(id)]);
   el.innerHTML = h;
   saved.forEach(([id, v]) => { const x = document.getElementById(id); if (x && v != null) x.value = v; });
 }
@@ -1063,17 +1340,18 @@ function draw(){
   saved.forEach(([id, v]) => { const x = document.getElementById(id); if (x && v != null) x.value = v; });
   if (ae) { const x = document.getElementById(ae); if (x) x.focus(); }
   const w = D ? waitCount() : 0;
-  document.getElementById("navin").innerHTML = [["today","Today"],["posts","Posts"],["film","Film"],["stats","Stats"],["money", isClient() ? "Report" : "Money"]].map(t => {
+  document.getElementById("navin").innerHTML = [["today","Today"],["posts","Approve"],["film","Film"],["stats","Stats"],["money", isClient() ? "Report" : "Money"]].map(t => {
     const b = t[0] === "posts" && !isClient() ? w : 0;
-    return `<button class="navbtn" data-a="tab:${t[0]}" ${S.tab === t[0] ? 'aria-current="page"' : ""}${b ? ` aria-label="${t[1]}, ${b} need you"` : ""}>${I[t[0]]}${t[1]}${b ? `<span class="navbadge">${b}</span>` : ""}</button>`;
+    return `<button class="navbtn" data-a="tab:${t[0]}" ${S.tab === t[0] ? 'aria-current="page"' : ""}${b ? ` aria-label="${t[1]}, ${b} need you"` : ""}>${t[0] === "posts" ? I.approve : I[t[0]]}${t[1]}${b ? `<span class="navbadge">${b}</span>` : ""}</button>`;
   }).join("");
   drawLayer();
+  bindDeck();
 }
 function go(tab){ if (tab !== S.tab) { S.prev = S.tab === "settings" ? S.prev : S.tab; S.tab = tab; S.post = null; S.upload = null; window.scrollTo(0, 0); } }
 
 // ---------- actions ----------
 async function load(){
-  try { const j = await app("app_board"); D = j; S.loadErr = ""; loadCovers(); }
+  try { const j = await app("app_board"); D = j; S.loadErr = ""; loadCovers(); loadApprove(); }
   catch (e) {
     if (e && e.code === "bad_key") { lockScreen("That key didn't work. Enter it again."); return; }
     S.loadErr = (e && e.message) || "Couldn't load your posts.";
@@ -1095,7 +1373,7 @@ function loadSlides(id){
   prev("slides", { id, lite: !HOSTED }).then(async j => {
     const list = (j && j.slides) || [];
     SLIDES[id] = { list, note: j && j.note, missing: (j && j.missing) || 0, total: (j && j.total) || 0 };
-    drawLayer();
+    redrawPics();
     if (!HOSTED && list.length && !list[0].src) {
       const safe = String(id).replace(/[^a-z0-9_-]/gi, "");
       for (let i = 0; i < list.length; i += 2) {
@@ -1103,12 +1381,13 @@ function loadSlides(id){
           const rows = await sql("select n, slides->n->>'src' as src from show_slides, generate_series(" + i + ", " + Math.min(i + 1, list.length - 1) + ") n where id = '" + safe + "'");
           rows.forEach(r => { if (list[Number(r.n)]) list[Number(r.n)].src = r.src; });
         } catch (e) { /* that pair stays blank */ }
-        drawLayer();
+        redrawPics();
       }
     }
     if (list.length && list[0].src && !COVERS[id]) COVERS[id] = list[0].src;
-  }, e => { SLIDES[id] = { err: (e && e.message) || "Couldn't load the photos." }; drawLayer(); });
+  }, e => { SLIDES[id] = { err: (e && e.message) || "Couldn't load the photos." }; redrawPics(); });
 }
+function redrawPics(){ if (S.dragging) return; if (S.tab === "posts" && S.atab !== "sched" && !S.post) draw(); else drawLayer(); }
 function slideStrip(it){
   if (it.src !== "show" || !(it.files || []).length) return "";
   const s = SLIDES[it.id];
@@ -1128,7 +1407,18 @@ document.addEventListener("click", e => {
   const el = e.target.closest("[data-a]"); if (!el || el.disabled) return;
   const raw = el.dataset.a, i = raw.indexOf(":"), a = i < 0 ? raw : raw.slice(0, i), v = i < 0 ? "" : raw.slice(i + 1);
   switch (a) {
-    case "tab": go(v); break;
+    case "tab": if (v === "posts" && S.tab !== "posts") S.atab = "swipe"; go(v); break;
+    case "atab": S.atab = v; S.post = null; window.scrollTo(0, 0); break;
+    case "sched": go("posts"); S.atab = "sched"; break;
+    case "dk": { const it = deckItems()[0]; if (!it || S.busy) return;
+      if (v === "approve" && it.client) { say("Client post. Press and hold the green button to post it."); return; }
+      flyOut(v); return; }
+    case "fixchip": { const t = document.getElementById("fixnote"); if (t) { t.value = (t.value.trim() ? t.value.trim() + ". " : "") + v; t.focus(); } return; }
+    case "fixcancel": S.fixFor = null; drawLayer(); return;
+    case "fixsend": { const t = document.getElementById("fixnote"), note = ((t && t.value) || "").trim();
+      if (!note) { say("Type what should change, or tap one of the buttons.", null, true); return; }
+      const it = deckItems().find(x => x.id === S.fixFor); S.fixFor = null; drawLayer();
+      if (it) decide(it, "fix", note); return; }
     case "settings": S.prev = S.tab === "settings" ? S.prev : S.tab; S.tab = "settings"; S.post = null; S.upload = null; window.scrollTo(0, 0); break;
     case "back": S.tab = S.prev || "today"; break;
     case "retry": S.loadErr = ""; draw(); load(); return;
@@ -1141,7 +1431,7 @@ document.addEventListener("click", e => {
       run("Saving…", async () => { await drop("set_enabled", { value: to }); D.board.drop_enabled = to; try { await drop("snapshot"); } catch (x) {}
         say(to === "on" ? "Posting is on." : "Posting paused. Nothing goes out.", () => run("Undoing…", async () => { await drop("set_enabled", { value: to === "on" ? "off" : "on" }); D.board.drop_enabled = to === "on" ? "off" : "on"; say("Undone."); })); });
       return; }
-    case "review": go("posts"); S.filter = "show"; S.pview = "schedule"; { const w = showItems().find(x => x.status === "needs_ok" && x.date >= today()); if (w) { S.post = w.id; S.sheetMode = ""; loadSlides(w.id); } } break;
+    case "review": go("posts"); S.atab = "swipe"; break;
     case "filter": S.filter = v; break;
     case "pview": S.pview = v; if (!S.day) S.day = today(); break;
     case "day": S.day = v; break;
@@ -1292,7 +1582,7 @@ function lockScreen(msg){
 let polling = false;
 function startPolling(){
   if (polling) return; polling = true;
-  setInterval(() => { if (!document.hidden && !S.busy && !S.post && !S.upload) load(); }, HOSTED ? 90000 : 180000);
+  setInterval(() => { if (!document.hidden && !S.busy && !S.post && !S.upload && !S.dragging && !S.fixFor) load(); }, HOSTED ? 90000 : 180000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden && !S.post && !S.upload) load(); });
 }
 (async function boot(){
