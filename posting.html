@@ -202,6 +202,10 @@ button:disabled { opacity: .5; cursor: default; }
 .dcard.behind{position:absolute;z-index:1;top:10px;left:0;right:0;transform:scale(.95);opacity:.55;pointer-events:none}
 .dmedia{position:relative;width:100%;aspect-ratio:4/5;max-height:44vh;background:#111;display:flex;align-items:center;justify-content:center}
 .dmedia img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;-webkit-user-drag:none}
+.dvideo{width:100%;height:100%;object-fit:contain;background:#000;display:block}
+.dplay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:72px;height:72px;border-radius:50%;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;pointer-events:none}
+.dplay svg{width:34px;height:34px;margin-left:4px}
+.slide video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
 .dnone{color:#C9CBD0;font-weight:700;display:flex;gap:6px;align-items:center}
 .dots{position:absolute;top:8px;left:10px;right:10px;display:flex;gap:4px}
 .dots i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.35)}
@@ -553,6 +557,8 @@ function tasksList(){
   if (ai.ok && ai.left != null && ai.left < 2) tasks.push({ title:"Add Claude credit", why:"About $" + Number(ai.left).toFixed(2) + " left. Captions stop at $0.", cta:"Open settings", a:"settings" });
   const blanks = (((b.story_bank || {}).stories) || []).filter(x => x.needs).length;
   if (blanks) tasks.push({ title:"Fill " + blanks + " story blank" + (blanks === 1 ? "" : "s"), why:"One 10 minute voice memo fills your scripts in.", cta:"Record a story dump", a:"uploadkind:storydump" });
+  for (const n of (AP.needs || [])) { const it = findItem(n.target); tasks.unshift({ fixreq: n.id, item: it ? it.id : null, bad: true,
+    title: "Claude couldn't finish your fix", why: "You asked: “" + String((n.payload || {}).note || "a change") + "”" + (it ? " on " + it.title : "") + ". " + (n.result ? String(n.result) : "This one needs you or Claude at a computer.") }); }
   const tq = (D.tag_queue || []).filter(q => q.account === "daytodaychase").length;
   if (tq) tasks.push({ title:"Tell me what " + tq + " post" + (tq === 1 ? " was" : "s were"), why:"One tap each makes your lessons right.", cta:"Open Stats", a:"tab:stats" });
   return tasks;
@@ -572,6 +578,9 @@ function today_(){
   ${tasks.length === 0 ? `<div class="card allset"><span class="check">${I.okbig}</span><b style="font-size:22px">Nothing to do</b><span class="ph">You're set. Go film something.</span></div>` : ""}
   ${shown.map(t => { n++; const num = `<span class="num" style="${t.collab ? "background:var(--warn);color:#17181C" : t.bad ? "background:var(--bad);color:#FFFFFF" : ""}">${n}</span>`;
     const top = `<div class="top">${num}<div><span class="tt">${esc(t.title)}</span><span class="why">${esc(t.why)}</span></div></div>`;
+    if (t.fixreq) return `<div class="card pad task" style="border:2px solid var(--bad)">${top}
+      ${t.item ? `<button class="btn" data-a="post:${esc(t.item)}">Open the post</button>` : ""}
+      <button class="btn ghost" data-a="fixdone:${esc(t.fixreq)}">I handled it</button></div>`;
     if (t.collab) return `<div class="card pad task" style="border:2px solid var(--warn)">${top}
       ${linkBtn("https://www.instagram.com/daytodaychase/", "Open Instagram")}
       <button class="btn ghost" data-a="dismiss:${esc(t.key)}">It's tagged, done</button></div>`;
@@ -1088,7 +1097,7 @@ const DECIDED = {};
 const SESSION = { approve: 0, reject: 0, fix: 0, skip: 0 };
 const aprv = (a, x) => callFn("show-approve", a, x);
 function loadApprove(){
-  aprv("state").then(j => { AP = { trust: j.trust || [], swipes: j.swipes || [], need: j.need || 15, loaded: true }; if (!S.dragging) draw(); },
+  aprv("state").then(j => { AP = { trust: j.trust || [], swipes: j.swipes || [], need: j.need || 15, needs: j.needs || [], loaded: true }; if (!S.dragging) draw(); },
     () => { AP.loaded = true; if (!S.dragging) draw(); });
 }
 const LANE_LABEL = { show_clip:"Show clips", show_photo:"Show photo posts", show_drop:"Full episodes", show_teaser:"Episode teasers", show_yap:"Show yaps",
@@ -1112,15 +1121,16 @@ function autoItems(){ return deckBase().filter(x => trustFor(laneOf(x)).autopilo
 function deckWhen(it){ return dayLabel(it.date) + " at " + clock(it.time); }
 
 function cardMedia(it){
-  let srcs = [];
-  if (it.src === "show") { const s = SLIDES[it.id]; if (s && s.list) srcs = s.list.filter(x => x.src).map(x => x.src); if (!srcs.length && it.thumb) srcs = [it.thumb]; }
-  else if (it.thumb) srcs = [it.thumb];
-  const n = srcs.length, i = Math.min((S.si && S.si[it.id]) || 0, Math.max(0, n - 1));
-  const loading = it.src === "show" && (!SLIDES[it.id] || SLIDES[it.id].loading);
-  const img = n ? `<img src="${srcs[i]}" alt="">` : `<span class="dnone">${loading ? "Loading the photos…" : (it.type === "reel" ? I.play + " Video" : "No preview")}</span>`;
-  const total = it.src === "show" && SLIDES[it.id] && SLIDES[it.id].list ? SLIDES[it.id].list.length : n;
+  const sl = SLIDES[it.id], full = sl && sl.list ? sl.list.filter(x => x.src) : [];
+  const items = full.length ? full : (it.thumb ? [{ src: it.thumb, video: it.type === "reel" }] : []);
+  const n = items.length, i = Math.min((S.si && S.si[it.id]) || 0, Math.max(0, n - 1)), cur = items[i] || {};
+  const loading = !sl || sl.loading;
+  let img;
+  if (cur.video && cur.fid && HOSTED && S.playing === cur.fid) img = `<video class="dvideo" src="${vidUrl(cur.fid)}" poster="${cur.src || ""}" controls autoplay playsinline></video>`;
+  else img = n ? `<img src="${cur.src}" alt="">${cur.video ? (cur.fid && HOSTED ? `<span class="dplay" aria-hidden="true">${I.play}</span>` : "") : ""}` : `<span class="dnone">${loading ? "Loading…" : (it.type === "reel" ? I.play + " Video" : "No preview")}</span>`;
+  const total = n;
   const dots = total > 1 ? `<div class="dots">${Array.from({ length: total }, (_, k) => `<i class="${k === i ? "on" : ""}"></i>`).join("")}</div><span class="dcount">${i + 1} of ${total}</span>` : "";
-  const vid = it.type === "reel" && n ? `<span class="dvid">${I.play} Video</span>` : "";
+  const vid = cur.video && n && S.playing !== cur.fid ? `<span class="dvid">${I.play} ${HOSTED && cur.fid ? "Tap to play" : "Video"}</span>` : "";
   return `<div class="dmedia">${img}${dots}${vid}<span class="stamp yes">POST IT</span><span class="stamp no">NO</span><span class="stamp fix">FIX</span><span class="stamp later">LATER</span></div>`;
 }
 function cardHtml(it, behind){
@@ -1168,7 +1178,7 @@ function swipeView(){
   const list = deckItems();
   if (!list.length) return doneView();
   const it = list[0], nx = list[1];
-  [it, nx].forEach(x => { if (x && x.src === "show") loadSlides(x.id); });
+  [it, nx].forEach(x => { if (x) loadSlides(x.id); });
   const client = !!it.client;
   return `<div class="deck">${nx ? cardHtml(nx, true) : ""}${cardHtml(it, false)}</div>
   <div class="deckbtns">
@@ -1182,14 +1192,17 @@ function swipeView(){
 function fixSheet(){
   const it = deckItems().find(x => x.id === S.fixFor) || findItem(S.fixFor);
   if (!it) return "";
-  const chips = ["Wrong crop", "Change the caption", "Use different photos", "Post it on a different day", "Fix the collaborators"];
+  const chips = ["Wrong crop", "Use different photos", "Cut the video shorter", "Something else"];
   return `<div class="scrim" data-a="fixcancel"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Fix this post"><div class="in"><span class="grab"></span>
     <div class="h"><h2>What should change?</h2><button class="x" data-a="fixcancel" aria-label="Close">${I.x}</button></div>
     <span class="ph">${esc(it.title)} · ${esc(deckWhen(it))}</span>
+    ${canEdit(it) ? `<span class="lab">CHANGE IT YOURSELF, RIGHT NOW</span>
+    <div class="grid2" style="grid-template-columns:repeat(3,minmax(0,1fr))"><button class="btn ghost" data-a="fixedit">Caption</button><button class="btn ghost" data-a="fixedit">Time</button><button class="btn ghost" data-a="fixedit">Collabs</button></div>` : `<span class="dwarn">This one missed its time, so it can't be edited yet. Swipe right first and it moves to the next open spot. Then tap it on Scheduled to change the caption.</span>`}
+    <span class="lab">OR TELL CLAUDE WHAT TO FIX</span>
     <div class="chips">${chips.map(c => `<button class="chip" data-a="fixchip:${esc(c)}">${esc(c)}</button>`).join("")}</div>
     <textarea id="fixnote" class="field" rows="3" placeholder="Like: crop the first photo tighter"></textarea>
     <button class="btn big" data-a="fixsend">Send the fix</button>
-    <span class="mini">It comes back to you as a new card once it's redone. Caption, time and collaborator fixes are done by morning. Video edits wait until your Mac is on.</span>
+    <span class="mini">It comes back to you as a new card once it's redone. Crops, photo swaps and video edits need someone at a computer, so they show on Today until they're done.</span>
   </div></div>`;
 }
 
@@ -1206,7 +1219,7 @@ function flyOut(move){
 }
 function decide(it, move, note){
   const key = it.src + ":" + it.id;
-  DECIDED[key] = "saving"; SESSION[move]++;
+  DECIDED[key] = "saving"; SESSION[move]++; S.playing = null;
   S.capOpen = false; draw();
   (async () => {
     try {
@@ -1241,6 +1254,11 @@ function decide(it, move, note){
     if (!S.dragging) draw();
   })();
 }
+function markEdited(it){
+  if (!it || S.fromFix !== it.id) return;
+  S.fromFix = null;
+  aprv("swipe", { move: "edited", src: it.src, id: it.id, lane: laneOf(it), label: laneLabel(laneOf(it)) }).then(r => { if (r && r.trust) AP.trust = AP.trust.filter(t => t.lane !== r.trust.lane).concat([r.trust]); }, () => {});
+}
 function undoSwipe(it, sid, move){
   run("Putting it back…", async () => {
     if (sid && sid !== "done" && sid !== "saving") await aprv("undo", { swipe_id: sid });
@@ -1261,7 +1279,7 @@ function bindDeck(){
   const dirOf = (dx, dy) => Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "approve" : "reject") : (dy < 0 ? "fix" : "skip");
   const stamps = { approve: el.querySelector(".stamp.yes"), reject: el.querySelector(".stamp.no"), fix: el.querySelector(".stamp.fix"), skip: el.querySelector(".stamp.later") };
   el.addEventListener("pointerdown", e => {
-    if (e.button > 0) return;
+    if (e.button > 0 || e.target.closest("video")) return;
     g = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, t: Date.now(), media: !!e.target.closest(".dmedia"), cap: !!e.target.closest(".dcap"), mx: e.clientX - el.getBoundingClientRect().left };
     try { el.setPointerCapture(e.pointerId); } catch (x) {}
     el.style.transition = "none"; S.dragging = true;
@@ -1281,7 +1299,11 @@ function bindDeck(){
       el.style.transform = "";
       const it = deckItems()[0];
       if (it && was.media) {
-        const n = it.src === "show" && SLIDES[it.id] && SLIDES[it.id].list ? SLIDES[it.id].list.length : 1;
+        const sl = SLIDES[it.id], list = sl && sl.list ? sl.list.filter(x => x.src) : [];
+        const curS = list[(S.si && S.si[it.id]) || 0];
+        const mid = was.mx > el.offsetWidth * .25 && was.mx < el.offsetWidth * .75;
+        if (curS && curS.video && curS.fid && HOSTED && (mid || list.length < 2)) { S.playing = curS.fid; draw(); return; }
+        const n = list.length || 1;
         if (n > 1) { S.si = S.si || {}; const cur = S.si[it.id] || 0; S.si[it.id] = was.mx < el.offsetWidth / 2 ? Math.max(0, cur - 1) : Math.min(n - 1, cur + 1); draw(); }
       } else if (was.cap) { S.capOpen = !S.capOpen; draw(); }
       return;
@@ -1365,17 +1387,18 @@ function loadCovers(){
 }
 function loadSlides(id){
   const it = findItem(id);
-  if (!it || it.src !== "show" || !(it.files || []).length) return;
+  if (!it || (it.src !== "show" && it.src !== "drop")) return;
+  if (it.src === "show" && !(it.files || []).length) return;
   if (SLIDES[id] && !SLIDES[id].err) return;
   SLIDES[id] = { loading: true };
   // Outside Claude the server sends the pictures. Inside Claude it sends names only,
   // then each picture is read from show_slides two at a time so no answer gets too big.
-  prev("slides", { id, lite: !HOSTED }).then(async j => {
+  prev(it.src === "drop" ? "dropslides" : "slides", { id, lite: !HOSTED }).then(async j => {
     const list = (j && j.slides) || [];
     SLIDES[id] = { list, note: j && j.note, missing: (j && j.missing) || 0, total: (j && j.total) || 0 };
     redrawPics();
     if (!HOSTED && list.length && !list[0].src) {
-      const safe = String(id).replace(/[^a-z0-9_-]/gi, "");
+      const safe = (it.src === "drop" ? "drop:" : "") + String(id).replace(/[^a-z0-9_-]/gi, "");
       for (let i = 0; i < list.length; i += 2) {
         try {
           const rows = await sql("select n, slides->n->>'src' as src from show_slides, generate_series(" + i + ", " + Math.min(i + 1, list.length - 1) + ") n where id = '" + safe + "'");
@@ -1388,15 +1411,17 @@ function loadSlides(id){
   }, e => { SLIDES[id] = { err: (e && e.message) || "Couldn't load the photos." }; redrawPics(); });
 }
 function redrawPics(){ if (S.dragging) return; if (S.tab === "posts" && S.atab !== "sched" && !S.post) draw(); else drawLayer(); }
+function vidUrl(fid){ return BASE + "show-preview?action=video&k=" + encodeURIComponent(KEY) + "&f=" + encodeURIComponent(fid); }
 function slideStrip(it){
-  if (it.src !== "show" || !(it.files || []).length) return "";
+  if (it.src !== "show" && it.src !== "drop") return "";
+  if (it.src === "show" && !(it.files || []).length) return "";
   const s = SLIDES[it.id];
   if (!s || s.loading) return `<div class="slides"><div class="slide ph-load"><span>Loading the photos…</span></div></div>`;
   if (s.err) return `<div class="err">${esc(s.err)} <button class="btn ghost" style="margin-top:8px" data-a="slidesretry:${esc(it.id)}">Try again</button></div>`;
   if (!s.list.length) return `<div class="err">${esc(s.note || "No photos found in that folder.")}</div>`;
   const n = s.list.length;
   return `<div class="slides" aria-label="${n} ${n === 1 ? "slide" : "slides"}, swipe to see them all">${s.list.map((x, i) =>
-    `<div class="slide">${x.src ? `<img src="${x.src}" alt="Slide ${i + 1} of ${n}">` : ""}<span class="slidenum">${i + 1} of ${n}</span>${x.video ? `<span class="slidevid">${I.play || ""} Video</span>` : ""}</div>`).join("")}</div>
+    `<div class="slide">${x.video && x.fid && HOSTED ? `<video src="${vidUrl(x.fid)}" poster="${x.src || ""}" preload="none" controls playsinline></video>` : x.src ? `<img src="${x.src}" alt="Slide ${i + 1} of ${n}">` : ""}<span class="slidenum">${i + 1} of ${n}</span>${x.video && !(x.fid && HOSTED) ? `<span class="slidevid">${I.play || ""} Video</span>` : ""}</div>`).join("")}</div>
     <span class="mini">${n} ${n === 1 ? "slide" : "slides"}${n > 1 ? ". Swipe to see them all." : ""}${s.missing ? " " + s.missing + " could not load." : ""}</span>`;
 }
 function copyText(t, done){
@@ -1415,6 +1440,8 @@ document.addEventListener("click", e => {
       flyOut(v); return; }
     case "fixchip": { const t = document.getElementById("fixnote"); if (t) { t.value = (t.value.trim() ? t.value.trim() + ". " : "") + v; t.focus(); } return; }
     case "fixcancel": S.fixFor = null; drawLayer(); return;
+    case "fixedit": { const id = S.fixFor; S.fixFor = null; S.fromFix = id; S.post = id; S.sheetMode = ""; S.ed = null; loadSlides(id); break; }
+    case "fixdone": run("Saving…", async () => { await app("dismiss", { key: "fixreq:" + v }); AP.needs = (AP.needs || []).filter(n => n.id !== v); say("Marked done."); }); return;
     case "fixsend": { const t = document.getElementById("fixnote"), note = ((t && t.value) || "").trim();
       if (!note) { say("Type what should change, or tap one of the buttons.", null, true); return; }
       const it = deckItems().find(x => x.id === S.fixFor); S.fixFor = null; drawLayer();
@@ -1458,7 +1485,7 @@ document.addEventListener("click", e => {
         if (Object.keys(body).length === 1) { say("Nothing changed."); return; }
         run("Saving…", async () => {
           const r = await app("edit_drop", body);
-          applyDrop(it.id, body); S.post = null; S.ed = null;
+          applyDrop(it.id, body); S.post = null; S.ed = null; markEdited(it);
           const b4 = r.before || {};
           say(r.rehanded ? "Saved. Metricool got the new version." : "Saved.", () => run("Undoing…", async () => {
             const back = { id: it.id }; if (body.caption !== undefined) back.caption = b4.caption; if (body.hashtags !== undefined) back.hashtags = b4.hashtags || "";
@@ -1475,7 +1502,7 @@ document.addEventListener("click", e => {
           const r = await app("edit_show", body);
           const row = (D.show_posts || []).find(x => x.id === it.id); const b4 = r.before || {};
           if (row) { row.data = Object.assign({}, row.data, body.caption !== undefined ? { caption: body.caption } : {}, body.collabs ? { collabs: body.collabs.map(h => "@" + h) } : {}, body.date ? { date: body.date, time: body.time } : {}); row.pending_edit = Object.assign({}, row.pending_edit || {}, body); }
-          S.post = null; S.ed = null;
+          S.post = null; S.ed = null; markEdited(it);
           say("Saved. It goes into the show calendar within 2 hours.", () => run("Undoing…", async () => {
             await app("edit_show", { id: it.id, undo: true, restore: b4.pending_edit || null, restore_data: b4.data });
             if (row) { row.data = b4.data; row.pending_edit = b4.pending_edit || null; } say("Undone."); }));
