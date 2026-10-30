@@ -455,11 +455,13 @@ function emptySlots(fromYmd, days){
   }
   return out;
 }
+function handleOf(it){ return it.src === "desk" ? "@" + it.acct : it.acct === "show" ? "@thedaytodayshow" : "@daytodaychase"; }
 function postingOn(){ return ((D && D.board && D.board.drop_enabled) || "off") === "on"; }
 function stateOf(it){
   if (it.status === "empty") return ["Empty", "var(--bad)", "var(--badsoft)"];
   if (it.status === "posted") return ["Posted", "var(--soft)", "var(--sunk)"];
   if (it.status === "hold") return ["On hold", "var(--soft)", "var(--sunk)"];
+  if (it.status === "rejected") return ["Pulled, won't post", "var(--soft)", "var(--sunk)"];
   if (isPulled(it) && it.status !== "posted") return ["Pulled, won't post", "var(--soft)", "var(--sunk)"];
   if (it.status === "failed") return ["Did not go out", "var(--bad)", "var(--badsoft)"];
   if (it.status === "fix" || (it.src === "drop" && fixRequested(it.id))) return ["Fix sent", "var(--info)", "var(--infosoft)"];
@@ -474,7 +476,7 @@ function allItems(fromYmd, days, includePast){
   const end = addDays(fromYmd, days - 1);
   const f = S.filter;
   let list = [];
-  if (f !== "show") list = list.concat(meItems(), emptySlots(fromYmd, days));
+  if (f !== "show") list = list.concat(meItems(), deskItems(), emptySlots(fromYmd, days));
   if (f !== "me") list = list.concat(showItems());
   return list.filter(x => x.date >= fromYmd && x.date <= end && (includePast || x.status !== "posted" || x.date >= today()))
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
@@ -600,7 +602,7 @@ function rowItem(it, first, withDate){
     <span style="flex:1;min-width:0;color:var(--badtext);font-weight:700">${esc(it.title)}</span><span style="color:var(--badtext);font-size:22px;font-weight:700" aria-hidden="true">+</span></button>`;
   return `<button class="rowbtn" data-a="post:${esc(it.id)}">
     <span style="flex:none;width:68px;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;display:flex;flex-direction:column">${withDate ? `<small class="ph" style="font-size:12px">${DOW[dowOf(it.date)]} ${MON[Number(it.date.slice(5,7))-1]} ${Number(it.date.slice(8))}</small>` : ""}<span style="white-space:nowrap">${clock(it.time)}</span></span>${thumb(it, 36, 44)}
-    <span style="flex:1;min-width:0;display:flex;flex-direction:column"><b style="font-size:15px">${esc(it.title)}</b><small class="ph">${esc(it.acct === "show" ? "@thedaytodayshow" : "@daytodaychase")} · ${esc(st[0])}</small></span>
+    <span style="flex:1;min-width:0;display:flex;flex-direction:column"><b style="font-size:15px">${esc(it.title)}</b><small class="ph">${esc(handleOf(it))} · ${esc(st[0])}</small></span>
     <i aria-hidden="true" style="flex:none;width:12px;height:12px;border-radius:50%;background:${st[1]}"></i></button>`;
 }
 function reach(brand, link){
@@ -690,7 +692,7 @@ function dayView(){
     let card;
     if (it.src === "slot") card = `<button data-a="slot:${esc(it.id)}" style="flex:1;min-width:0;min-height:86px;border:2px dashed var(--bad);border-radius:16px;background:var(--card);color:var(--badtext);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;padding:12px 14px;text-align:left"><b style="font-size:16px">${esc(it.title)}</b><small style="font-size:14px;font-weight:600">Tap to add one</small></button>`;
     else card = `<button data-a="post:${esc(it.id)}" style="flex:1;min-width:0;border:1px solid var(--line);border-radius:16px;background:var(--card);display:flex;gap:12px;align-items:center;padding:10px;text-align:left">
-      ${thumb(it, 56, 70)}<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><b style="font-size:16px">${esc(it.title)}</b><small class="ph" style="font-size:13px">${esc(it.kind)}</small><small class="ph" style="font-size:13px">${it.acct === "show" ? "@thedaytodayshow" : "@daytodaychase"}</small>${pill(it)}</span></button>`;
+      ${thumb(it, 56, 70)}<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><b style="font-size:16px">${esc(it.title)}</b><small class="ph" style="font-size:13px">${esc(it.kind)}</small><small class="ph" style="font-size:13px">${esc(handleOf(it))}</small>${pill(it)}</span></button>`;
     return `<div style="display:flex;gap:12px;align-items:stretch"><span style="flex:none;width:74px;padding-top:12px;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap">${clock(it.time)}</span>${card}</div>`;
   }).join("");
   return strip() + `<h2>${esc(dayLabel(S.day))}</h2><div style="display:flex;flex-direction:column;gap:12px">${rows || '<div class="card pad"><span class="ph">Nothing this day.</span></div>'}</div>`;
@@ -818,6 +820,11 @@ function postSheet(){
   else if (it.src === "drop") {
     actions = (canEdit(it) ? editForm(it) + `<button class="btn ghost" data-a="sheetmode:fix">Something else? Tell me</button>` :
       (it.status === "scheduled" ? `<span class="mini">Goes out in under 20 minutes, so it is locked.</span>` : "")) + linkBtn(it.url, "Open in Drive", true);
+  } else if (it.src === "desk") {
+    if (it.status === "needs_ok") actions = `<button class="btn big" data-a="review">Swipe it in Approve</button>`;
+    else if (it.status === "approved") actions = `<div class="done" style="text-decoration:none">${I.ok}Approved. It goes out on time.</div>`;
+    else if (it.status === "fix") actions = `<div class="card pad" style="gap:4px"><span class="lab">YOUR FIX</span><span>${esc(it.fixNote || "Sent")}</span><span class="mini">Caption and time fixes come back as a new card. Crops and photo swaps need you at a computer.</span></div>`;
+    else if (it.status === "rejected") actions = `<span class="mini">You swiped no, so it won't post. It stays in Metricool as a draft you can delete.</span>`;
   } else if (it.src === "show") {
     const ed = canEdit(it) ? editForm(it) : "";
     if (it.status === "needs_ok") actions = ed + `<button class="btn big" data-a="approve:${esc(it.id)}">Approve, post it</button><button class="btn ghost" data-a="sheetmode:fix">Something else? Tell me</button>`;
@@ -831,7 +838,7 @@ function postSheet(){
   return `<div class="scrim" data-a="postclose"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.title)}"><div class="in"><span class="grab"></span>
     <div class="h"><h2 style="font-size:22px">${esc(it.title)}</h2><button class="x" data-a="postclose" aria-label="Close">${I.x}</button></div>
     <div style="display:flex;gap:14px;align-items:center">${SLIDES[it.id] && (SLIDES[it.id].list || []).length ? "" : thumb(it, 96, 120)}
-      <span style="display:flex;flex-direction:column;gap:4px;min-width:0"><b>${esc(when)}</b><span class="ph">${esc(it.kind)}</span><span class="ph">${it.acct === "show" ? "@thedaytodayshow" : "@daytodaychase"}</span>${pill(it)}</span></div>
+      <span style="display:flex;flex-direction:column;gap:4px;min-width:0"><b>${esc(when)}</b><span class="ph">${esc(it.kind)}</span><span class="ph">${it.src === "desk" ? "@" + esc(it.acct) : it.acct === "show" ? "@thedaytodayshow" : "@daytodaychase"}</span>${pill(it)}</span></div>
     ${slideStrip(it)}
     ${it.error && it.status === "failed" ? `<div class="err">${esc(it.error)}</div>` : ""}
     ${S.sheetMode || canEdit(it) ? "" : `<div class="card pad" style="gap:6px"><span class="lab">CAPTION</span><span>${esc(it.caption || "No caption yet.")}</span>${it.hashtags ? `<span class="ph">${esc(it.hashtags)}</span>` : ""}</div>
@@ -870,18 +877,35 @@ function uploadSheet(){
     body = `<span class="mini" style="margin-top:-6px">Picking one names the file so the app learns which ideas work.</span>` + ideas.slice(0, 8).map(it => opt("upidea:" + it.id, it.title, KIND_LABEL[it.kind] || it.kind)).join("") + opt("upidea:none", "Not from a film idea", "");
   }
   if (u.step === "drive") {
-    title = u.loading ? "Getting your folder…" : (u.err ? "That didn't work" : "Drop it in Drive");
+    title = u.loading ? "Getting your folder…" : (u.err ? "That didn't work" : HOSTED ? (u.up ? (u.up.busy ? "Uploading…" : "Uploaded") : "Add your " + (u.kind === "portrait" || u.kind === "iphone" || u.kind === "concert" ? "photos" : "file")) : "Drop it in Drive");
     if (u.err) body = `<div class="err">${esc(u.err)}</div><button class="btn" data-a="upretry">Try again</button>`;
     else if (!u.loading) {
       const next = openSlots(KINDTYPE[u.kind] || "reel", 21)[0];
+      const when = next && u.kind !== "story" && u.kind !== "storydump" && u.kind !== "concert" ? " It takes the next open spot: " + dayLabel(next.date) + " at " + clock(next.time) + "." : "";
+      if (HOSTED && u.up) {
+        const all = u.up.files, done = all.filter(f => f.done).length, bad = all.filter(f => f.err);
+        body = `<span class="ph">${u.up.busy ? "Sending " + all.length + (all.length === 1 ? " file" : " files") + " to Drive. Keep the app open." : bad.length ? done + " of " + all.length + " went up." : "All " + all.length + " went up."}</span>
+          ${all.map((f, k) => `<div style="display:flex;flex-direction:column;gap:4px"><span style="display:flex;justify-content:space-between;gap:8px;font-size:14px"><b style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.name)}</b><span id="uppct${k}" class="ph">${f.err ? "Failed" : f.done ? "Done" : f.pct + "%"}</span></span>
+            <div class="meter"><i id="upbar${k}" style="width:${f.done ? 100 : f.pct}%;${f.err ? "background:var(--bad)" : f.done ? "background:var(--good)" : ""}"></i></div>${f.err ? `<span class="mini" style="color:var(--badtext)">${esc(f.err)}</span>` : ""}</div>`).join("")}
+          ${u.up.busy ? "" : `<span class="mini">${u.kind === "concert" ? "Overnight it becomes one carousel on @daytodayconcerts and shows up in Approve." : u.kind === "storydump" ? "Your stories get pulled out overnight." : esc(u.tip || "") + when}</span>
+          ${bad.length ? `<button class="btn" data-a="upagain">Try the failed ones again</button>` : ""}<button class="btn big" data-a="upclose">Done</button>`}`;
+      } else if (HOSTED) {
+        body = `${u.kind === "concert" ? `<label for="upshow" class="lab">WHICH SHOW?</label><input id="upshow" class="field" placeholder="Like: Khruangbin at the Fillmore" value="${esc(u.show || "")}">` : ""}
+          ${u.name ? `<span class="mini">It gets named <b>${esc(u.name)}</b> so the app knows which idea it is.</span>` : ""}
+          <label class="btn big" for="upfiles" style="display:flex;align-items:center;justify-content:center">${I.plus || "+"} Pick ${u.kind === "portrait" || u.kind === "iphone" || u.kind === "concert" ? "photos" : u.kind === "storydump" ? "the voice memo" : "the video"}</label>
+          <input id="upfiles" type="file" ${u.kind === "storydump" ? 'accept="audio/*,video/*"' : 'multiple accept="image/*,video/*"'} style="display:none">
+          <span class="mini">${u.kind === "concert" ? "Everything from one show becomes one carousel on @daytodayconcerts. Camera photos and phone clips can mix." : esc(u.tip || "")}${when}</span>
+          ${linkBtn(u.url, "Or open the folder in Drive", true)}`;
+      } else {
       body = `<ol style="margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px;font-size:16px">
         <li>Tap the button below. Your <b>${esc(u.folder || KNAME[u.kind])}</b> folder opens in Drive.</li>
         <li>Tap <b>+</b>, then <b>Upload</b>, and pick ${u.kind === "portrait" || u.kind === "iphone" || u.kind === "concert" ? "the photos" : "the file"}.</li>
         ${u.name ? `<li>Name it exactly this, so the app knows which idea it is:</li>` : ""}</ol>
         ${u.name ? `<div style="display:flex;gap:8px;align-items:center"><code class="field" style="flex:1;min-width:0;font-weight:700">${esc(u.name)}</code><button class="btn" style="width:auto;flex:none" data-a="copyname">Copy</button></div>` : ""}
         ${linkBtn(u.url, "Open the folder in Drive")}
-        <span class="mini">${esc(u.tip || "")}${next && u.kind !== "story" && u.kind !== "storydump" && u.kind !== "concert" ? " It takes the next open spot: " + dayLabel(next.date) + " at " + clock(next.time) + "." : ""}</span>
+        <span class="mini">${esc(u.tip || "")}${when}</span>
         <button class="btn ghost" data-a="upclose">Done</button>`;
+      }
     }
   }
   return `<div class="scrim" data-a="upclose"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="in"><span class="grab"></span>
@@ -890,6 +914,56 @@ function uploadSheet(){
 }
 const KINDTYPE = { yap:"reel", vlog:"reel", show:"reel", postcard:"photo", portrait:"photo", iphone:"photo", concert:"photo" };
 const CONCERT_FOLDER = "https://drive.google.com/drive/folders/1AoKiBSWn7kpP-oDLIhziAJKCsdnO9DTn";
+const upFn = (a, x) => callFn("show-upload", a, x);
+const EXT_MIME = { jpg:"image/jpeg", jpeg:"image/jpeg", png:"image/png", heic:"image/heic", heif:"image/heif", mov:"video/quicktime", mp4:"video/mp4", m4v:"video/x-m4v", m4a:"audio/mp4", mp3:"audio/mpeg", wav:"audio/wav" };
+function mimeOf(f){ return f.type || EXT_MIME[String(f.name).split(".").pop().toLowerCase()] || ""; }
+function putFile(url, f, mime, k){
+  return new Promise((ok, no) => {
+    const x = new XMLHttpRequest(); x.open("PUT", url); x.setRequestHeader("Content-Type", mime);
+    x.upload.onprogress = e => { if (!e.lengthComputable) return; const p = Math.round(e.loaded / e.total * 100); const r = S.upload && S.upload.up && S.upload.up.files[k]; if (r) r.pct = p;
+      const b = document.getElementById("upbar" + k), t = document.getElementById("uppct" + k); if (b) b.style.width = p + "%"; if (t) t.textContent = p + "%"; };
+    x.onload = () => (x.status === 200 || x.status === 201) ? ok() : no({ message: "Drive said " + x.status });
+    x.onerror = () => no({ message: "Lost connection. Try again on wifi." });
+    x.send(f);
+  });
+}
+async function startUpload(list){
+  const u = S.upload; if (!u || !list.length) return;
+  if (u.kind === "concert") { const el = document.getElementById("upshow"); u.show = el ? el.value.trim() : (u.show || ""); if (!u.show) { say("Type the show's name first.", null, true); return; } }
+  const files = Array.from(list);
+  u.up = { busy: true, files: files.map(f => ({ name: f.name, size: f.size, pct: 0, done: false, err: "", f })) };
+  drawLayer();
+  let folder = "";
+  try {
+    if (u.kind === "concert") folder = (await upFn("concert_folder", { name: u.show })).id;
+    else folder = ((String(u.url || "").match(/folders\/([A-Za-z0-9_-]+)/) || [])[1]) || "";
+    if (!folder) throw { message: "Couldn't find the folder. Use Open the folder in Drive." };
+  } catch (e) { u.up.files.forEach(r => r.err = (e && e.message) || "Couldn't start."); u.up.busy = false; drawLayer(); return; }
+  u.up.folder = folder;
+  await sendFiles();
+}
+async function sendFiles(){
+  const u = S.upload; if (!u || !u.up) return;
+  u.up.busy = true; drawLayer();
+  const rows = u.up.files;
+  for (let k = 0; k < rows.length; k++) {
+    const r = rows[k]; if (r.done) continue; r.err = ""; r.pct = 0;
+    const mime = mimeOf(r.f), ext = String(r.f.name).includes(".") ? "." + String(r.f.name).split(".").pop() : "";
+    const name = u.name ? u.name + (rows.length > 1 ? " " + (k + 1) : "") + ext : r.f.name;
+    try {
+      if (!mime) throw { message: "That kind of file can't go up." };
+      const s = await upFn("session", { folder: u.up.folder, name, mime, size: r.f.size });
+      await putFile(s.url, r.f, mime, k);
+      r.done = true; r.pct = 100;
+    } catch (e) { r.err = (e && e.message) || "Didn't go up."; }
+    if (S.upload === u) drawLayer();
+  }
+  u.up.busy = false;
+  if (S.upload === u) drawLayer();
+  const ok = rows.filter(r => r.done).length;
+  if (ok) { say(ok === rows.length ? "Uploaded. It's in Drive." : ok + " of " + rows.length + " uploaded."); load(); }
+}
+document.addEventListener("change", e => { if (e.target && e.target.id === "upfiles" && e.target.files && e.target.files.length) startUpload(e.target.files); });
 async function upDrive(){
   const u = S.upload; u.step = "drive"; u.loading = true; u.err = ""; drawLayer();
   try {
@@ -1186,7 +1260,8 @@ function deskItems(){
     const reel = d.kind === "reel"; const files = Array.isArray(d.files) ? d.files : [];
     return { src: "desk", id: d.id, acct: d.account, date: et.slice(0, 10), time: et.slice(11, 16), type: reel ? "reel" : "photo",
       kind: (DESK_NAME[d.account] || d.account) + " " + (reel ? "reel" : files.length > 1 ? "carousel" : "photo"), title: (DESK_NAME[d.account] || d.account) + " " + (reel ? "reel" : "post"),
-      caption: d.caption || "", collabs: (d.collabs || []).join(", "), client: !!d.client, files, dkind: reel ? "reel" : "photo", status: "waiting" }; });
+      caption: d.caption || "", collabs: (d.collabs || []).join(", "), client: !!d.client, files, dkind: reel ? "reel" : "photo",
+      status: ({ waiting: "needs_ok", approved: "approved", fix: "fix", rejected: "rejected", posted: "posted", failed: "failed" })[d.status] || "needs_ok", fixNote: d.note || d.fix_note || "" }; });
 }
 function laneOf(it){ if (it.src === "desk") return ("desk_" + String(it.acct || "x").replace(/[^a-z0-9]/g, "").slice(0, 24) + "_" + it.dkind); return it.src === "show" ? "show_" + (String(it.stype || "post").replace(/[^a-z]/g, "") || "post") : "me_" + (String(it.lane || "post").replace(/[^a-z]/g, "") || "post"); }
 function laneLabel(l){ if (l.startsWith("desk_")) { const p = l.split("_"); return (DESK_NAME[p[1]] || "@" + p[1]) + (p[2] === "reel" ? " reels" : " photo posts"); } return LANE_LABEL[l] || (l.startsWith("show_") ? "Show posts" : "Your posts"); }
@@ -1199,7 +1274,7 @@ function deckBase(){
   const shows = showItems().filter(x => x.status === "needs_ok" && (x.date + "T" + x.time) > now && x.date <= end);
   const mine = meItems().filter(x => x.status === "scheduled" && !x.handed && !fixRequested(x.id) && x.date <= end)
     .map(x => Object.assign(x, { stuck: (x.date + "T" + x.time) < now }));
-  const desk = deskItems().filter(x => (x.date + "T" + x.time) > now && x.date <= end);
+  const desk = deskItems().filter(x => x.status === "needs_ok" && (x.date + "T" + x.time) > now && x.date <= end);
   return [].concat(shows, mine, desk).filter(x => !DECIDED[x.src + ":" + x.id] && !gone.has(x.src + ":" + x.id))
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 }
@@ -1559,7 +1634,7 @@ document.addEventListener("click", e => {
       run("Saving…", async () => { await drop("set_enabled", { value: to }); D.board.drop_enabled = to; try { await drop("snapshot"); } catch (x) {}
         say(to === "on" ? "Posting is on." : "Posting paused. Nothing goes out.", () => run("Undoing…", async () => { await drop("set_enabled", { value: to === "on" ? "off" : "on" }); D.board.drop_enabled = to === "on" ? "off" : "on"; say("Undone."); })); });
       return; }
-    case "review": go("posts"); S.atab = "swipe"; break;
+    case "review": go("posts"); S.atab = "swipe"; S.post = null; break;
     case "filter": S.filter = v; break;
     case "pview": S.pview = v; if (!S.day) S.day = today(); break;
     case "day": S.day = v; break;
@@ -1637,6 +1712,7 @@ document.addEventListener("click", e => {
         say("Moved to " + dayLabel(v.slice(0, 10)) + " at " + clock(v.slice(11, 16)) + ".", () => run("Moving back…", async () => { await app("move_drop", { id: it.id, to_et: from }); setDropTime(it.id, from); say("Moved back."); })); }); return; }
     case "dismiss": run("Saving…", async () => { await app("dismiss", { key: v }); const id = v.replace(/^collab:/, ""); const keep = D.collab_checks; D.collab_checks = keep.filter(c => c.id !== id);
         say("Marked done.", () => run("Undoing…", async () => { await app("dismiss", { key: v, undo: true }); D.collab_checks = keep; say("Undone."); })); }); return;
+    case "upagain": sendFiles(); return;
     case "upload": S.post = null; S.upload = { kind: null }; break;
     case "uploadkind": S.post = null; S.upload = { kind: v }; { const st = upSteps(v); S.upload.step = st[0]; if (st[0] === "drive") { draw(); upDrive(); return; } } break;
     case "upclose": S.upload = null; break;
