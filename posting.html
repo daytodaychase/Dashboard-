@@ -363,9 +363,9 @@ async function callFn(fn, action, extra){
     return j;
   }
   const payload = JSON.stringify(body).replace(/'/g, "''");
-  const rows = await sql("select net.http_post(url := '" + BASE + fn + "', headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer ' || (select value from show_secrets where key = 'callback_token')), body := '" + payload + "'::jsonb, timeout_milliseconds := 90000) as id");
+  const rows = await sql("select net.http_post(url := '" + BASE + fn + "', headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer ' || (select value from show_secrets where key = 'callback_token')), body := '" + payload + "'::jsonb, timeout_milliseconds := 200000) as id");
   const id = Number(rows[0] && rows[0].id);
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 140; i++) {
     await new Promise(r => setTimeout(r, i < 3 ? 700 : 1500));
     const got = await sql("select status_code, content from net._http_response where id = " + id);
     if (got.length) {
@@ -914,7 +914,7 @@ function film(){
   const script = Array.isArray(it.script) ? it.script : [];
   let body = "";
   if (S.ftab === "script") body = (it.on_screen ? `<div class="say" style="background:var(--warnsoft)"><span class="lab">WORDS ON SCREEN</span><span>${hl(it.on_screen)}</span></div>` : "") +
-    script.map(l => `<span class="me">${hl(l.say)}</span>${l.think ? `<span class="them">${esc(l.think)}</span>` : ""}`).join("");
+    script.map(l => `${l.shot ? `<span style="font-size:13px;font-weight:700;color:var(--key)">SHOT: ${hl(l.shot)}</span>` : ""}<span class="me">${hl(l.say)}</span>${l.think ? `<span class="them">${esc(l.think)}</span>` : ""}`).join("");
   if (S.ftab === "copy") body = ref.handle ? `<span>Copy the steps from <b>@${esc(ref.handle)}</b>${ref.views ? ", " + fmt(ref.views) + " views" : ""}${ref.outlier ? ", " + ref.outlier + "x their normal" : ""}.</span>
       ${(ref.beats || []).map((b, i) => `<span style="display:flex;gap:10px"><b style="flex:none;width:24px;height:24px;border-radius:50%;background:var(--sunk);display:flex;align-items:center;justify-content:center;font-size:13px">${i + 1}</b><span>${esc(b)}</span></span>`).join("")}
       <span class="ph">Same steps. Your story. Never their story.</span>${linkBtn(ref.url, "Watch their video", true)}` : `<span class="ph">No reference video on this one.</span>`;
@@ -943,37 +943,60 @@ const HOURS = [["2 PM",100,"best"],["12 PM",96,"strong"],["4 PM",95,"strong"],["
 const TAGOPTS = [["talk","Talking to camera"],["hack","Life hack or tip"],["fun","Funny moment"],["story","Personal story"],["ditl","Day in the life"],["showme","Behind the scenes"],["people","With my people"],["photo","Photo"]];
 function bars(rows, f){ return `<div style="display:flex;flex-direction:column;gap:8px">${rows.map(r => `<div style="display:flex;align-items:center;gap:10px"><span style="flex:none;width:96px;font-size:14px">${esc(r[0])}</span><span style="flex:1;height:12px;background:var(--sunk);border-radius:6px;overflow:hidden"><span style="display:block;height:100%;width:${r[1] / rows[0][1] * 100}%;background:var(--key);border-radius:6px"></span></span><span style="flex:none;width:54px;text-align:right;font-size:13px;color:var(--soft)">${esc(f(r))}</span></div>`).join("")}</div>`; }
 let SCRL = [];
+function scrOpts(){ let o = {}; try { o = JSON.parse(localStorage.getItem("dtdScrOpts") || "{}"); } catch (e) {} return Object.assign({ type: "yap", len: "med", end: "auto", kw: "", gift: "" }, o); }
+function scrOptsSave(o){ try { localStorage.setItem("dtdScrOpts", JSON.stringify(o)); } catch (e) {} }
+function scrGrab(){ if (!S.scr || !S.scr.pick) return; const k = document.getElementById("scrkw"), g = document.getElementById("scrgift"); const o = S.scr.opts;
+  if (k) o.kw = k.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ""); if (g) o.gift = g.value.trim(); }
 function scriptSheet(){
   const x = S.scr; if (!x) return "";
-  let body;
-  if (x.loading) body = `<div class="loading" style="padding:40px 0">${I.pencil}<br>Writing your script…<br><span class="mini">About a minute. It writes it, then checks every fact against your stories.</span></div>`;
+  let body, title = "Your script";
+  if (x.pick) {
+    const o = x.opts; title = "What kind of script?";
+    body = `${x.lesson ? `<span class="streak">Aimed at: ${esc(x.lesson.rule)}</span>` : ""}
+    <span class="lab">TYPE</span>${seg("scrtype", [["yap","Talking to camera"],["vo","Voiceover"]], o.type, "Type")}
+    <span class="mini">${o.type === "vo" ? "You film b roll first, then read this over it. Each line tells you what shot goes under it." : "You talk straight to the camera."}</span>
+    <span class="lab">LENGTH</span>${seg("scrlen", [["short","30 sec"],["med","45 to 60"],["long","60 to 90"]], o.len, "Length")}
+    <span class="lab">ENDING</span>${seg("scrend", [["auto","Best fit"],["mc","ManyChat"],["none","No ask"]], o.end, "Ending")}
+    <span class="mini">${o.end === "mc" ? "Ends with “comment the word” so ManyChat DMs them." : o.end === "none" ? "Ends on a strong last line. No ask." : "Claude picks the ending that fits. It always lands a real conclusion."}</span>
+    ${o.end === "mc" ? `<label class="lab" for="scrkw">COMMENT WORD</label><input id="scrkw" class="field" placeholder="Example: LIGHT" value="${esc(o.kw)}" autocapitalize="characters" style="text-transform:uppercase">
+    <label class="lab" for="scrgift">WHAT THEY GET IN THE DM</label><input id="scrgift" class="field" placeholder="Example: my one light setup list" value="${esc(o.gift)}">` : ""}
+    <button class="btn big" data-a="scrgo">${I.pencil} Write it</button>`;
+  }
+  else if (x.loading) body = `<div class="loading" style="padding:40px 0">${I.pencil}<br>Writing your script…<br><span class="mini">One to two minutes. It writes it, then checks every fact against your real stories.</span></div>`;
   else if (x.err) body = `<div class="err">${esc(x.err)}</div><button class="btn big" data-a="scragain">Try again</button>`;
   else {
-    const d = x.data;
+    const d = x.data; title = d.title || title; const vo = d.type === "vo";
     body = `<span class="ph">${esc(d.why || "")}</span>
     ${d.lesson ? `<span class="streak">Aimed at: ${esc(d.lesson)}</span>` : ""}
-    <div class="card pad" style="gap:4px"><span class="lab">ON SCREEN TEXT</span><b style="font-size:18px">${esc(d.on_screen || "")}</b></div>
-    <div class="card pad" style="gap:12px"><span class="lab">THE SCRIPT · ABOUT ${Number(d.length_sec) || 45} SEC</span>
-      ${(d.script || []).map(l => `<div style="display:flex;flex-direction:column;gap:3px">${l.think ? `<span style="font-size:14px;font-style:italic;color:var(--soft)">They think: ${hl(l.think)}</span>` : ""}<b style="font-size:17px;line-height:1.35">${hl(l.say)}</b></div>`).join("")}
-      <span class="mini">Read the grey lines in your head. Only say the bold ones. Yellow blanks are details only you know.</span></div>
-    <div class="card pad" style="gap:4px"><span class="lab">CAPTION</span><span style="white-space:pre-line">${esc(d.caption || "")}</span></div>
+    ${d.source ? `<span class="mini">Built from your real story: “${esc(String(d.source).slice(0, 220))}${String(d.source).length > 220 ? "…" : ""}”</span>` : ""}
+    <div class="card pad" style="gap:4px"><span class="lab">ON SCREEN TEXT</span><b style="font-size:18px">${hl(d.on_screen || "")}</b></div>
+    <div class="card pad" style="gap:12px"><span class="lab">${vo ? "VOICEOVER" : "THE SCRIPT"} · ABOUT ${Number(d.length_sec) || 45} SEC</span>
+      ${(d.script || []).map(l => `<div style="display:flex;flex-direction:column;gap:3px">${l.shot ? `<span style="font-size:13px;font-weight:700;color:var(--key)">SHOT: ${hl(l.shot)}</span>` : ""}${l.think ? `<span style="font-size:14px;font-style:italic;color:var(--soft)">They think: ${hl(l.think)}</span>` : ""}<b style="font-size:17px;line-height:1.35">${hl(l.say)}</b></div>`).join("")}
+      <span class="mini">Read the grey lines in your head. Only say the bold ones.${vo ? " Film the blue shots first." : ""} Yellow blanks are details only you know.</span></div>
+    <div class="card pad" style="gap:4px"><span class="lab">CAPTION</span><span style="white-space:pre-line">${hl(d.caption || "")}</span></div>
     ${d.audit ? `<span class="mini">Self check: ${Number(d.audit.score) || 0} of 7 bricks. ${esc(d.audit.notes || "")}</span>` : ""}
     ${x.saved ? `<div class="done" style="text-decoration:none">${I.ok}Saved. It's at the top of your Film tab.</div><button class="btn" data-a="tab:film">Open Film</button>` : `<button class="btn big" data-a="scrsave">Save to my Film tab</button>`}
     <div class="grid2"><button class="btn ghost" data-a="scrcopy">Copy the script</button><button class="btn ghost" data-a="scrclaude">Copy for Claude</button></div>
-    <button class="btn ghost" data-a="scragain">Write a different one</button>`;
+    <div class="grid2"><button class="btn ghost" data-a="scragain">Write a different one</button><button class="btn ghost" data-a="scropts">Change type or length</button></div>`;
   }
   return `<div class="scrim" data-a="scrclose"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Your script"><div class="in"><span class="grab"></span>
-    <div class="h"><h2>${esc(x.data && !x.loading && !x.err ? x.data.title : "Your script")}</h2><button class="x" data-a="scrclose" aria-label="Close">${I.x}</button></div>${body}</div></div>`;
+    <div class="h"><h2>${esc(title)}</h2><button class="x" data-a="scrclose" aria-label="Close">${I.x}</button></div>${body}</div></div>`;
 }
 function scriptText(d){
-  return [d.title, "", "ON SCREEN: " + (d.on_screen || ""), ""].concat((d.script || []).map(l => (l.think ? "(they think: " + l.think + ")\n" : "") + l.say)).concat(["", "CAPTION:", d.caption || ""]).join("\n");
+  return [d.title, "", "ON SCREEN: " + (d.on_screen || ""), ""].concat((d.script || []).map(l => (l.shot ? "[SHOT: " + l.shot + "]\n" : "") + (l.think ? "(they think: " + l.think + ")\n" : "") + l.say)).concat(["", "CAPTION:", d.caption || ""]).join("\n");
 }
 function writeScript(idx){
   const l = idx >= 0 ? SCRL[idx] : null;
-  S.scr = { loading: true, idx, lesson: l }; drawLayer();
-  scriptFn("write", { account: S.scrAcct || "daytodaychase", lesson: l ? { rule: l.rule, direction: l.direction, confidence: l.confidence } : null })
-    .then(j => { if (!S.scr || S.scr.idx !== idx) return; S.scr = { idx, lesson: l, data: j.script }; drawLayer(); },
-      e => { if (!S.scr) return; S.scr = { idx, lesson: l, err: (e && e.message) || "Couldn't write it. Try again." }; drawLayer(); });
+  S.scr = { pick: true, idx, lesson: l, opts: scrOpts() }; drawLayer();
+}
+function runScript(){
+  const x = S.scr; if (!x) return; const idx = x.idx, l = x.lesson, o = x.opts || scrOpts();
+  if (o.end === "mc" && !o.kw) { say("Type the comment word first."); return; }
+  scrOptsSave(o);
+  S.scr = { loading: true, idx, lesson: l, opts: o }; drawLayer();
+  scriptFn("write", { account: S.scrAcct || "daytodaychase", type: o.type, len: o.len, end: o.end, kw: o.kw, gift: o.gift, lesson: l ? { rule: l.rule, direction: l.direction, confidence: l.confidence } : null })
+    .then(j => { if (!S.scr || S.scr.idx !== idx) return; S.scr = { idx, lesson: l, opts: o, data: j.script }; drawLayer(); },
+      e => { if (!S.scr) return; S.scr = { idx, lesson: l, opts: o, err: (e && e.message) || "Couldn't write it. Try again." }; drawLayer(); });
 }
 function stats(){
   const show = S.statsTab === "show";
@@ -1480,7 +1503,10 @@ document.addEventListener("click", e => {
     case "fixchip": { const t = document.getElementById("fixnote"); if (t) { t.value = (t.value.trim() ? t.value.trim() + ". " : "") + v; t.focus(); } return; }
     case "fixcancel": S.fixFor = null; drawLayer(); return;
     case "scr": writeScript(Number(v)); return;
-    case "scragain": writeScript(S.scr ? S.scr.idx : -1); return;
+    case "scragain": if (S.scr && S.scr.opts) { S.scr.pick = true; runScript(); } else writeScript(S.scr ? S.scr.idx : -1); return;
+    case "scropts": if (S.scr) { S.scr = { pick: true, idx: S.scr.idx, lesson: S.scr.lesson, opts: S.scr.opts || scrOpts() }; drawLayer(); } return;
+    case "scrgo": scrGrab(); runScript(); return;
+    case "scrtype": case "scrlen": case "scrend": if (S.scr && S.scr.pick) { scrGrab(); S.scr.opts[{ scrtype: "type", scrlen: "len", scrend: "end" }[a]] = v; drawLayer(); } return;
     case "scrclose": S.scr = null; drawLayer(); return;
     case "scrcopy": if (S.scr && S.scr.data) copyText(scriptText(S.scr.data), () => say("Script copied.")); return;
     case "scrclaude": if (S.scr && S.scr.data) copyText("Here's a yap script my DayToDay app wrote for me from my post data. Help me make it better using my yap rules. Keep it true to my real stories.\n\n" + scriptText(S.scr.data), () => say("Copied. Paste it into Claude.")); return;
