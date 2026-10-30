@@ -908,7 +908,7 @@ function hl(t){ return esc(t).replace(/\[YOUR DETAIL: ?([^\]]*)\]/g, '<span clas
 function film(){
   const list = ((D.board && D.board.film && D.board.film.list) || []).filter(x => !S.skipping[x.id]);
   const blanks = ((((D.board || {}).story_bank || {}).stories) || []).filter(x => x.needs).length;
-  if (!list.length) return head() + `<div class="card allset"><b style="font-size:20px">No ideas right now</b><span class="ph">New ones come every Monday and Thursday morning.</span></div>` + dumpBtn(blanks);
+  if (!list.length) return head() + writerCard() + `<h2>This week's ideas</h2><div class="card allset"><b style="font-size:20px">No ideas right now</b><span class="ph">New ones come every Monday and Thursday morning.</span></div>` + dumpBtn(blanks);
   if (S.idea >= list.length) S.idea = 0;
   const it = list[S.idea], ref = it.ref || {}, lane = ref.lane ? ref.lane[0].toUpperCase() + ref.lane.slice(1) : "";
   const script = Array.isArray(it.script) ? it.script : [];
@@ -920,7 +920,7 @@ function film(){
       <span class="ph">Same steps. Your story. Never their story.</span>${linkBtn(ref.url, "Watch their video", true)}` : `<span class="ph">No reference video on this one.</span>`;
   if (S.ftab === "why") body = `<span>${esc(it.why || "")}</span>${it.audit ? `<span class="ph">Scored ${esc(it.audit.score)} of ${esc(it.audit.of || 7)}. ${esc(it.audit.notes || "")}</span>` : ""}`;
   const meta = [PLACE[it.place] || it.place, it.length_sec ? it.length_sec + " sec" : "", it.shoot && it.shoot.when ? it.shoot.when : ""].filter(Boolean).join(" · ");
-  return head() + `
+  return head() + writerCard() + `<h2>This week's ideas</h2>
   <section class="card idea" style="overflow:hidden">
     <div class="band"><span class="tag">${esc(KIND_LABEL[it.kind] || it.kind)}</span><span class="grow">${esc(meta)}</span><b>${S.idea + 1} of ${list.length}</b></div>
     <div class="pad" style="gap:14px">
@@ -943,6 +943,13 @@ const HOURS = [["2 PM",100,"best"],["12 PM",96,"strong"],["4 PM",95,"strong"],["
 const TAGOPTS = [["talk","Talking to camera"],["hack","Life hack or tip"],["fun","Funny moment"],["story","Personal story"],["ditl","Day in the life"],["showme","Behind the scenes"],["people","With my people"],["photo","Photo"]];
 function bars(rows, f){ return `<div style="display:flex;flex-direction:column;gap:8px">${rows.map(r => `<div style="display:flex;align-items:center;gap:10px"><span style="flex:none;width:96px;font-size:14px">${esc(r[0])}</span><span style="flex:1;height:12px;background:var(--sunk);border-radius:6px;overflow:hidden"><span style="display:block;height:100%;width:${r[1] / rows[0][1] * 100}%;background:var(--key);border-radius:6px"></span></span><span style="flex:none;width:54px;text-align:right;font-size:13px;color:var(--soft)">${esc(f(r))}</span></div>`).join("")}</div>`; }
 let SCRL = [];
+function scrPrep(brand){ const ls = (D.lessons || []).filter(l => l.account === brand); SCRL = ls.slice(); S.scrAcct = brand;
+  const more = ls.filter(l => l.direction === "do_more"), test = ls.filter(l => l.direction === "test_more");
+  return more.find(l => l.confidence !== "low") || more[0] || test[0] || null; }
+function writerCard(){ const nl = scrPrep("daytodaychase"); return `<section class="card pad" style="gap:10px">
+    <span class="lab">WRITE A NEW SCRIPT</span>${nl ? `<b style="font-size:17px;line-height:1.3">Aimed at what's working: ${esc(nl.rule)}</b>` : `<b style="font-size:17px">Built from your real stories</b>`}
+    <button class="btn big" data-a="scr:${nl ? SCRL.indexOf(nl) : -1}">${I.pencil} Write a new script</button>
+    <span class="mini">Talking or voiceover. You pick the length and the ending. Saved scripts land below.</span></section>`; }
 function scrOpts(){ let o = {}; try { o = JSON.parse(localStorage.getItem("dtdScrOpts") || "{}"); } catch (e) {} return Object.assign({ type: "yap", len: "med", end: "auto", kw: "", gift: "" }, o); }
 function scrOptsSave(o){ try { localStorage.setItem("dtdScrOpts", JSON.stringify(o)); } catch (e) {} }
 function scrGrab(){ if (!S.scr || !S.scr.pick) return; const k = document.getElementById("scrkw"), g = document.getElementById("scrgift"); const o = S.scr.opts;
@@ -979,7 +986,7 @@ function scriptSheet(){
       <span class="mini">Read the grey lines in your head. Only say the bold ones.${vo ? " Film the blue shots first." : ""} Yellow blanks are details only you know.</span></div>
     <div class="card pad" style="gap:4px"><span class="lab">CAPTION</span><span style="white-space:pre-line">${hl(d.caption || "")}</span></div>
     ${d.audit ? `<span class="mini">Self check: ${Number(d.audit.score) || 0} of 7 bricks. ${esc(d.audit.notes || "")}</span>` : ""}
-    ${x.saved ? `<div class="done" style="text-decoration:none">${I.ok}Saved. It's at the top of your Film tab.</div><button class="btn" data-a="tab:film">Open Film</button>` : `<button class="btn big" data-a="scrsave">Save to my Film tab</button>`}
+    ${x.saved ? `<div class="done" style="text-decoration:none">${I.ok}Saved. It's in This week's ideas.</div><button class="btn" data-a="scrclose">Done</button>` : `<button class="btn big" data-a="scrsave">Save to my Film tab</button>`}
     <div class="grid2"><button class="btn ghost" data-a="scrcopy">Copy the script</button><button class="btn ghost" data-a="scrclaude">Copy for Claude</button></div>
     <div class="grid2"><button class="btn ghost" data-a="scragain">Write a different one</button><button class="btn ghost" data-a="scropts">Change type or length</button></div>`;
   }
@@ -1040,8 +1047,8 @@ function stats(){
     ${weekly.length >= 2 ? `<div style="display:flex;align-items:flex-end;gap:6px;height:64px" aria-hidden="true">${weekly.map((v, i) => `<i style="flex:1;height:${Math.max(6, v / mx * 100)}%;background:${i === weekly.length - 1 ? "var(--key)" : "var(--keysoft)"};border-radius:6px 6px 2px 2px"></i>`).join("")}</div>
       <span class="mini">Instagram views over 30 days, one bar per week. The dark bar is now.</span>` : ""}
     <div class="doit"><span class="lab">YOUR NEXT VIDEO</span><b>${esc(nextL ? nextL.rule : todo)}</b></div>
-    <button class="btn big" data-a="scr:${nextL ? SCRL.indexOf(nextL) : -1}">${I.pencil} Write me a script for this</button>
-    <span class="mini">Built from what works on your posts, your real stories, and your yap rules.</span>
+    <button class="btn big" data-a="scr:${nextL ? SCRL.indexOf(nextL) : -1}">${I.pencil} Make this on Film</button>
+    <span class="mini">Opens your Film tab and writes a script for it.</span>
   </section>
   ${reach(brand, false)}
   ${more.length ? `<h2>Post more of this</h2><span class="mini" style="margin-top:-10px">Compared to your own normal. The number is views.</span><div class="card" style="overflow:hidden">${more.map(l => lrow(l, "var(--good)")).join("")}</div>` : ""}
@@ -1510,7 +1517,7 @@ document.addEventListener("click", e => {
       flyOut(v); return; }
     case "fixchip": { const t = document.getElementById("fixnote"); if (t) { t.value = (t.value.trim() ? t.value.trim() + ". " : "") + v; t.focus(); } return; }
     case "fixcancel": S.fixFor = null; drawLayer(); return;
-    case "scr": writeScript(Number(v)); return;
+    case "scr": if (S.tab !== "film") { const keep = SCRL.slice(), acct = S.scrAcct; go("film"); draw(); SCRL = keep; S.scrAcct = acct; } writeScript(Number(v)); return;
     case "scragain": if (S.scr && S.scr.opts) { S.scr.pick = true; runScript(); } else writeScript(S.scr ? S.scr.idx : -1); return;
     case "scropts": if (S.scr) { S.scr = { pick: true, idx: S.scr.idx, lesson: S.scr.lesson, opts: S.scr.opts || scrOpts() }; drawLayer(); } return;
     case "scrgo": scrGrab(); runScript(); return;
@@ -1522,7 +1529,7 @@ document.addEventListener("click", e => {
     case "scrclose": S.scr = null; drawLayer(); return;
     case "scrcopy": if (S.scr && S.scr.data) copyText(scriptText(S.scr.data), () => say("Script copied.")); return;
     case "scrclaude": if (S.scr && S.scr.data) copyText("Here's a yap script my DayToDay app wrote for me from my post data. Help me make it better using my yap rules. Keep it true to my real stories.\n\n" + scriptText(S.scr.data), () => say("Copied. Paste it into Claude.")); return;
-    case "scrsave": if (!S.scr || !S.scr.data) return; run("Saving…", async () => { await scriptFn("save", { script: S.scr.data }); S.scr.saved = true; say("Saved to Film."); }); return;
+    case "scrsave": if (!S.scr || !S.scr.data) return; run("Saving…", async () => { await scriptFn("save", { script: S.scr.data }); S.scr.saved = true; say("Saved to Film."); load(); }); return;
     case "fixedit": { const id = S.fixFor; S.fixFor = null; S.fromFix = id; S.post = id; S.sheetMode = ""; S.ed = null; loadSlides(id); break; }
     case "fixdone": run("Saving…", async () => { await app("dismiss", { key: "fixreq:" + v }); AP.needs = (AP.needs || []).filter(n => n.id !== v); say("Marked done."); }); return;
     case "fixsend": { const t = document.getElementById("fixnote"), note = ((t && t.value) || "").trim();
