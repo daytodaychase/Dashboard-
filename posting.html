@@ -843,10 +843,10 @@ function postSheet(){
 // ---------- upload ----------
 const KINDS = [
   ["VIDEOS, POST AS REELS","var(--key)",[["yap","Yap","Me talking, on phone"],["vlog","Vlog clip","Shot on the camera"],["show","Show clip","From the Day To Day Show"],["postcard","Postcard","Cinematic, wide, 7 PM feed"]]],
-  ["PHOTOS","#9A5A32",[["portrait","Portrait","Tags @daytodayportraits"],["iphone","iPhone dump","Sunday 7 PM carousel"]]],
+  ["PHOTOS","#9A5A32",[["portrait","Portrait","Tags @daytodayportraits"],["iphone","iPhone dump","Sunday 7 PM carousel"],["concert","Concert","Posts on @daytodayconcerts"]]],
   ["OTHER","var(--info)",[["story","Story","Goes up in about 5 minutes"],["storydump","Story dump","Voice memo of real stories"]]]
 ];
-const KNAME = { yap:"Yap", vlog:"Vlog clip", show:"Show clip", postcard:"Postcard", portrait:"Portrait", iphone:"iPhone dump", story:"Story", storydump:"Story dump" };
+const KNAME = { yap:"Yap", vlog:"Vlog clip", show:"Show clip", postcard:"Postcard", portrait:"Portrait", iphone:"iPhone dump", concert:"Concert", story:"Story", storydump:"Story dump" };
 function upSteps(k){ return k === "portrait" ? ["collab","drive"] : (k === "yap" || k === "vlog" || k === "show") ? ["idea","drive"] : ["drive"]; }
 function uploadSheet(){
   const u = S.upload;
@@ -876,11 +876,11 @@ function uploadSheet(){
       const next = openSlots(KINDTYPE[u.kind] || "reel", 21)[0];
       body = `<ol style="margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px;font-size:16px">
         <li>Tap the button below. Your <b>${esc(u.folder || KNAME[u.kind])}</b> folder opens in Drive.</li>
-        <li>Tap <b>+</b>, then <b>Upload</b>, and pick ${u.kind === "portrait" || u.kind === "iphone" ? "the photos" : "the file"}.</li>
+        <li>Tap <b>+</b>, then <b>Upload</b>, and pick ${u.kind === "portrait" || u.kind === "iphone" || u.kind === "concert" ? "the photos" : "the file"}.</li>
         ${u.name ? `<li>Name it exactly this, so the app knows which idea it is:</li>` : ""}</ol>
         ${u.name ? `<div style="display:flex;gap:8px;align-items:center"><code class="field" style="flex:1;min-width:0;font-weight:700">${esc(u.name)}</code><button class="btn" style="width:auto;flex:none" data-a="copyname">Copy</button></div>` : ""}
         ${linkBtn(u.url, "Open the folder in Drive")}
-        <span class="mini">${esc(u.tip || "")}${next && u.kind !== "story" && u.kind !== "storydump" ? " It takes the next open spot: " + dayLabel(next.date) + " at " + clock(next.time) + "." : ""}</span>
+        <span class="mini">${esc(u.tip || "")}${next && u.kind !== "story" && u.kind !== "storydump" && u.kind !== "concert" ? " It takes the next open spot: " + dayLabel(next.date) + " at " + clock(next.time) + "." : ""}</span>
         <button class="btn ghost" data-a="upclose">Done</button>`;
     }
   }
@@ -888,12 +888,14 @@ function uploadSheet(){
     <div class="h"><button class="x" data-a="upback" aria-label="Back">${I.back}</button><span class="lab" style="flex:1;text-align:center">${esc(KNAME[u.kind].toUpperCase())}${steps.length > 1 ? ", STEP " + (i + 1) + " OF " + steps.length : ""}</span><button class="x" data-a="upclose" aria-label="Close">${I.x}</button></div>
     ${bar}<h2>${esc(title)}</h2>${body}</div></div>`;
 }
-const KINDTYPE = { yap:"reel", vlog:"reel", show:"reel", postcard:"photo", portrait:"photo", iphone:"photo" };
+const KINDTYPE = { yap:"reel", vlog:"reel", show:"reel", postcard:"photo", portrait:"photo", iphone:"photo", concert:"photo" };
+const CONCERT_FOLDER = "https://drive.google.com/drive/folders/1AoKiBSWn7kpP-oDLIhziAJKCsdnO9DTn";
 async function upDrive(){
   const u = S.upload; u.step = "drive"; u.loading = true; u.err = ""; drawLayer();
   try {
     let j;
-    if (u.ideaId) { j = await drop("idea_done", { id: u.ideaId, device: u.kind === "vlog" ? "camera" : "phone" }); u.name = j.file_name || ""; }
+    if (u.kind === "concert") j = { url: CONCERT_FOLDER, folder: "6 concerts", tip: "Make one folder per concert inside it, named for the show (like \u201cKhruangbin Fillmore\u201d). Camera photos and phone clips can mix. Overnight it becomes one carousel on @daytodayconcerts and shows up in Approve for your swipe." };
+    else if (u.ideaId) { j = await drop("idea_done", { id: u.ideaId, device: u.kind === "vlog" ? "camera" : "phone" }); u.name = j.file_name || ""; }
     else j = await drop("prepare_upload", { kind: u.kind, handle: u.handle || "" });
     u.url = j.url; u.folder = j.folder || ""; u.tip = j.tip || ""; u.loading = false;
     if (u.ideaId) load();
